@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../inventory/data/inventory_item_model.dart';
+import '../../../app_theme.dart';
 
 class FeedsPage extends StatelessWidget {
   final List<InventoryItem> feeds;
@@ -57,8 +58,28 @@ class FeedsPage extends StatelessWidget {
           ],
           const Spacer(),
           ElevatedButton(
-            onPressed: selectedFeed != null ? onContinue : null,
-            child: const Text('Continue'),
+            onPressed: onContinue,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Continue'),
+              ),
+            ),
           ),
         ],
       ),

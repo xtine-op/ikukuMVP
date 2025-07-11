@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../shared/services/supabase_service.dart';
 import '../data/daily_record_model.dart';
+import 'record_detail_page.dart';
 
 class RecordsPage extends StatefulWidget {
   const RecordsPage({super.key});
@@ -50,9 +51,20 @@ class _RecordsPageState extends State<RecordsPage> {
               itemBuilder: (context, i) {
                 final record = records[i];
                 return ListTile(
-                  title: Text(                  
-                    'Date: ${record.recordDate.toLocal().toString().split(' ')[0]}',
+                  title: Text(
+                    // Show created date as title (no batch name in DailyRecord)
+                    'Created: ${record.createdAt.toLocal().toString().split(' ')[0]}',
                   ),
+                  subtitle: Text(
+                    'Record Date: ${record.recordDate.toLocal().toString().split(' ')[0]}',
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => RecordDetailPage(record: record),
+                      ),
+                    );
+                  },
                 );
               },
             ),

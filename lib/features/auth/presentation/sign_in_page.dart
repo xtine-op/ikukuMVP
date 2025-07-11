@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app_theme.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -97,7 +98,27 @@ class _SignInPageState extends State<SignInPage> {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _signInOrSignUp,
-                    child: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      foregroundColor: CustomColors.text,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: CustomColors.buttonGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+                      ),
+                    ),
                   ),
             TextButton(
               onPressed: () {

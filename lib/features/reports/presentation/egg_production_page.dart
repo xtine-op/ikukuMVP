@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../batches/data/batch_model.dart';
+import '../../../app_theme.dart';
 
 class EggProductionPage extends StatelessWidget {
   final Batch? selectedBatch;
@@ -120,8 +121,28 @@ class EggProductionPage extends StatelessWidget {
           ],
           const Spacer(),
           ElevatedButton(
-            onPressed: collectedEggs != null ? onContinue : null,
-            child: const Text('Continue'),
+            onPressed: onContinue,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Continue'),
+              ),
+            ),
           ),
         ],
       ),

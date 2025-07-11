@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app_theme.dart';
 
 class FeatureButton extends StatelessWidget {
   final String label;
@@ -16,11 +17,32 @@ class FeatureButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ElevatedButton.icon(
-        icon: Icon(icon),
-        label: Text(label),
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: CustomColors.buttonGradient,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ElevatedButton.icon(
+          icon: Icon(icon, color: CustomColors.text),
+          label: Text(label, style: TextStyle(color: CustomColors.text)),
+          onPressed: onTap,
+          style:
+              ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: CustomColors.text,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ).copyWith(
+                elevation: MaterialStateProperty.all(0),
+                backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                shadowColor: MaterialStateProperty.all(Colors.transparent),
+              ),
+        ),
       ),
     );
   }

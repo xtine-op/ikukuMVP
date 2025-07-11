@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
+import '../../../app_theme.dart';
 
 class ReviewAndSavePage extends StatelessWidget {
   final Batch? selectedBatch;
@@ -86,7 +87,30 @@ class ReviewAndSavePage extends StatelessWidget {
             ),
           if (notes != null && notes!.isNotEmpty) Text('Notes: $notes'),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: onSave, child: const Text('Save Report')),
+          ElevatedButton(
+            onPressed: onSave,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Save Report'),
+              ),
+            ),
+          ),
         ],
       ),
     );

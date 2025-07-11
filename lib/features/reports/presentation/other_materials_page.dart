@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../inventory/data/inventory_item_model.dart';
+import '../../../app_theme.dart';
 
 class OtherMaterialsPage extends StatelessWidget {
   final List<InventoryItem> otherMaterials;
@@ -46,7 +47,30 @@ class OtherMaterialsPage extends StatelessWidget {
               style: TextStyle(color: Colors.red),
             ),
           const Spacer(),
-          ElevatedButton(onPressed: onContinue, child: const Text('Continue')),
+          ElevatedButton(
+            onPressed: onContinue,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Continue'),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
@@ -112,7 +113,10 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     if (error != null) return Scaffold(body: Center(child: Text(error!)));
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop() ? const BackButton() : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
         title: const Text('Farm Report Entry'),
       ),
       body: PageView(

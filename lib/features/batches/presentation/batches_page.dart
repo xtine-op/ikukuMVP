@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../data/batch_model.dart';
 
@@ -117,7 +119,27 @@ class _BatchesPageState extends State<BatchesPage> {
                 }
               }
             },
-            child: const Text('Add'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Add'),
+              ),
+            ),
           ),
         ],
       ),
@@ -205,7 +227,27 @@ class _BatchesPageState extends State<BatchesPage> {
                 }
               }
             },
-            child: const Text('Save'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Save'),
+              ),
+            ),
           ),
         ],
       ),
@@ -216,8 +258,11 @@ class _BatchesPageState extends State<BatchesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop() ? const BackButton() : null,
-        title: const Text('Batches'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
+        title: const Text('Add Chick Batch'),
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())

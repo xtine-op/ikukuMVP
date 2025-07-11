@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../batches/data/batch_model.dart';
+import '../../../app_theme.dart';
 
 class AdditionalNotesPage extends StatelessWidget {
   final Batch? selectedBatch;
@@ -31,7 +32,30 @@ class AdditionalNotesPage extends StatelessWidget {
             onChanged: onNotesChanged,
           ),
           const Spacer(),
-          ElevatedButton(onPressed: onContinue, child: const Text('Continue')),
+          ElevatedButton(
+            onPressed: onContinue,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Continue'),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../inventory/data/inventory_item_model.dart';
+import '../../../app_theme.dart';
 
 class VaccinesPage extends StatelessWidget {
   final List<InventoryItem> vaccines;
@@ -59,7 +60,9 @@ class VaccinesPage extends StatelessWidget {
               const Text('No'),
             ],
           ),
-          if ((selectedVaccine != null && vaccineAmount != null && vaccineAmount! > 0)) ...[
+          if ((selectedVaccine != null &&
+              vaccineAmount != null &&
+              vaccineAmount! > 0)) ...[
             DropdownButton<InventoryItem>(
               value: selectedVaccine,
               hint: const Text('Select vaccine'),
@@ -82,7 +85,8 @@ class VaccinesPage extends StatelessWidget {
               keyboardType: TextInputType.number,
               onChanged: onVaccineAmountChanged,
             ),
-            if (vaccineAmount != null && vaccineAmount! > (selectedVaccine?.quantity ?? 0))
+            if (vaccineAmount != null &&
+                vaccineAmount! > (selectedVaccine?.quantity ?? 0))
               const Text(
                 'Cannot use more vaccine than available in store.',
                 style: TextStyle(color: Colors.red),
@@ -90,8 +94,33 @@ class VaccinesPage extends StatelessWidget {
           ],
           const Spacer(),
           ElevatedButton(
-            onPressed: (selectedVaccine != null && vaccineAmount != null && vaccineAmount! > 0) ? onContinue : null,
-            child: const Text('Continue'),
+            onPressed:
+                (selectedVaccine != null &&
+                    vaccineAmount != null &&
+                    vaccineAmount! > 0)
+                ? onContinue
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              foregroundColor: CustomColors.text,
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                child: const Text('Continue'),
+              ),
+            ),
           ),
         ],
       ),
