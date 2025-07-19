@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../data/batch_model.dart';
+import '../../inventory/presentation/inventory_page.dart';
+import '../../../shared/widgets/bottom_nav_bar.dart';
 
 class BatchesPage extends StatefulWidget {
   const BatchesPage({super.key});
@@ -49,97 +51,169 @@ class _BatchesPageState extends State<BatchesPage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Color(0xFFF7F8FA),
         title: const Text('Add Batch'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Batch Name'),
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                  onSaved: (v) => name = v ?? '',
-                ),
-                DropdownButtonFormField<String>(
-                  value: birdType,
-                  items: const [
-                    DropdownMenuItem(value: 'broiler', child: Text('Broiler')),
-                    DropdownMenuItem(
-                      value: 'kienyeji',
-                      child: Text('Kienyeji'),
+        content: SizedBox(
+          width: 400, // Make dialog a little wider
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Batch Name',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: CustomColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
                     ),
-                    DropdownMenuItem(value: 'layer', child: Text('Layer')),
-                  ],
-                  onChanged: (v) => birdType = v ?? 'broiler',
-                  decoration: const InputDecoration(labelText: 'Bird Type'),
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: 'Age in Days'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || int.tryParse(v) == null
-                      ? 'Enter a number'
-                      : null,
-                  onSaved: (v) => ageInDays = int.tryParse(v ?? '0') ?? 0,
-                ),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Total Chickens',
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                    onSaved: (v) => name = v ?? '',
                   ),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || int.tryParse(v) == null
-                      ? 'Enter a number'
-                      : null,
-                  onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
-                ),
-              ],
+                  SizedBox(height: 18),
+                  DropdownButtonFormField<String>(
+                    value: birdType,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'broiler',
+                        child: Text('Broiler'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'kienyeji',
+                        child: Text('Kienyeji'),
+                      ),
+                      DropdownMenuItem(value: 'layer', child: Text('Layer')),
+                    ],
+                    onChanged: (v) => birdType = v ?? 'broiler',
+                    decoration: InputDecoration(
+                      labelText: 'Bird Type',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: CustomColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Age in Days',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: CustomColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v == null || int.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => ageInDays = int.tryParse(v ?? '0') ?? 0,
+                  ),
+                  SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Total Chickens',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: CustomColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v == null || int.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState?.validate() ?? false) {
-                formKey.currentState?.save();
-                final batch = Batch.empty(user.id).copyWith(
-                  name: name,
-                  birdType: birdType,
-                  ageInDays: ageInDays,
-                  totalChickens: totalChickens,
-                  createdAt: DateTime.now(),
-                );
-                await SupabaseService().addBatch(batch.toJson());
-                if (mounted) {
-                  Navigator.pop(context);
-                  fetchBatches();
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: CustomColors.primary,
+                    side: BorderSide(color: CustomColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
               ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      formKey.currentState?.save();
+                      final batch = Batch.empty(user.id).copyWith(
+                        name: name,
+                        birdType: birdType,
+                        ageInDays: ageInDays,
+                        totalChickens: totalChickens,
+                        createdAt: DateTime.now(),
+                      );
+                      await SupabaseService().addBatch(batch.toJson());
+                      if (mounted) {
+                        Navigator.pop(context);
+                        fetchBatches();
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    foregroundColor: CustomColors.text,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: CustomColors.buttonGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: const Text('Add Batch'),
+                    ),
+                  ),
+                ),
               ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Add'),
-              ),
-            ),
+            ],
           ),
         ],
       ),
@@ -155,19 +229,34 @@ class _BatchesPageState extends State<BatchesPage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Color(0xFFF7F8FA),
         title: const Text('Edit Batch'),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   initialValue: name,
-                  decoration: const InputDecoration(labelText: 'Batch Name'),
+                  decoration: InputDecoration(
+                    labelText: 'Batch Name',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: CustomColors.primary,
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
                   validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                   onSaved: (v) => name = v ?? '',
                 ),
+                SizedBox(height: 18),
                 DropdownButtonFormField<String>(
                   value: birdType,
                   items: const [
@@ -179,21 +268,54 @@ class _BatchesPageState extends State<BatchesPage> {
                     DropdownMenuItem(value: 'layer', child: Text('Layer')),
                   ],
                   onChanged: (v) => birdType = v ?? 'broiler',
-                  decoration: const InputDecoration(labelText: 'Bird Type'),
+                  decoration: InputDecoration(
+                    labelText: 'Bird Type',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: CustomColors.primary,
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
                 ),
+                SizedBox(height: 18),
                 TextFormField(
                   initialValue: ageInDays.toString(),
-                  decoration: const InputDecoration(labelText: 'Age in Days'),
+                  decoration: InputDecoration(
+                    labelText: 'Age in Days',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: CustomColors.primary,
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
                   keyboardType: TextInputType.number,
                   validator: (v) => v == null || int.tryParse(v) == null
                       ? 'Enter a number'
                       : null,
                   onSaved: (v) => ageInDays = int.tryParse(v ?? '0') ?? 0,
                 ),
+                SizedBox(height: 18),
                 TextFormField(
                   initialValue: totalChickens.toString(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Total Chickens',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: CustomColors.primary,
+                        width: 1.2,
+                      ),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   validator: (v) => v == null || int.tryParse(v) == null
@@ -206,8 +328,15 @@ class _BatchesPageState extends State<BatchesPage> {
           ),
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: CustomColors.primary,
+              side: BorderSide(color: CustomColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -256,16 +385,132 @@ class _BatchesPageState extends State<BatchesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isEmpty = !loading && batches.isEmpty;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/'),
         ),
-        title: const Text('Add Chick Batch'),
+        title: const Text('Batches'),
+        actions: [
+          IconButton(
+            icon: Stack(
+              children: [
+                const Icon(Icons.notifications_none_outlined),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onPressed: () {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Coming soon.')));
+            },
+          ),
+        ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
+          : isEmpty
+          ? SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 32,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      'Manage Batches',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/icons/animal-chicken.svg',
+                          width: 28,
+                          height: 28,
+                          package: null,
+                          errorBuilder: (c, e, s) =>
+                              const Icon(Icons.info_outline),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Tip: A batch is a group of chicken, obtained at the same time',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'My Batches',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 32),
+                    Center(
+                      child: Column(
+                        children: [
+                          Image.asset(
+                            'assets/icons/amico.png',
+                            width: 140,
+                            height: 140,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'You have no batches yet',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'The batches you create will appear here',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          TextButton(
+                            onPressed: _showAddBatchDialog,
+                            child: const Text(
+                              'CREATE A BATCH',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : ListView.builder(
               itemCount: batches.length,
               itemBuilder: (context, i) {
@@ -291,14 +536,27 @@ class _BatchesPageState extends State<BatchesPage> {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              backgroundColor: Color(0xFFF7F8FA),
                               title: const Text('Delete Batch'),
                               content: Text(
                                 'Are you sure you want to delete "${batch.name}"?',
                               ),
                               actions: [
-                                TextButton(
+                                OutlinedButton(
                                   onPressed: () =>
                                       Navigator.pop(context, false),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: CustomColors.primary,
+                                    side: BorderSide(
+                                      color: CustomColors.primary,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
                                   child: const Text('Cancel'),
                                 ),
                                 ElevatedButton(
@@ -319,13 +577,27 @@ class _BatchesPageState extends State<BatchesPage> {
                       ),
                     ],
                   ),
+                  onTap: () {
+                    context.go('/report-entry');
+                  },
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddBatchDialog,
-        child: const Icon(Icons.add),
-      ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      floatingActionButton: isEmpty
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: FloatingActionButton(
+                onPressed: _showAddBatchDialog,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: const Icon(Icons.add, color: CustomColors.text),
+              ),
+            ),
     );
   }
 }

@@ -7,6 +7,7 @@ class SelectBatchPage extends StatelessWidget {
   final Batch? selectedBatch;
   final ValueChanged<Batch> onBatchSelected;
   final VoidCallback onContinue;
+  final List<String> batchesReportedToday;
 
   const SelectBatchPage({
     super.key,
@@ -14,6 +15,7 @@ class SelectBatchPage extends StatelessWidget {
     required this.selectedBatch,
     required this.onBatchSelected,
     required this.onContinue,
+    required this.batchesReportedToday,
   });
 
   @override
@@ -24,7 +26,7 @@ class SelectBatchPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select a Batch to Report On',
+            'Select the batch you are reporting for',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -36,35 +38,149 @@ class SelectBatchPage extends StatelessWidget {
                   .map(
                     (batch) => Card(
                       color: selectedBatch?.id == batch.id
-                          ? CustomColors.lightGreen.withOpacity(0.2)
-                          : CustomColors.lightYellow,
+                          ? CustomColors
+                                .lightYellow // Light yellow for selected
+                          : batchesReportedToday.contains(batch.id)
+                          ? Colors.grey[200] // Grey for already reported
+                          : CustomColors.background,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 0,
                       child: ListTile(
-                        title: Text(
-                          batch.name,
-                          style: TextStyle(
-                            color: CustomColors.text,
-                            fontWeight: FontWeight.w600,
+                        title: Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  batch.name,
+                                  style: TextStyle(
+                                    color: CustomColors.text,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (batchesReportedToday.contains(batch.id))
+                                Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: CustomColors.primary,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Reported today',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        subtitle: Text(
-                          '${batch.birdType} • Age: ${batch.ageInDays} days',
-                          style: TextStyle(color: CustomColors.textDisabled),
+                        subtitle: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: batch.birdType.toLowerCase() == 'broiler'
+                                    ? Colors.green[100]
+                                    : batch.birdType.toLowerCase() == 'layers'
+                                    ? Colors.yellow[100]
+                                    : batch.birdType.toLowerCase() == 'kienyeji'
+                                    ? Colors.lightGreen[200]
+                                    : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                batch.birdType,
+                                style: TextStyle(
+                                  color:
+                                      batch.birdType.toLowerCase() == 'broiler'
+                                      ? Colors.green[800]
+                                      : batch.birdType.toLowerCase() == 'layers'
+                                      ? Colors.orange[800]
+                                      : batch.birdType.toLowerCase() ==
+                                            'kienyeji'
+                                      ? Colors.green[700]
+                                      : Colors.grey[800],
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                'Age: ${batch.ageInDays} days',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         trailing: selectedBatch?.id == batch.id
                             ? Icon(
                                 Icons.check_circle,
-                                color: CustomColors.primary,
+                                color: CustomColors.secondary,
                               )
                             : null,
-                        onTap: () => onBatchSelected(batch),
+                        onTap: batchesReportedToday.contains(batch.id)
+                            ? null
+                            : () => onBatchSelected(batch),
                       ),
                     ),
                   )
                   .toList(),
+            ),
+          ),
+          // Move Continue button immediately after the batch list and center it
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 24.0),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ElevatedButton(
+                  onPressed: selectedBatch != null ? onContinue : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    foregroundColor: CustomColors.text,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  child: const Text(
+                    'CONTINUE',
+                    style: TextStyle(color: CustomColors.text),
+                  ),
+                ),
+              ),
             ),
           ),
           if (selectedBatch == null)
@@ -75,27 +191,6 @@ class SelectBatchPage extends StatelessWidget {
                 style: TextStyle(color: CustomColors.textDisabled),
               ),
             ),
-          const SizedBox(height: 16),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: CustomColors.buttonGradient,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ElevatedButton(
-              onPressed: selectedBatch != null ? onContinue : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                foregroundColor: CustomColors.text,
-                textStyle: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              child: const Text('Continue'),
-            ),
-          ),
         ],
       ),
     );

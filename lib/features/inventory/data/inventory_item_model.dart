@@ -4,7 +4,7 @@ class InventoryItem {
   final String id;
   final String userId;
   final String name;
-  final String category; // feed, vaccine, medicine, other
+  final String category; // feed, vaccine, other
   final int quantity;
   final String unit;
   final DateTime addedOn;

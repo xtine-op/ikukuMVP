@@ -25,9 +25,22 @@ class AdditionalNotesPage extends StatelessWidget {
         children: [
           Text(
             'Write any additional notes for this batch (${selectedBatch?.name ?? ''} - ${selectedBatch?.birdType ?? ''})',
+            style: TextStyle(fontSize: 18),
           ),
+          const SizedBox(height: 24),
           TextField(
-            decoration: const InputDecoration(labelText: 'Notes'),
+            decoration: InputDecoration(
+              labelText: 'Notes',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
             maxLines: 3,
             onChanged: onNotesChanged,
           ),
@@ -52,7 +65,10 @@ class AdditionalNotesPage extends StatelessWidget {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Continue'),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(color: CustomColors.text),
+                ),
               ),
             ),
           ),

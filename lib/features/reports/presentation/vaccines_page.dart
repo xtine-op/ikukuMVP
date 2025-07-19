@@ -4,19 +4,15 @@ import '../../../app_theme.dart';
 
 class VaccinesPage extends StatelessWidget {
   final List<InventoryItem> vaccines;
-  final InventoryItem? selectedVaccine;
-  final ValueChanged<InventoryItem?> onVaccineSelected;
-  final double? vaccineAmount;
-  final ValueChanged<String> onVaccineAmountChanged;
+  final List<Map<String, dynamic>> selectedVaccines;
+  final void Function(List<Map<String, dynamic>>) onSelectedVaccinesChanged;
   final VoidCallback onContinue;
 
   const VaccinesPage({
     super.key,
     required this.vaccines,
-    required this.selectedVaccine,
-    required this.onVaccineSelected,
-    required this.vaccineAmount,
-    required this.onVaccineAmountChanged,
+    required this.selectedVaccines,
+    required this.onSelectedVaccinesChanged,
     required this.onContinue,
   });
 
@@ -24,82 +20,146 @@ class VaccinesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Have you used any vaccines today?'),
-          Row(
+      child: SingleChildScrollView(
+        child: _VaccinesSelector(
+          vaccines: vaccines,
+          selectedVaccines: selectedVaccines,
+          onSelectedVaccinesChanged: onSelectedVaccinesChanged,
+          onContinue: onContinue,
+        ),
+      ),
+    );
+  }
+}
+
+class _VaccinesSelector extends StatefulWidget {
+  final List<InventoryItem> vaccines;
+  final List<Map<String, dynamic>> selectedVaccines;
+  final void Function(List<Map<String, dynamic>>) onSelectedVaccinesChanged;
+  final VoidCallback onContinue;
+
+  const _VaccinesSelector({
+    required this.vaccines,
+    required this.selectedVaccines,
+    required this.onSelectedVaccinesChanged,
+    required this.onContinue,
+  });
+
+  @override
+  State<_VaccinesSelector> createState() => _VaccinesSelectorState();
+}
+
+class _VaccinesSelectorState extends State<_VaccinesSelector> {
+  late List<Map<String, dynamic>> _selectedVaccines;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedVaccines = List<Map<String, dynamic>>.from(
+      widget.selectedVaccines,
+    );
+  }
+
+  void _toggleVaccine(InventoryItem vaccine, bool selected) {
+    setState(() {
+      if (selected) {
+        if (!_selectedVaccines.any((v) => v['name'] == vaccine.name)) {
+          _selectedVaccines.add({'name': vaccine.name, 'quantity': null});
+        }
+      } else {
+        _selectedVaccines.removeWhere((v) => v['name'] == vaccine.name);
+      }
+      widget.onSelectedVaccinesChanged(_selectedVaccines);
+    });
+  }
+
+  void _updateQuantity(String vaccineName, String value) {
+    setState(() {
+      final idx = _selectedVaccines.indexWhere((v) => v['name'] == vaccineName);
+      if (idx != -1) {
+        final quantity = double.tryParse(value);
+        if (quantity != null && quantity >= 0) {
+          // Find the vaccine to check available stock
+          final vaccine = widget.vaccines.firstWhere(
+            (v) => v.name == vaccineName,
+          );
+          if (quantity <= vaccine.quantity) {
+            _selectedVaccines[idx]['quantity'] = quantity;
+          } else {
+            // Show error for exceeding stock
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Cannot use more than ${vaccine.quantity} litres of ${vaccine.name}',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        } else {
+          _selectedVaccines[idx]['quantity'] = null;
+        }
+        widget.onSelectedVaccinesChanged(_selectedVaccines);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select the vaccines you used today.',
+          style: TextStyle(fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        ...widget.vaccines.map((vaccine) {
+          final isSelected = _selectedVaccines.any(
+            (v) => v['name'] == vaccine.name,
+          );
+          return CheckboxListTile(
+            value: isSelected,
+            title: Text('${vaccine.name} (Stock: ${vaccine.quantity})'),
+            onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+          );
+        }).toList(),
+        const SizedBox(height: 16),
+        ..._selectedVaccines.map((v) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Radio<String>(
-                value: 'yes',
-                groupValue:
-                    (selectedVaccine != null &&
-                        vaccineAmount != null &&
-                        vaccineAmount! > 0)
-                    ? 'yes'
-                    : 'no',
-                onChanged: (v) {
-                  // When 'yes' is selected, do nothing (let user pick vaccine)
-                },
+              Text(v['name'], style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 6),
+              TextField(
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Qty (Litres)',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: false,
+                ),
+                onChanged: (val) => _updateQuantity(v['name'], val),
+                controller: TextEditingController(
+                  text: v['quantity']?.toString() ?? '',
+                ),
               ),
-              const Text('Yes'),
-              Radio<String>(
-                value: 'no',
-                groupValue:
-                    (selectedVaccine != null &&
-                        vaccineAmount != null &&
-                        vaccineAmount! > 0)
-                    ? 'yes'
-                    : 'no',
-                onChanged: (v) {
-                  // When 'no' is selected, clear vaccine selection and amount
-                  onVaccineSelected(null);
-                  onVaccineAmountChanged('');
-                },
-              ),
-              const Text('No'),
+              const SizedBox(height: 16),
             ],
-          ),
-          if ((selectedVaccine != null &&
-              vaccineAmount != null &&
-              vaccineAmount! > 0)) ...[
-            DropdownButton<InventoryItem>(
-              value: selectedVaccine,
-              hint: const Text('Select vaccine'),
-              items: vaccines
-                  .map(
-                    (vaccine) => DropdownMenuItem(
-                      value: vaccine,
-                      child: Text(
-                        '${vaccine.name} (Stock: ${vaccine.quantity})',
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: onVaccineSelected,
-            ),
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Amount used today (Litres)',
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: onVaccineAmountChanged,
-            ),
-            if (vaccineAmount != null &&
-                vaccineAmount! > (selectedVaccine?.quantity ?? 0))
-              const Text(
-                'Cannot use more vaccine than available in store.',
-                style: TextStyle(color: Colors.red),
-              ),
-          ],
-          const Spacer(),
-          ElevatedButton(
-            onPressed:
-                (selectedVaccine != null &&
-                    vaccineAmount != null &&
-                    vaccineAmount! > 0)
-                ? onContinue
-                : null,
+          );
+        }).toList(),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: widget.onContinue,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -118,12 +178,15 @@ class VaccinesPage extends StatelessWidget {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Continue'),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(color: CustomColors.text),
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

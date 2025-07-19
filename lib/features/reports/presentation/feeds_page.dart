@@ -4,19 +4,15 @@ import '../../../app_theme.dart';
 
 class FeedsPage extends StatelessWidget {
   final List<InventoryItem> feeds;
-  final InventoryItem? selectedFeed;
-  final ValueChanged<InventoryItem?> onFeedSelected;
-  final double? feedAmount;
-  final ValueChanged<String> onFeedAmountChanged;
+  final List<Map<String, dynamic>> selectedFeeds;
+  final void Function(List<Map<String, dynamic>>) onSelectedFeedsChanged;
   final VoidCallback onContinue;
 
   const FeedsPage({
     super.key,
     required this.feeds,
-    required this.selectedFeed,
-    required this.onFeedSelected,
-    required this.feedAmount,
-    required this.onFeedAmountChanged,
+    required this.selectedFeeds,
+    required this.onSelectedFeedsChanged,
     required this.onContinue,
   });
 
@@ -24,41 +20,140 @@ class FeedsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Select the feed type you used today.'),
-          DropdownButton<InventoryItem>(
-            value: selectedFeed,
-            hint: const Text('Select feed'),
-            items: feeds
-                .map(
-                  (feed) => DropdownMenuItem(
-                    value: feed,
-                    child: Text('${feed.name} (Stock: ${feed.quantity})'),
+      child: SingleChildScrollView(
+        child: _FeedsSelector(
+          feeds: feeds,
+          selectedFeeds: selectedFeeds,
+          onSelectedFeedsChanged: onSelectedFeedsChanged,
+          onContinue: onContinue,
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedsSelector extends StatefulWidget {
+  final List<InventoryItem> feeds;
+  final List<Map<String, dynamic>> selectedFeeds;
+  final void Function(List<Map<String, dynamic>>) onSelectedFeedsChanged;
+  final VoidCallback onContinue;
+
+  const _FeedsSelector({
+    required this.feeds,
+    required this.selectedFeeds,
+    required this.onSelectedFeedsChanged,
+    required this.onContinue,
+  });
+
+  @override
+  State<_FeedsSelector> createState() => _FeedsSelectorState();
+}
+
+class _FeedsSelectorState extends State<_FeedsSelector> {
+  late List<Map<String, dynamic>> _selectedFeeds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedFeeds = List<Map<String, dynamic>>.from(widget.selectedFeeds);
+  }
+
+  void _toggleFeed(InventoryItem feed, bool selected) {
+    setState(() {
+      if (selected) {
+        if (!_selectedFeeds.any((f) => f['name'] == feed.name)) {
+          _selectedFeeds.add({'name': feed.name, 'quantity': null});
+        }
+      } else {
+        _selectedFeeds.removeWhere((f) => f['name'] == feed.name);
+      }
+      widget.onSelectedFeedsChanged(_selectedFeeds);
+    });
+  }
+
+  void _updateQuantity(String feedName, String value) {
+    setState(() {
+      final idx = _selectedFeeds.indexWhere((f) => f['name'] == feedName);
+      if (idx != -1) {
+        final quantity = double.tryParse(value);
+        if (quantity != null && quantity >= 0) {
+          // Find the feed to check available stock
+          final feed = widget.feeds.firstWhere((f) => f.name == feedName);
+          if (quantity <= feed.quantity) {
+            _selectedFeeds[idx]['quantity'] = quantity;
+          } else {
+            // Show error for exceeding stock
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Cannot use more than ${feed.quantity} kg of ${feed.name}',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        } else {
+          _selectedFeeds[idx]['quantity'] = null;
+        }
+        widget.onSelectedFeedsChanged(_selectedFeeds);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select the feed types you used today.',
+          style: TextStyle(fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        ...widget.feeds.map((feed) {
+          final isSelected = _selectedFeeds.any((f) => f['name'] == feed.name);
+          return CheckboxListTile(
+            value: isSelected,
+            title: Text('${feed.name} (Stock: ${feed.quantity})'),
+            onChanged: (checked) => _toggleFeed(feed, checked ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+          );
+        }).toList(),
+        const SizedBox(height: 16),
+        ..._selectedFeeds.map((f) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(f['name'], style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 6),
+              TextField(
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Qty (Kg)',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                )
-                .toList(),
-            onChanged: onFeedSelected,
-          ),
-          if (selectedFeed != null) ...[
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Amount used today (Kg)',
+                  filled: false,
+                ),
+                onChanged: (v) => _updateQuantity(f['name'], v),
+                controller: TextEditingController(
+                  text: f['quantity']?.toString() ?? '',
+                ),
               ),
-              keyboardType: TextInputType.number,
-              onChanged: onFeedAmountChanged,
-            ),
-            if (feedAmount != null &&
-                feedAmount! > (selectedFeed?.quantity ?? 0))
-              const Text(
-                'Cannot use more feed than available in store.',
-                style: TextStyle(color: Colors.red),
-              ),
-          ],
-          const Spacer(),
-          ElevatedButton(
-            onPressed: onContinue,
+              const SizedBox(height: 16),
+            ],
+          );
+        }).toList(),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: widget.onContinue,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -77,12 +172,15 @@ class FeedsPage extends StatelessWidget {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Continue'),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(color: CustomColors.text),
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

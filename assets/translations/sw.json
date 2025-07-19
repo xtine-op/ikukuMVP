@@ -1,0 +1,20 @@
+{
+  "welcome": "Karibu kwenye ikuku",
+  "choose_language": "Chagua lugha yako",
+  "english": "Kiingereza",
+  "swahili": "Kiswahili",
+  "continue": "ENDELEA",
+  "language_change_hint": "Lugha inaweza kubadilishwa wakati wowote kwenye mipangilio",
+  "profile": "Wasifu",
+  "edit_profile": "Hariri Wasifu",
+  "language_preferences": "Mapendeleo ya lugha",
+  "add_recovery_phone": "Ongeza nambari ya kurejesha",
+  "logout": "Toka",
+  "delete_account": "Futa akaunti yangu",
+  "poultry_farmer": "Mimi ni Mkulima wa Kuku",
+  "living_in": "Ninaishi {location}",
+  "myfarm_is_in": "Shamba langu lipo {location}",
+  "my_number": "Nambari yangu ni {phone}",
+  "home": "Nyumbani",
+  "my_shop": "Duka Langu"
+} 

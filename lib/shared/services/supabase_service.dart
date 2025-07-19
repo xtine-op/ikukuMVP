@@ -7,6 +7,44 @@ class SupabaseService {
 
   final supabase = Supabase.instance.client;
 
+  // Test Supabase connection
+  Future<bool> testConnection() async {
+    try {
+      print('Testing Supabase connection...');
+
+      // Try to fetch a simple query to test connection
+      // Use a table that should exist, or try a simple RPC call
+      try {
+        final response = await supabase.from('users').select('count').limit(1);
+        print('Connection test successful: $response');
+        return true;
+      } catch (tableError) {
+        // If users table doesn't exist, try a different approach
+        print('Users table not accessible, trying alternative test...');
+        // Try to get the current user (this should work even if no user is logged in)
+        final user = supabase.auth.currentUser;
+        print(
+          'Current user check successful: ${user?.id ?? 'No user logged in'}',
+        );
+        return true;
+      }
+    } catch (e) {
+      print('Supabase connection test failed: $e');
+      print('Error type: ${e.runtimeType}');
+      return false;
+    }
+  }
+
+  // Get current user
+  User? getCurrentUser() {
+    return supabase.auth.currentUser;
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    await supabase.auth.signOut();
+  }
+
   // Example: Fetch all batches for a user
   Future<List<Map<String, dynamic>>> fetchBatches(String userId) async {
     final response = await supabase
@@ -89,8 +127,125 @@ class SupabaseService {
 
   // Add a new batch record
   Future<void> addBatchRecord(Map<String, dynamic> record) async {
-    await supabase.from('batch_records').insert(record);
+    // Ensure feeds_used and vaccines_used are JSON
+    final rec = Map<String, dynamic>.from(record);
+    if (rec['feeds_used'] != null && rec['feeds_used'] is! String) {
+      rec['feeds_used'] = rec['feeds_used'] is String
+          ? rec['feeds_used']
+          : rec['feeds_used'];
+    }
+    if (rec['vaccines_used'] != null && rec['vaccines_used'] is! String) {
+      rec['vaccines_used'] = rec['vaccines_used'] is String
+          ? rec['vaccines_used']
+          : rec['vaccines_used'];
+    }
+    await supabase.from('batch_records').insert(rec);
+  }
+
+  // Check if a daily record exists for a batch and date (normalized schema)
+  Future<bool> hasDailyRecordForBatch(String batchId, DateTime date) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return false;
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    // 1. Find today's daily_record for this user
+    final dailyRecord = await supabase
+        .from('daily_records')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('record_date', startOfDay.toIso8601String())
+        .lt('record_date', endOfDay.toIso8601String())
+        .maybeSingle();
+    if (dailyRecord == null || dailyRecord['id'] == null) return false;
+    // 2. Check if a batch_record exists for this batch and daily_record
+    final batchRecord = await supabase
+        .from('batch_records')
+        .select('id')
+        .eq('batch_id', batchId)
+        .eq('daily_record_id', dailyRecord['id'])
+        .maybeSingle();
+    return batchRecord != null && batchRecord['id'] != null;
+  }
+
+  // Fetch all batch records for a given daily record id
+  Future<List<Map<String, dynamic>>> fetchBatchRecordsForDailyRecord(
+    String dailyRecordId,
+  ) async {
+    final response = await supabase
+        .from('batch_records')
+        .select()
+        .eq('daily_record_id', dailyRecordId);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  // Fetch all batch records for a user for a specific date
+  Future<List<Map<String, dynamic>>> fetchDailyRecordsForDate(
+    String userId,
+    DateTime date,
+  ) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    // 1. Find all daily_records for this user for the date
+    final dailyRecords = await supabase
+        .from('daily_records')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('record_date', startOfDay.toIso8601String())
+        .lt('record_date', endOfDay.toIso8601String());
+    print(
+      '[SupabaseService] fetchDailyRecordsForDate: dailyRecords = '
+              ' [33m' +
+          dailyRecords.toString() +
+          '\u001b[0m',
+    );
+    if (dailyRecords == null || dailyRecords.isEmpty) return [];
+    final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
+    if (dailyRecordIds.isEmpty) return [];
+    // 2. Find all batch_records for these daily_record_ids
+    final batchRecords = await supabase
+        .from('batch_records')
+        .select('batch_id')
+        .inFilter('daily_record_id', dailyRecordIds);
+    print(
+      '[SupabaseService] fetchDailyRecordsForDate: batchRecords = '
+              '\u001b[36m' +
+          batchRecords.toString() +
+          '\u001b[0m',
+    );
+    // Ensure every record is a map with a batch_id key
+    if (batchRecords == null || batchRecords.isEmpty) return [];
+    final result = List<Map<String, dynamic>>.from(
+      batchRecords,
+    ).where((r) => r.containsKey('batch_id') && r['batch_id'] != null).toList();
+    return result;
   }
 
   // Add similar methods for records, etc.
+
+  // Fetch the total eggs collected by a user
+  Future<int> fetchTotalEggsCollected(String userId) async {
+    // 1. Get all daily_record ids for this user
+    final dailyRecords = await supabase
+        .from('daily_records')
+        .select('id')
+        .eq('user_id', userId);
+    if (dailyRecords == null || dailyRecords.isEmpty) return 0;
+    final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
+    if (dailyRecordIds.isEmpty) return 0;
+    // 2. Get all batch_records for these daily_record_ids
+    final batchRecords = await supabase
+        .from('batch_records')
+        .select('eggs_collected')
+        .inFilter('daily_record_id', dailyRecordIds);
+    if (batchRecords == null || batchRecords.isEmpty) return 0;
+    // 3. Sum eggs_collected
+    int totalEggs = 0;
+    for (final record in batchRecords) {
+      final eggs = record['eggs_collected'];
+      if (eggs != null && eggs is int) {
+        totalEggs += eggs;
+      }
+    }
+    return totalEggs;
+  }
 }

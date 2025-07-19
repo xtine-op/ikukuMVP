@@ -30,15 +30,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  easy_localization: ^3.0.3
   go_router: ^14.1.1
   supabase_flutter: ^2.5.2
   uuid: ^4.3.3
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
+  intl: ^0.20.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +78,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/icons/onboarding-image-1.png
+    - assets/icons/onboarding-image-2.png
+    - assets/icons/onboarding-image-3.png
+    - assets/translations/en.json
+    - assets/translations/sw.json
     - assets/icons/animal-chicken.svg
     - assets/icons/feeds.svg
     - assets/icons/eggs-f.svg
@@ -81,3 +91,9 @@ flutter:
     - assets/icons/add-batch.svg
     - assets/icons/Request-farm-summary.svg
     - assets/icons/extension-farmers.svg
+    - assets/icons/tip-chicken.png
+    - assets/icons/vaccines.svg
+    - assets/icons/others.svg
+    - assets/icons/logo.png
+    - assets/icons/app-logo.png
+    - assets/icons/MAIN LOGO.png

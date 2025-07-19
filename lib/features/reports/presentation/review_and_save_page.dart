@@ -21,6 +21,9 @@ class ReviewAndSavePage extends StatelessWidget {
   final Map<InventoryItem, double> otherMaterialsUsed;
   final String? notes;
   final VoidCallback onSave;
+  final List<Map<String, dynamic>> selectedFeeds;
+  final List<Map<String, dynamic>> selectedVaccines;
+  final List<Map<String, dynamic>> selectedOtherMaterials;
 
   const ReviewAndSavePage({
     super.key,
@@ -41,73 +44,211 @@ class ReviewAndSavePage extends StatelessWidget {
     required this.otherMaterialsUsed,
     required this.notes,
     required this.onSave,
+    required this.selectedFeeds,
+    required this.selectedVaccines,
+    required this.selectedOtherMaterials,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    final date = DateTime.now();
+    final isBroiler =
+        (selectedBatch?.birdType?.toLowerCase() ?? '') == 'broiler';
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Review Today\'s Report',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          // Header
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: CustomColors.primary),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              const Spacer(),
+              const Text(
+                'Confirm',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const Spacer(flex: 2),
+            ],
           ),
-          const SizedBox(height: 8),
-          if (selectedBatch != null)
-            Text(
-              'Batch: ${selectedBatch!.name} (${selectedBatch!.birdType}), Age: ${selectedBatch!.ageInDays}',
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF8E2),
+              borderRadius: BorderRadius.circular(12),
             ),
-          if (chickenReduction != null)
-            Text('Chicken Reduction: $chickenReduction'),
-          if (reductionReason != null)
-            Text('Reduction Reason: $reductionReason'),
-          if (reductionCount != null) Text('Reduction Count: $reductionCount'),
-          if (collectedEggs != null)
-            Text(
-              'Eggs Collected: ${collectedEggs == true ? (eggsCollected ?? 0) : 'No'}',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Kuku's Farm report",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: CustomColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${date.day} ${_monthName(date.month)} ${date.year}',
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.layers, size: 16, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${selectedBatch?.name ?? ''} - ${selectedBatch?.birdType ?? ''}',
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          if (gradeEggs == true)
-            Text(
-              'Egg Grading: Big: ${bigEggs ?? 0}, Deformed: ${deformedEggs ?? 0}, Broken: ${brokenEggs ?? 0}',
+          ),
+          // Birds Section
+          _SectionCard(
+            title: 'BIRDS- ${selectedBatch?.birdType?.toUpperCase() ?? ''}',
+            onEdit: () {},
+            items: [
+              _SectionItem(
+                label: 'Sold',
+                value: '0',
+              ), // No sold field in form, set to 0 or add if needed
+              _SectionItem(
+                label: 'Died',
+                value: (reductionReason == 'death' ? (reductionCount ?? 0) : 0)
+                    .toString(),
+              ),
+              _SectionItem(
+                label: 'Curled',
+                value: (reductionReason == 'curled' ? (reductionCount ?? 0) : 0)
+                    .toString(),
+              ),
+              _SectionItem(
+                label: 'Stolen',
+                value: (reductionReason == 'stolen' ? (reductionCount ?? 0) : 0)
+                    .toString(),
+              ),
+            ],
+          ),
+          // Eggs Section (exclude if broiler)
+          if (!isBroiler)
+            _SectionCard(
+              title: 'EGGS',
+              onEdit: () {},
+              items: [
+                _SectionItem(
+                  label: 'Collected',
+                  value: (eggsCollected ?? 0).toString(),
+                ),
+                _SectionItem(
+                  label: 'Broken',
+                  value: (brokenEggs ?? 0).toString(),
+                ),
+                _SectionItem(label: 'Big', value: (bigEggs ?? 0).toString()),
+                _SectionItem(
+                  label: 'Deformed',
+                  value: (deformedEggs ?? 0).toString(),
+                ),
+              ],
             ),
-          if (selectedFeed != null)
-            Text(
-              'Feed Used: ${selectedFeed!.name} (${feedAmount != null ? feedAmount!.toStringAsFixed(2) : '0'} Kg)',
+          // Feeds Section (show all selected feeds)
+          _SectionCard(
+            title: 'FEEDS USED',
+            onEdit: () {},
+            items: [
+              ...selectedFeeds.map(
+                (f) => _SectionItem(
+                  label: f['name'] ?? '',
+                  value: f['quantity'] != null ? '${f['quantity']} Kg' : '',
+                ),
+              ),
+            ],
+          ),
+          // Vaccines Section (show all selected vaccines)
+          _SectionCard(
+            title: 'VACCINES',
+            onEdit: () {},
+            items: [
+              ...selectedVaccines.map(
+                (v) => _SectionItem(
+                  label: v['name'] ?? '',
+                  value: v['quantity'] != null ? '${v['quantity']} Lit' : '',
+                ),
+              ),
+            ],
+          ),
+          // Other Materials Section (show all selected other materials)
+          _SectionCard(
+            title: 'OTHER MATERIALS',
+            onEdit: () {},
+            items: [
+              ...selectedOtherMaterials.map(
+                (m) => _SectionItem(
+                  label: m['name'] ?? '',
+                  value: m['quantity'] != null ? '${m['quantity']}kg' : '',
+                ),
+              ),
+            ],
+          ),
+          // Additional Notes Section
+          if (notes != null && notes!.trim().isNotEmpty)
+            _SectionCard(
+              title: 'ADDITIONAL NOTES',
+              onEdit: () {},
+              items: [_SectionItem(label: '', value: notes!)],
             ),
-          if (selectedVaccine != null)
-            Text(
-              'Vaccine Used: ${selectedVaccine!.name} (${vaccineAmount != null ? vaccineAmount!.toStringAsFixed(2) : '0'} L)',
-            ),
-          if (otherMaterialsUsed.isNotEmpty)
-            ...otherMaterialsUsed.entries.map(
-              (e) =>
-                  Text('Other: ${e.key.name} (${e.value.toStringAsFixed(2)})'),
-            ),
-          if (notes != null && notes!.isNotEmpty) Text('Notes: $notes'),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: onSave,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          Center(
+            child: Text(
+              'This report was prepared by\nType here on ${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+              style: const TextStyle(color: Colors.black54, fontSize: 13),
+              textAlign: TextAlign.center,
             ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Save Report'),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'FINISH REPORTING',
+                    style: TextStyle(
+                      color: CustomColors.text,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -115,4 +256,107 @@ class ReviewAndSavePage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _monthName(int month) {
+  const months = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return months[month];
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final VoidCallback onEdit;
+  final List<_SectionItem> items;
+  const _SectionCard({
+    required this.title,
+    required this.onEdit,
+    required this.items,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+              GestureDetector(
+                onTap: onEdit,
+                child: Text(
+                  'EDIT ITEMS',
+                  style: TextStyle(
+                    color: CustomColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(item.label, style: const TextStyle(fontSize: 15)),
+                  Text(
+                    item.value,
+                    style: const TextStyle(
+                      color: CustomColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                    softWrap: true,
+                    maxLines: null,
+                    overflow: TextOverflow.visible,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionItem {
+  final String label;
+  final String value;
+  const _SectionItem({required this.label, required this.value});
 }

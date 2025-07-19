@@ -72,12 +72,18 @@ final ThemeData appTheme = ThemeData(
       ),
     ),
   ),
-  inputDecorationTheme: const InputDecorationTheme(
-    filled: true,
-    fillColor: CustomColors.lightYellow,
+  inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(12)),
-      borderSide: BorderSide.none,
+      borderSide: BorderSide(color: CustomColors.primary),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+      borderSide: BorderSide(color: CustomColors.primary.withOpacity(0.3)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+      borderSide: BorderSide(color: CustomColors.primary, width: 2),
     ),
     hintStyle: TextStyle(color: CustomColors.textDisabled),
     labelStyle: TextStyle(color: CustomColors.text),

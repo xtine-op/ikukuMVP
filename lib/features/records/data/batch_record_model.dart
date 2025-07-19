@@ -1,5 +1,51 @@
 import 'package:uuid/uuid.dart';
 
+class FeedUsage {
+  final String name;
+  final double quantity;
+  FeedUsage({required this.name, required this.quantity});
+
+  factory FeedUsage.fromJson(Map<String, dynamic> json) => FeedUsage(
+    name: json['name'] as String,
+    quantity: (json['quantity'] as num).toDouble(),
+  );
+
+  Map<String, dynamic> toJson() => {'name': name, 'quantity': quantity};
+}
+
+class VaccineUsage {
+  final String name;
+  final double quantity;
+  VaccineUsage({required this.name, required this.quantity});
+
+  factory VaccineUsage.fromJson(Map<String, dynamic> json) => VaccineUsage(
+    name: json['name'] as String,
+    quantity: (json['quantity'] as num).toDouble(),
+  );
+
+  Map<String, dynamic> toJson() => {'name': name, 'quantity': quantity};
+}
+
+class OtherMaterialUsage {
+  final String name;
+  final double quantity;
+  final String? unit;
+  OtherMaterialUsage({required this.name, required this.quantity, this.unit});
+
+  factory OtherMaterialUsage.fromJson(Map<String, dynamic> json) =>
+      OtherMaterialUsage(
+        name: json['name'] as String,
+        quantity: (json['quantity'] as num).toDouble(),
+        unit: json['unit'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'quantity': quantity,
+    if (unit != null) 'unit': unit,
+  };
+}
+
 class BatchRecord {
   final String id;
   final String dailyRecordId;
@@ -17,6 +63,13 @@ class BatchRecord {
   final double? feedUsedKg;
   final String? vaccinesGiven;
   final String? notes;
+  final List<FeedUsage> feedsUsed;
+  final List<VaccineUsage> vaccinesUsed;
+  final List<OtherMaterialUsage> otherMaterialsUsed;
+  final int? eggsBroken;
+  final int? sawdustInStore;
+  final int? sawdustUsed;
+  final int? sawdustRemaining;
 
   BatchRecord({
     required this.id,
@@ -35,6 +88,13 @@ class BatchRecord {
     this.feedUsedKg,
     this.vaccinesGiven,
     this.notes,
+    required this.feedsUsed,
+    required this.vaccinesUsed,
+    required this.otherMaterialsUsed,
+    this.eggsBroken,
+    this.sawdustInStore,
+    this.sawdustUsed,
+    this.sawdustRemaining,
   });
 
   factory BatchRecord.fromJson(Map<String, dynamic> json) => BatchRecord(
@@ -54,6 +114,19 @@ class BatchRecord {
     feedUsedKg: (json['feed_used_kg'] as num?)?.toDouble(),
     vaccinesGiven: json['vaccines_given'] as String?,
     notes: json['notes'] as String?,
+    feedsUsed: (json['feeds_used'] as List<dynamic>? ?? [])
+        .map((e) => FeedUsage.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    vaccinesUsed: (json['vaccines_used'] as List<dynamic>? ?? [])
+        .map((e) => VaccineUsage.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    otherMaterialsUsed: (json['other_materials_used'] as List<dynamic>? ?? [])
+        .map((e) => OtherMaterialUsage.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    eggsBroken: json['eggs_broken'] as int?,
+    sawdustInStore: json['sawdust_in_store'] as int?,
+    sawdustUsed: json['sawdust_used'] as int?,
+    sawdustRemaining: json['sawdust_remaining'] as int?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -73,6 +146,13 @@ class BatchRecord {
     'feed_used_kg': feedUsedKg,
     'vaccines_given': vaccinesGiven,
     'notes': notes,
+    'feeds_used': feedsUsed.map((e) => e.toJson()).toList(),
+    'vaccines_used': vaccinesUsed.map((e) => e.toJson()).toList(),
+    'other_materials_used': otherMaterialsUsed.map((e) => e.toJson()).toList(),
+    'eggs_broken': eggsBroken,
+    'sawdust_in_store': sawdustInStore,
+    'sawdust_used': sawdustUsed,
+    'sawdust_remaining': sawdustRemaining,
   };
 
   static BatchRecord empty(String dailyRecordId, String batchId) => BatchRecord(
@@ -92,5 +172,12 @@ class BatchRecord {
     feedUsedKg: null,
     vaccinesGiven: null,
     notes: null,
+    feedsUsed: [],
+    vaccinesUsed: [],
+    otherMaterialsUsed: [],
+    eggsBroken: null,
+    sawdustInStore: null,
+    sawdustUsed: null,
+    sawdustRemaining: null,
   );
 }

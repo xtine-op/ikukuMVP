@@ -1,0 +1,20 @@
+{
+  "welcome": "Welcome to ikuku",
+  "choose_language": "Choose your language",
+  "english": "English",
+  "swahili": "Kiswahili",
+  "continue": "CONTINUE",
+  "language_change_hint": "Language preferences can be changed anytime in settings",
+  "profile": "Profile",
+  "edit_profile": "Edit Profile",
+  "language_preferences": "Language preferences",
+  "add_recovery_phone": "Add recovery phone no.",
+  "logout": "Logout",
+  "delete_account": "Delete my account",
+  "poultry_farmer": "I am a Poultry Farmer",
+  "living_in": "Living in {location}",
+  "myfarm_is_in": "My farm is in {location}",
+  "my_number": "My No. is {phone}",
+  "home": "Home",
+  "my_shop": "My Shop"
+} 

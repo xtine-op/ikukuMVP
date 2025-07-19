@@ -4,15 +4,16 @@ import '../../../app_theme.dart';
 
 class OtherMaterialsPage extends StatelessWidget {
   final List<InventoryItem> otherMaterials;
-  final Map<InventoryItem, double> otherMaterialsUsed;
-  final void Function(InventoryItem, String) onMaterialUsedChanged;
+  final List<Map<String, dynamic>> selectedOtherMaterials;
+  final void Function(List<Map<String, dynamic>>)
+  onSelectedOtherMaterialsChanged;
   final VoidCallback onContinue;
 
   const OtherMaterialsPage({
     super.key,
     required this.otherMaterials,
-    required this.otherMaterialsUsed,
-    required this.onMaterialUsedChanged,
+    required this.selectedOtherMaterials,
+    required this.onSelectedOtherMaterialsChanged,
     required this.onContinue,
   });
 
@@ -20,35 +21,153 @@ class OtherMaterialsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Other materials used today:'),
-          ...otherMaterials.map(
-            (item) => Row(
-              children: [
-                Expanded(child: Text('${item.name} (Stock: ${item.quantity})')),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    decoration: const InputDecoration(labelText: 'Used'),
-                    keyboardType: TextInputType.number,
-                    onChanged: (v) => onMaterialUsedChanged(item, v),
-                  ),
+      child: SingleChildScrollView(
+        child: _OtherMaterialsSelector(
+          otherMaterials: otherMaterials,
+          selectedOtherMaterials: selectedOtherMaterials,
+          onSelectedOtherMaterialsChanged: onSelectedOtherMaterialsChanged,
+          onContinue: onContinue,
+        ),
+      ),
+    );
+  }
+}
+
+class _OtherMaterialsSelector extends StatefulWidget {
+  final List<InventoryItem> otherMaterials;
+  final List<Map<String, dynamic>> selectedOtherMaterials;
+  final void Function(List<Map<String, dynamic>>)
+  onSelectedOtherMaterialsChanged;
+  final VoidCallback onContinue;
+
+  const _OtherMaterialsSelector({
+    required this.otherMaterials,
+    required this.selectedOtherMaterials,
+    required this.onSelectedOtherMaterialsChanged,
+    required this.onContinue,
+  });
+
+  @override
+  State<_OtherMaterialsSelector> createState() =>
+      _OtherMaterialsSelectorState();
+}
+
+class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
+  late List<Map<String, dynamic>> _selectedOtherMaterials;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedOtherMaterials = List<Map<String, dynamic>>.from(
+      widget.selectedOtherMaterials,
+    );
+  }
+
+  void _toggleMaterial(InventoryItem material, bool selected) {
+    setState(() {
+      if (selected) {
+        if (!_selectedOtherMaterials.any((m) => m['name'] == material.name)) {
+          _selectedOtherMaterials.add({
+            'name': material.name,
+            'quantity': null,
+          });
+        }
+      } else {
+        _selectedOtherMaterials.removeWhere((m) => m['name'] == material.name);
+      }
+      widget.onSelectedOtherMaterialsChanged(_selectedOtherMaterials);
+    });
+  }
+
+  void _updateQuantity(String materialName, String value) {
+    setState(() {
+      final idx = _selectedOtherMaterials.indexWhere(
+        (m) => m['name'] == materialName,
+      );
+      if (idx != -1) {
+        final quantity = double.tryParse(value);
+        if (quantity != null && quantity >= 0) {
+          // Find the material to check available stock
+          final material = widget.otherMaterials.firstWhere(
+            (m) => m.name == materialName,
+          );
+          if (quantity <= material.quantity) {
+            _selectedOtherMaterials[idx]['quantity'] = quantity;
+          } else {
+            // Show error for exceeding stock
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Cannot use more than ${material.quantity} ${material.unit} of ${material.name}',
                 ),
-              ],
-            ),
-          ),
-          if (otherMaterials.any(
-            (item) => (otherMaterialsUsed[item] ?? 0) > item.quantity,
-          ))
-            const Text(
-              'Cannot use more than available in store.',
-              style: TextStyle(color: Colors.red),
-            ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: onContinue,
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        } else {
+          _selectedOtherMaterials[idx]['quantity'] = null;
+        }
+        widget.onSelectedOtherMaterialsChanged(_selectedOtherMaterials);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select the other materials you used today.',
+          style: TextStyle(fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        ...widget.otherMaterials.map((material) {
+          final isSelected = _selectedOtherMaterials.any(
+            (m) => m['name'] == material.name,
+          );
+          return CheckboxListTile(
+            value: isSelected,
+            title: Text('${material.name} (Stock: ${material.quantity})'),
+            onChanged: (checked) => _toggleMaterial(material, checked ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+          );
+        }).toList(),
+        const SizedBox(height: 16),
+        ..._selectedOtherMaterials.map((m) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(m['name'], style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 6),
+              TextField(
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Qty',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: false,
+                ),
+                onChanged: (val) => _updateQuantity(m['name'], val),
+                controller: TextEditingController(
+                  text: m['quantity']?.toString() ?? '',
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        }).toList(),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: widget.onContinue,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -67,12 +186,15 @@ class OtherMaterialsPage extends StatelessWidget {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Continue'),
+                child: const Text(
+                  'CONTINUE',
+                  style: TextStyle(color: CustomColors.text),
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -49,102 +49,126 @@ class EggProductionPage extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Have you collected eggs today?'),
-          Row(
-            children: [
-              Radio<bool>(
-                value: true,
-                groupValue: collectedEggs,
-                onChanged: onCollectedEggsChanged,
-              ),
-              const Text('Yes'),
-              Radio<bool>(
-                value: false,
-                groupValue: collectedEggs,
-                onChanged: onCollectedEggsChanged,
-              ),
-              const Text('No'),
-            ],
-          ),
-          if (collectedEggs == true) ...[
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'How many eggs have you collected?',
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: onEggsCollectedChanged,
-            ),
-            const SizedBox(height: 8),
-            const Text('Would you like to grade your eggs?'),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Have you collected eggs today?'),
             Row(
               children: [
                 Radio<bool>(
                   value: true,
-                  groupValue: gradeEggs,
-                  onChanged: onGradeEggsChanged,
+                  groupValue: collectedEggs,
+                  onChanged: onCollectedEggsChanged,
                 ),
                 const Text('Yes'),
                 Radio<bool>(
                   value: false,
-                  groupValue: gradeEggs,
-                  onChanged: onGradeEggsChanged,
+                  groupValue: collectedEggs,
+                  onChanged: onCollectedEggsChanged,
                 ),
                 const Text('No'),
               ],
             ),
-            if (gradeEggs == true) ...[
+            if (collectedEggs == true) ...[
               TextField(
                 decoration: const InputDecoration(
-                  labelText: 'Number of big eggs',
+                  labelText: 'How many eggs have you collected?',
+                  border: OutlineInputBorder(),
+                  filled: false,
                 ),
-                keyboardType: TextInputType.number,
-                onChanged: onBigEggsChanged,
-              ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Number of deformed eggs',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: false,
                 ),
-                keyboardType: TextInputType.number,
-                onChanged: onDeformedEggsChanged,
+                onChanged: onEggsCollectedChanged,
               ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Number of broken eggs',
+              const SizedBox(height: 8),
+              const Text('Would you like to grade your eggs?'),
+              Row(
+                children: [
+                  Radio<bool>(
+                    value: true,
+                    groupValue: gradeEggs,
+                    onChanged: onGradeEggsChanged,
+                  ),
+                  const Text('Yes'),
+                  Radio<bool>(
+                    value: false,
+                    groupValue: gradeEggs,
+                    onChanged: onGradeEggsChanged,
+                  ),
+                  const Text('No'),
+                ],
+              ),
+              if (gradeEggs == true) ...[
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Number of big eggs',
+                    border: OutlineInputBorder(),
+                    filled: false,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: false,
+                  ),
+                  onChanged: onBigEggsChanged,
                 ),
-                keyboardType: TextInputType.number,
-                onChanged: onBrokenEggsChanged,
-              ),
+                const SizedBox(height: 8),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Number of deformed eggs',
+                    border: OutlineInputBorder(),
+                    filled: false,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: false,
+                  ),
+                  onChanged: onDeformedEggsChanged,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Number of broken eggs',
+                    border: OutlineInputBorder(),
+                    filled: false,
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: false,
+                  ),
+                  onChanged: onBrokenEggsChanged,
+                ),
+                const SizedBox(height: 8),
+              ],
             ],
+            const Spacer(),
+            ElevatedButton(
+              onPressed: onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: CustomColors.text,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: const Text(
+                    'CONTINUE',
+                    style: TextStyle(color: CustomColors.text),
+                  ),
+                ),
+              ),
+            ),
           ],
-          const Spacer(),
-          ElevatedButton(
-            onPressed: onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Continue'),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

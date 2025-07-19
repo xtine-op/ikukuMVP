@@ -24,7 +24,10 @@ class FeatureButton extends StatelessWidget {
         ),
         child: ElevatedButton.icon(
           icon: Icon(icon, color: CustomColors.text),
-          label: Text(label, style: TextStyle(color: CustomColors.text)),
+          label: Text(
+            label.toUpperCase(),
+            style: TextStyle(color: CustomColors.text),
+          ),
           onPressed: onTap,
           style:
               ElevatedButton.styleFrom(

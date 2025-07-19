@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import 'farm_report_entry_page.dart';
 import 'report_detail_page.dart';
+import '../../../shared/widgets/bottom_nav_bar.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -14,16 +17,17 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  List<Map<String, dynamic>> reports = [];
+  List<Map<String, dynamic>> batches = [];
+  List<Map<String, dynamic>> batchRecords = [];
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchReports();
+    fetchData();
   }
 
-  Future<void> fetchReports() async {
+  Future<void> fetchData() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       setState(() {
@@ -31,31 +35,38 @@ class _ReportsPageState extends State<ReportsPage> {
       });
       return;
     }
-    // Fallback: fetch daily records if get_monthly_farm_summary is missing
-    try {
-      final data = await SupabaseService().fetchReports(user.id);
-      setState(() {
-        reports = data;
-        loading = false;
-      });
-    } catch (e) {
-      // If the RPC fails, fallback to daily records
-      final data = await SupabaseService().fetchDailyRecords(user.id);
-      setState(() {
-        reports = data;
-        loading = false;
-      });
+    final fetchedBatches = await SupabaseService().fetchBatches(user.id);
+    // Fetch all daily records for the user
+    final dailyRecords = await SupabaseService().fetchDailyRecords(user.id);
+    // Fetch all batch records for each daily record
+    List<Map<String, dynamic>> allBatchRecords = [];
+    for (final dr in dailyRecords) {
+      final brs = await SupabaseService().fetchBatchRecordsForDailyRecord(
+        dr['id'],
+      );
+      for (final br in brs) {
+        // Attach the record date to the batch record for sorting
+        br['record_date'] = dr['record_date'];
+        allBatchRecords.add(br);
+      }
     }
+    setState(() {
+      batches = fetchedBatches;
+      batchRecords = allBatchRecords;
+      loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop() ? const BackButton() : null,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => context.go('/'),
+        ),
         title: const Text('My Farm Reports'),
       ),
-
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -77,11 +88,7 @@ class _ReportsPageState extends State<ReportsPage> {
                           style: TextStyle(color: CustomColors.text),
                         ),
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const FarmReportEntryPage(),
-                            ),
-                          );
+                          context.go('/report-entry');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -99,12 +106,11 @@ class _ReportsPageState extends State<ReportsPage> {
                     ),
                   ),
                 ),
-                // TEXT "PREVIOUS REPORTS"
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    'Previous Reports',
+                    'Previous Records',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -112,30 +118,64 @@ class _ReportsPageState extends State<ReportsPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // List of previous reports
+                // List of previous records derived from batches with batch records
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: reports.length,
-                    itemBuilder: (context, i) {
-                      final report = reports[i];
-                      return ListTile(
-                        title: Text(report['batch_name'] ?? 'Batch'),
-                        subtitle: Text(
-                          '${report['date'] ?? ''} • ${report['batch_type'] ?? ''}',
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ReportDetailPage(report: report),
+                  child: ListView(
+                    children: batches
+                        .map((batch) {
+                          // Find all batch records for this batch
+                          final recordsForBatch = batchRecords
+                              .where((br) => br['batch_id'] == batch['id'])
+                              .toList();
+                          if (recordsForBatch.isEmpty) return SizedBox.shrink();
+                          // Sort by record_date descending
+                          recordsForBatch.sort((a, b) {
+                            final da = a['record_date'] ?? '';
+                            final db = b['record_date'] ?? '';
+                            return db.compareTo(da);
+                          });
+                          final latestRecord = recordsForBatch.first;
+                          // Format date
+                          String formattedDate = 'Unknown Date';
+                          final rawDate = latestRecord['record_date'];
+                          if (rawDate is String && rawDate.isNotEmpty) {
+                            try {
+                              final dt = DateTime.parse(rawDate);
+                              formattedDate = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(dt);
+                            } catch (_) {
+                              formattedDate = rawDate;
+                            }
+                          } else if (rawDate is DateTime) {
+                            formattedDate = DateFormat(
+                              'yyyy-MM-dd',
+                            ).format(rawDate);
+                          }
+                          return ListTile(
+                            title: Text(batch['name'] ?? 'Unknown Batch'),
+                            subtitle: Text(
+                              '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
                             ),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ReportDetailPage(
+                                    report: latestRecord,
+                                    batch: batch,
+                                  ),
+                                ),
+                              );
+                            },
                           );
-                        },
-                      );
-                    },
+                        })
+                        .where((w) => w is! SizedBox)
+                        .toList(),
                   ),
                 ),
               ],
             ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 }
