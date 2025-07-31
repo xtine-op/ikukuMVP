@@ -709,7 +709,7 @@ class _InventoryPageState extends State<InventoryPage> {
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 }

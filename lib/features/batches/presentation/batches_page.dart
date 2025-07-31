@@ -5,11 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../data/batch_model.dart';
-import '../../inventory/presentation/inventory_page.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 
 class BatchesPage extends StatefulWidget {
-  const BatchesPage({super.key});
+  final bool fromReportsPage;
+
+  const BatchesPage({super.key, this.fromReportsPage = false});
 
   @override
   State<BatchesPage> createState() => _BatchesPageState();
@@ -18,6 +19,8 @@ class BatchesPage extends StatefulWidget {
 class _BatchesPageState extends State<BatchesPage> {
   List<Batch> batches = [];
   bool loading = true;
+  bool _hasShownAddReportDialog =
+      false; // Track if dialog was shown in this session
 
   @override
   void initState() {
@@ -38,6 +41,80 @@ class _BatchesPageState extends State<BatchesPage> {
       batches = data.map((e) => Batch.fromJson(e)).toList();
       loading = false;
     });
+  }
+
+  void _showAddReportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: const Color(0xFFF7F8FA),
+        title: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Text(
+            'Add Report?',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        content: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Text(
+            'Do you want to add a report for this batch?',
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: CustomColors.primary,
+                    side: BorderSide(color: CustomColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('No'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.go('/report-entry');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    foregroundColor: CustomColors.text,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: CustomColors.buttonGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: const Text('Yes'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddBatchDialog() async {
@@ -187,6 +264,16 @@ class _BatchesPageState extends State<BatchesPage> {
                       if (mounted) {
                         Navigator.pop(context);
                         fetchBatches();
+
+                        // Show popup asking if user wants to add a report
+                        // Only if they came from the reports page and haven't shown dialog yet
+                        if (widget.fromReportsPage &&
+                            !_hasShownAddReportDialog) {
+                          setState(() {
+                            _hasShownAddReportDialog = true;
+                          });
+                          _showAddReportDialog();
+                        }
                       }
                     }
                   },
@@ -492,15 +579,37 @@ class _BatchesPageState extends State<BatchesPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          TextButton(
-                            onPressed: _showAddBatchDialog,
-                            child: const Text(
-                              'CREATE A BATCH',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                letterSpacing: 0.5,
+                          SizedBox(
+                            width: double.infinity,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: CustomColors.buttonGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ElevatedButton.icon(
+                                icon: Icon(Icons.add, color: CustomColors.text),
+                                label: Text(
+                                  'CREATE A BATCH',
+                                  style: TextStyle(
+                                    color: CustomColors.text,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                onPressed: _showAddBatchDialog,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  foregroundColor: CustomColors.text,
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -583,7 +692,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 );
               },
             ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       floatingActionButton: isEmpty
           ? null
           : Container(

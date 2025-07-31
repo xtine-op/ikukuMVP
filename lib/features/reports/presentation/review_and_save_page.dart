@@ -240,6 +240,7 @@ class ReviewAndSavePage extends StatelessWidget {
                 ),
                 child: Container(
                   alignment: Alignment.center,
+                  height: 24,
                   child: const Text(
                     'FINISH REPORTING',
                     style: TextStyle(

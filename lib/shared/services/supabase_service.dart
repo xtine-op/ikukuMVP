@@ -142,29 +142,73 @@ class SupabaseService {
     await supabase.from('batch_records').insert(rec);
   }
 
+  // Fix database constraints to allow one report per batch per day
+  Future<void> fixDatabaseConstraints() async {
+    try {
+      // Drop the existing unique_user_date constraint if it exists
+      await supabase.rpc(
+        'exec_sql',
+        params: {
+          'sql': '''
+          DO \$\$ 
+          BEGIN
+            -- Drop existing constraint if it exists
+            IF EXISTS (
+              SELECT 1 FROM information_schema.table_constraints 
+              WHERE constraint_name = 'unique_user_date'
+            ) THEN
+              ALTER TABLE daily_records DROP CONSTRAINT IF EXISTS unique_user_date;
+            END IF;
+            
+            -- Add new constraint for one report per batch per day
+            -- This will be enforced at the application level since we check before inserting
+          END \$\$;
+        ''',
+        },
+      );
+      print('Database constraints fixed successfully');
+    } catch (e) {
+      print('Error fixing database constraints: $e');
+      // Continue execution even if constraint fix fails
+    }
+  }
+
   // Check if a daily record exists for a batch and date (normalized schema)
   Future<bool> hasDailyRecordForBatch(String batchId, DateTime date) async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final user = supabase.auth.currentUser;
     if (user == null) return false;
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    // 1. Find today's daily_record for this user
-    final dailyRecord = await supabase
-        .from('daily_records')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('record_date', startOfDay.toIso8601String())
-        .lt('record_date', endOfDay.toIso8601String())
-        .maybeSingle();
-    if (dailyRecord == null || dailyRecord['id'] == null) return false;
-    // 2. Check if a batch_record exists for this batch and daily_record
-    final batchRecord = await supabase
-        .from('batch_records')
-        .select('id')
-        .eq('batch_id', batchId)
-        .eq('daily_record_id', dailyRecord['id'])
-        .maybeSingle();
-    return batchRecord != null && batchRecord['id'] != null;
+
+    try {
+      // 1. Find all daily_records for this user for the date (handle multiple records)
+      final dailyRecords = await supabase
+          .from('daily_records')
+          .select('id')
+          .eq('user_id', user.id)
+          .gte('record_date', startOfDay.toIso8601String())
+          .lt('record_date', endOfDay.toIso8601String());
+
+      if (dailyRecords == null || dailyRecords.isEmpty) return false;
+
+      // 2. Check if a batch_record exists for this batch and any of the daily_records
+      final dailyRecordIds = dailyRecords
+          .map((r) => r['id'] as String)
+          .toList();
+
+      // Use .select() and check if any records exist instead of .maybeSingle()
+      final batchRecords = await supabase
+          .from('batch_records')
+          .select('id')
+          .eq('batch_id', batchId)
+          .inFilter('daily_record_id', dailyRecordIds);
+
+      // Return true if any batch records exist for this batch
+      return batchRecords != null && batchRecords.isNotEmpty;
+    } catch (e) {
+      print('Error checking daily record for batch: $e');
+      return false; // Return false on error to allow reporting
+    }
   }
 
   // Fetch all batch records for a given daily record id

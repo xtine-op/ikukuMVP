@@ -51,6 +51,7 @@ class _VaccinesSelector extends StatefulWidget {
 
 class _VaccinesSelectorState extends State<_VaccinesSelector> {
   late List<Map<String, dynamic>> _selectedVaccines;
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
@@ -58,6 +59,24 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
     _selectedVaccines = List<Map<String, dynamic>>.from(
       widget.selectedVaccines,
     );
+    _initializeControllers();
+  }
+
+  @override
+  void dispose() {
+    _controllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
+  }
+
+  void _initializeControllers() {
+    for (final vaccine in _selectedVaccines) {
+      final name = vaccine['name'] as String;
+      if (!_controllers.containsKey(name)) {
+        _controllers[name] = TextEditingController(
+          text: vaccine['quantity']?.toString() ?? '',
+        );
+      }
+    }
   }
 
   void _toggleVaccine(InventoryItem vaccine, bool selected) {
@@ -65,9 +84,12 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
       if (selected) {
         if (!_selectedVaccines.any((v) => v['name'] == vaccine.name)) {
           _selectedVaccines.add({'name': vaccine.name, 'quantity': null});
+          _controllers[vaccine.name] = TextEditingController();
         }
       } else {
         _selectedVaccines.removeWhere((v) => v['name'] == vaccine.name);
+        _controllers[vaccine.name]?.dispose();
+        _controllers.remove(vaccine.name);
       }
       widget.onSelectedVaccinesChanged(_selectedVaccines);
     });
@@ -95,6 +117,9 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
                 backgroundColor: Colors.red,
               ),
             );
+            // Reset the controller to the previous valid value
+            _controllers[vaccineName]?.text =
+                _selectedVaccines[idx]['quantity']?.toString() ?? '';
             return;
           }
         } else {
@@ -121,35 +146,44 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           );
           return CheckboxListTile(
             value: isSelected,
-            title: Text('${vaccine.name} (Stock: ${vaccine.quantity})'),
+            title: Text('${vaccine.name} (Stock: ${vaccine.quantity} litres)'),
             onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
         }).toList(),
         const SizedBox(height: 16),
         ..._selectedVaccines.map((v) {
+          final vaccineName = v['name'] as String;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(v['name'], style: const TextStyle(fontSize: 16)),
+              Text(
+                vaccineName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 6),
               TextField(
+                controller: _controllers[vaccineName],
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  hintText: 'Qty (Litres)',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
+                decoration: InputDecoration(
+                  hintText: 'Enter quantity (litres)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
-                  filled: false,
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixText: 'litres',
                 ),
-                onChanged: (val) => _updateQuantity(v['name'], val),
-                controller: TextEditingController(
-                  text: v['quantity']?.toString() ?? '',
-                ),
+                onChanged: (val) => _updateQuantity(vaccineName, val),
               ),
               const SizedBox(height: 16),
             ],

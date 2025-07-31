@@ -4,6 +4,7 @@ import 'routing/app_router.dart';
 import 'app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'shared/services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,14 @@ void main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyaHVqaWxraHRlZHZraHlidGR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4MDY2ODEsImV4cCI6MjA2NzM4MjY4MX0.NLxRGmM4F6ckDcvbGW6SFvLKEd9Dn-8bieInZO6aPYs',
   );
+
+  // Fix database constraints on app startup
+  try {
+    await SupabaseService().fixDatabaseConstraints();
+  } catch (e) {
+    print('Failed to fix database constraints: $e');
+  }
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('sw')],

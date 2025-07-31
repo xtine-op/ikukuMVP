@@ -86,7 +86,7 @@ class _CategorySelectionPageState extends State<CategorySelectionPage> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 }

@@ -38,15 +38,13 @@ class EggProductionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLayerOrKienyeji =
-        selectedBatch != null &&
-        (selectedBatch!.birdType.toLowerCase().contains('layer') ||
-            selectedBatch!.birdType.toLowerCase().contains('kienyeji'));
-    if (!isLayerOrKienyeji) {
-      return const Center(
-        child: Text('No egg production for this batch type.'),
-      );
-    }
+    print(
+      '[EggProductionPage] Building with batch: ${selectedBatch?.name} (${selectedBatch?.birdType})',
+    );
+
+    // Add a simple test to see if the page is being rendered
+    print('[EggProductionPage] Rendering egg production page');
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(

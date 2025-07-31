@@ -19,23 +19,40 @@ class BottomNavBar extends StatelessWidget {
         } else if (index == 2) {
           // Profile: Go to profile page
           context.go('/profile');
-        } else {
-          // My Shop: Show inactive message
+        } else if (index == 1) {
+          // My Shop: Show coming soon message (inactive)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('This feature is coming soon!'),
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: 2),
+              backgroundColor: CustomColors.primary,
             ),
           );
         }
       },
       items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'home'.tr()),
-        BottomNavigationBarItem(icon: Icon(Icons.store), label: 'my_shop'.tr()),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'profile'.tr()),
+        BottomNavigationBarItem(
+          icon: Icon(
+            Icons.home,
+            color: currentIndex == 0 ? CustomColors.primary : Colors.grey,
+          ),
+          label: 'home'.tr(),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.store, color: Colors.grey),
+          label: 'my_shop'.tr(),
+          backgroundColor: Colors.grey.withOpacity(0.1),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            Icons.person,
+            color: currentIndex == 2 ? CustomColors.primary : Colors.grey,
+          ),
+          label: 'profile'.tr(),
+        ),
       ],
       selectedItemColor: CustomColors.primary,
-      unselectedItemColor: Colors.black45,
+      unselectedItemColor: Colors.grey,
     );
   }
 }

@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
-import 'farm_report_entry_page.dart';
 import 'report_detail_page.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 
@@ -59,6 +58,8 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasBatches = batches.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -69,113 +70,168 @@ class _ReportsPageState extends State<ReportsPage> {
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: CustomColors.buttonGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.add, color: CustomColors.text),
-                        label: Text(
-                          'Add Farm Report',
-                          style: TextStyle(color: CustomColors.text),
-                        ),
-                        onPressed: () {
-                          context.go('/report-entry');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          foregroundColor: CustomColors.text,
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Previous Records',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // List of previous records derived from batches with batch records
-                Expanded(
-                  child: ListView(
-                    children: batches
-                        .map((batch) {
-                          // Find all batch records for this batch
-                          final recordsForBatch = batchRecords
-                              .where((br) => br['batch_id'] == batch['id'])
-                              .toList();
-                          if (recordsForBatch.isEmpty) return SizedBox.shrink();
-                          // Sort by record_date descending
-                          recordsForBatch.sort((a, b) {
-                            final da = a['record_date'] ?? '';
-                            final db = b['record_date'] ?? '';
-                            return db.compareTo(da);
-                          });
-                          final latestRecord = recordsForBatch.first;
-                          // Format date
-                          String formattedDate = 'Unknown Date';
-                          final rawDate = latestRecord['record_date'];
-                          if (rawDate is String && rawDate.isNotEmpty) {
-                            try {
-                              final dt = DateTime.parse(rawDate);
-                              formattedDate = DateFormat(
-                                'yyyy-MM-dd',
-                              ).format(dt);
-                            } catch (_) {
-                              formattedDate = rawDate;
-                            }
-                          } else if (rawDate is DateTime) {
-                            formattedDate = DateFormat(
-                              'yyyy-MM-dd',
-                            ).format(rawDate);
-                          }
-                          return ListTile(
-                            title: Text(batch['name'] ?? 'Unknown Batch'),
-                            subtitle: Text(
-                              '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
-                            ),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ReportDetailPage(
-                                    report: latestRecord,
-                                    batch: batch,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        })
-                        .where((w) => w is! SizedBox)
-                        .toList(),
-                  ),
-                ),
-              ],
-            ),
+          : !hasBatches
+          ? _buildNoBatchesView()
+          : _buildReportsView(),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+    );
+  }
+
+  Widget _buildNoBatchesView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/amico.png',
+              width: 140,
+              height: 140,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'It seems you have not created your batches yet, go to batches and add a chick batch to continue',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: CustomColors.text,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ElevatedButton.icon(
+                  label: Text(
+                    'Go to Batches',
+                    style: TextStyle(color: CustomColors.text),
+                  ),
+                  onPressed: () {
+                    context.go('/batches', extra: {'fromReportsPage': true});
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    foregroundColor: CustomColors.text,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportsView() {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: CustomColors.buttonGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.add, color: CustomColors.text),
+                label: Text(
+                  'Add Farm Report',
+                  style: TextStyle(color: CustomColors.text),
+                ),
+                onPressed: () {
+                  context.go('/report-entry');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  foregroundColor: CustomColors.text,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'Previous Records',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // List of previous records derived from batches with batch records
+        Expanded(
+          child: ListView(
+            children: batches
+                .map((batch) {
+                  // Find all batch records for this batch
+                  final recordsForBatch = batchRecords
+                      .where((br) => br['batch_id'] == batch['id'])
+                      .toList();
+                  if (recordsForBatch.isEmpty) return SizedBox.shrink();
+                  // Sort by record_date descending
+                  recordsForBatch.sort((a, b) {
+                    final da = a['record_date'] ?? '';
+                    final db = b['record_date'] ?? '';
+                    return db.compareTo(da);
+                  });
+                  final latestRecord = recordsForBatch.first;
+                  // Format date
+                  String formattedDate = 'Unknown Date';
+                  final rawDate = latestRecord['record_date'];
+                  if (rawDate is String && rawDate.isNotEmpty) {
+                    try {
+                      final dt = DateTime.parse(rawDate);
+                      formattedDate = DateFormat('yyyy-MM-dd').format(dt);
+                    } catch (_) {
+                      formattedDate = rawDate;
+                    }
+                  } else if (rawDate is DateTime) {
+                    formattedDate = DateFormat('yyyy-MM-dd').format(rawDate);
+                  }
+                  return ListTile(
+                    title: Text(batch['name'] ?? 'Unknown Batch'),
+                    subtitle: Text(
+                      '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ReportDetailPage(
+                            report: latestRecord,
+                            batch: batch,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                })
+                .where((w) => w is! SizedBox)
+                .toList(),
+          ),
+        ),
+      ],
     );
   }
 }

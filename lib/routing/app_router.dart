@@ -63,7 +63,11 @@ class AppRouter {
       GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
       GoRoute(
         path: '/batches',
-        builder: (context, state) => const BatchesPage(),
+        builder: (context, state) {
+          final fromReportsPage =
+              (state.extra as Map?)?['fromReportsPage'] == true;
+          return BatchesPage(fromReportsPage: fromReportsPage);
+        },
       ),
       GoRoute(
         path: '/inventory-categories',

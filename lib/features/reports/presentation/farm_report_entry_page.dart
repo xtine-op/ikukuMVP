@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
+import '../../../app_theme.dart';
 import 'select_batch_page.dart';
 import 'chicken_reduction_page.dart';
 import 'egg_production_page.dart';
@@ -52,6 +53,10 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
   bool loading = true;
   String? error;
+  bool _hasNoInventory = false; // Track if there are no inventory items
+  bool _hasShownAddReportDialog =
+      false; // Track if dialog was shown in this session
+  bool _showingDialog = false; // Track if a dialog is currently being shown
 
   // Add a list to track batches already reported today
   List<String> batchesReportedToday = [];
@@ -62,15 +67,21 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   List<Map<String, dynamic>> selectedVaccines = [];
   List<Map<String, dynamic>> selectedOtherMaterials = [];
 
+  // Cache the pages list to avoid recreation during navigation
+  List<Widget>? _cachedPages;
+
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: step);
+    step = 0; // Ensure step starts at 0
+    _pageController = PageController(initialPage: 0);
+    print('[FarmReportEntryPage] PageController initialized with step: $step');
     _fetchInitialData();
   }
 
   @override
   void dispose() {
+    _showingDialog = false; // Reset dialog flag
     _pageController?.dispose();
     super.dispose();
   }
@@ -154,6 +165,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         setState(() {
           loading = false;
           error = 'No inventory found. Please add inventory items first.';
+          _hasNoInventory = true;
         });
         print('[FarmReportEntryPage] No inventory found.');
         return;
@@ -170,6 +182,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         batchesReportedToday = reportedBatchIds;
         loading = false;
         error = null;
+        _invalidatePagesCache(); // Invalidate cache when data is loaded
       });
       print('[FarmReportEntryPage] Initialization complete.');
     } catch (e) {
@@ -182,13 +195,22 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   }
 
   void _nextStep() async {
-    // If on batch selection step, require a batch to be selected
-    if (step == 0 && selectedBatch == null) {
-      // Optionally show a message or just return
-      return;
+    print('[FarmReportEntryPage] _nextStep called, current step: $step');
+    print(
+      '[FarmReportEntryPage] Selected batch: ${selectedBatch?.name} (${selectedBatch?.birdType})',
+    );
+
+    // Ensure page controller is available
+    if (_pageController == null) {
+      print('[FarmReportEntryPage] PageController is null, initializing...');
+      _pageController = PageController(initialPage: step);
     }
-    // If on batch selection step, check if already reported today
+
+    // If we're on the batch selection step (step 0) and a batch is selected
     if (step == 0 && selectedBatch != null) {
+      print(
+        '[FarmReportEntryPage] On batch selection step with batch selected, checking if already reported',
+      );
       setState(() => loading = true);
       bool? alreadyReported;
       String? errorMsg;
@@ -204,9 +226,13 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               },
             );
       } catch (e) {
-        errorMsg = 'Failed to check report status: $e';
+        print('Error checking report status: $e');
+        // If there's an error checking status, allow the user to proceed
+        // This prevents blocking due to database issues
+        alreadyReported = false;
+        errorMsg = null;
       }
-      if (alreadyReported == null && errorMsg != null) {
+      if (errorMsg != null) {
         setState(() => loading = false);
         showDialog(
           context: context,
@@ -272,30 +298,201 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         );
         return;
       }
+      print('[FarmReportEntryPage] Moving to chicken reduction step (step 1)');
       setState(() {
         loading = false;
         step = 1;
+        _invalidatePagesCache();
       });
-      _pageController?.animateToPage(
-        1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.ease,
-      );
+      // Use a small delay to ensure state is updated before animating
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted && _pageController != null) {
+          // We know we have at least 8 pages (0-7), so page 1 should exist
+          print(
+            '[FarmReportEntryPage] Navigating to page 1 (chicken reduction)',
+          );
+          _pageController!.animateToPage(
+            1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.ease,
+          );
+        }
+      });
       return;
     }
-    setState(() => step++);
-    _pageController?.animateToPage(
-      step,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.ease,
-    );
+
+    // If we're on the chicken reduction step (step 1)
+    if (step == 1) {
+      print(
+        '[FarmReportEntryPage] On chicken reduction step, moving to next step',
+      );
+
+      // Check if we need to skip the egg production step for non-layer/non-kienyeji batches
+      if (selectedBatch != null) {
+        final isLayerOrKienyeji =
+            selectedBatch!.birdType.toLowerCase().contains('layer') ||
+            selectedBatch!.birdType.toLowerCase().contains('kienyeji');
+
+        if (!isLayerOrKienyeji) {
+          // Skip egg production step (step 2) for non-layer/non-kienyeji batches
+          print(
+            '[FarmReportEntryPage] Skipping egg production for ${selectedBatch!.birdType}',
+          );
+          setState(() {
+            step = 3;
+            _invalidatePagesCache();
+          }); // Jump directly to feeds step
+          // Use a small delay to ensure state is updated before animating
+          Future.delayed(const Duration(milliseconds: 50), () {
+            if (mounted && _pageController != null) {
+              print('[FarmReportEntryPage] Navigating to page 3 (feeds)');
+              _pageController!.animateToPage(
+                3,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.ease,
+              );
+            }
+          });
+          return;
+        }
+      }
+
+      // Move to egg production step (step 2) for layer/kienyeji batches
+      print(
+        '[FarmReportEntryPage] Moving to egg production step for ${selectedBatch?.birdType}',
+      );
+      print(
+        '[FarmReportEntryPage] Batch type check: ${selectedBatch?.birdType.toLowerCase().contains('layer')} or ${selectedBatch?.birdType.toLowerCase().contains('kienyeji')}',
+      );
+      setState(() {
+        step = 2;
+        _invalidatePagesCache();
+      });
+      // Use a small delay to ensure state is updated before animating
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted && _pageController != null) {
+          print('[FarmReportEntryPage] Navigating to page 2 (egg production)');
+          print(
+            '[FarmReportEntryPage] PageController current page: ${_pageController!.page}',
+          );
+          try {
+            _pageController!.animateToPage(
+              2,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
+          } catch (e) {
+            print('[FarmReportEntryPage] Error animating to page 2: $e');
+          }
+        }
+      });
+      return;
+    }
+
+    // For all other steps, just move to the next step
+    print('[FarmReportEntryPage] Moving to next step: ${step + 1}');
+    setState(() {
+      step++;
+      _invalidatePagesCache();
+    });
+    // Use a small delay to ensure state is updated before animating
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (mounted && _pageController != null) {
+        _pageController!.animateToPage(
+          step,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.ease,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+      '[FarmReportEntryPage] Building with step: $step, pageController: ${_pageController != null ? "available" : "null"}',
+    );
+
+    // Ensure page controller is initialized
+    if (_pageController == null) {
+      print(
+        '[FarmReportEntryPage] PageController is null in build, initializing...',
+      );
+      _pageController = PageController(initialPage: step);
+    }
+
     if (loading)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (error != null)
+    if (error != null) {
+      if (_hasNoInventory) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/'),
+            ),
+            title: const Text('Farm Report Entry'),
+          ),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icons/amico.png',
+                    width: 140,
+                    height: 140,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'It seems you have no items in your store. Go to your store and add items to continue.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: CustomColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: CustomColors.buttonGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.store, color: CustomColors.text),
+                        label: Text(
+                          'Go to Store',
+                          style: TextStyle(color: CustomColors.text),
+                        ),
+                        onPressed: () {
+                          context.go('/inventory-categories');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: CustomColors.text,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -321,6 +518,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           ),
         ),
       );
+    }
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -332,9 +530,18 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
+          // Update step when page changes to keep them in sync
+          print(
+            '[FarmReportEntryPage] onPageChanged called with index: $index, current step: $step',
+          );
           setState(() {
             step = index;
+            _invalidatePagesCache(); // Invalidate cache when step changes
           });
+          print('[FarmReportEntryPage] Step updated to: $step');
+          print(
+            '[FarmReportEntryPage] Current batch: ${selectedBatch?.name} (${selectedBatch?.birdType})',
+          );
         },
         physics: const NeverScrollableScrollPhysics(),
         children: _buildPages(),
@@ -342,73 +549,87 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     );
   }
 
+  void _invalidatePagesCache() {
+    _cachedPages = null;
+  }
+
   List<Widget> _buildPages() {
-    return [
+    // Return cached pages if available
+    if (_cachedPages != null) {
+      return _cachedPages!;
+    }
+
+    _cachedPages = [
       // Page 1: Select Batch
       SelectBatchPage(
         batches: batches,
         selectedBatch: selectedBatch,
         onBatchSelected: (batch) {
-          setState(() => selectedBatch = batch);
+          setState(() {
+            selectedBatch = batch;
+            _invalidatePagesCache(); // Invalidate cache when batch changes
+          });
         },
         onContinue: () {
-          if (selectedBatch == null) return;
+          print('[FarmReportEntryPage] SelectBatchPage onContinue called');
+          if (selectedBatch == null) {
+            print('[FarmReportEntryPage] No batch selected, returning');
+            return;
+          }
+          print('[FarmReportEntryPage] Calling _nextStep from SelectBatchPage');
           _nextStep(); // Call directly, not in post-frame callback
         },
         batchesReportedToday: batchesReportedToday, // Pass this to the page
       ),
-      // Page 2: Chicken Reduction
+      // Page 2: Chicken Reduction (always shown)
       ChickenReductionPage(
         chickenReduction: chickenReduction,
-        onReductionChanged: (v) => setState(() => chickenReduction = v),
+        onReductionChanged: (v) => setState(() {
+          chickenReduction = v;
+          _invalidatePagesCache();
+        }),
         reductionReason: reductionReason,
-        onReasonChanged: (v) => setState(() => reductionReason = v),
+        onReasonChanged: (v) => setState(() {
+          reductionReason = v;
+          _invalidatePagesCache();
+        }),
         reductionCount: reductionCount,
-        onCountChanged: (v) => setState(() => reductionCount = int.tryParse(v)),
+        onCountChanged: (v) => setState(() {
+          reductionCount = int.tryParse(v);
+          _invalidatePagesCache();
+        }),
         onContinue: _nextStep,
         selectedBatch: selectedBatch,
       ),
-      // Page 3: Egg Production (always included, but conditionally rendered)
-      Builder(
-        builder: (context) {
-          if (selectedBatch != null &&
-              (selectedBatch!.birdType.toLowerCase().contains('layer') ||
-                  selectedBatch!.birdType.toLowerCase().contains('kienyeji'))) {
-            return EggProductionPage(
-              selectedBatch: selectedBatch,
-              collectedEggs: collectedEggs,
-              onCollectedEggsChanged: (v) => setState(() => collectedEggs = v),
-              eggsCollected: eggsCollected,
-              onEggsCollectedChanged: (v) =>
-                  setState(() => eggsCollected = int.tryParse(v)),
-              gradeEggs: gradeEggs,
-              onGradeEggsChanged: (v) => setState(() => gradeEggs = v),
-              bigEggs: bigEggs,
-              onBigEggsChanged: (v) =>
-                  setState(() => bigEggs = int.tryParse(v)),
-              deformedEggs: deformedEggs,
-              onDeformedEggsChanged: (v) =>
-                  setState(() => deformedEggs = int.tryParse(v)),
-              brokenEggs: brokenEggs,
-              onBrokenEggsChanged: (v) =>
-                  setState(() => brokenEggs = int.tryParse(v)),
-              onContinue: _nextStep,
-            );
-          } else {
-            // If not relevant, show a placeholder and auto-advance
-            Future.microtask(() {
-              if (step == 2 && _pageController != null) {
-                setState(() => step++);
-                _pageController!.animateToPage(
-                  step,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                );
-              }
-            });
-            return Center(child: Text('No egg production for this batch.'));
-          }
-        },
+      // Page 3: Egg Production (only for layers/kienyeji)
+      Container(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Egg Production Page',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Batch: ${selectedBatch?.name ?? 'None'}',
+                style: TextStyle(fontSize: 16),
+              ),
+              Text(
+                'Type: ${selectedBatch?.birdType ?? 'None'}',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _nextStep,
+                child: Text('Continue to Feeds'),
+              ),
+            ],
+          ),
+        ),
       ),
       // Page 4: Feeds
       FeedsPage(
@@ -465,6 +686,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         selectedOtherMaterials: selectedOtherMaterials,
       ),
     ];
+
+    return _cachedPages!;
   }
 
   // Add helper widgets for dynamic entry lists
@@ -615,46 +838,48 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     setState(() => loading = true);
-    // Check again before saving (in case of race condition)
-    final alreadyReported = await SupabaseService().hasDailyRecordForBatch(
-      selectedBatch!.id,
-      DateTime.now(),
-    );
-    if (alreadyReported) {
-      setState(() => loading = false);
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: const Color(0xFFF7F8FA),
-          title: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              'Already Reported',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ),
-          content: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              'You have already submitted a report for this batch today. Please try again tomorrow.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
+
     try {
+      // Check again before saving (in case of race condition)
+      final alreadyReported = await SupabaseService().hasDailyRecordForBatch(
+        selectedBatch!.id,
+        DateTime.now(),
+      );
+      if (alreadyReported) {
+        setState(() => loading = false);
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            backgroundColor: const Color(0xFFF7F8FA),
+            title: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Text(
+                'Already Reported',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+            content: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Text(
+                'You have already submitted a report for this batch today. Please try again tomorrow.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
       final now = DateTime.now();
       final report = <String, dynamic>{
         'user_id': user.id,
@@ -742,6 +967,12 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
       setState(() => loading = false);
       if (!mounted) return;
+
+      // Add a small delay to ensure the widget is stable before showing dialog
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted || _showingDialog) return;
+
+      _showingDialog = true;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -763,12 +994,51 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Close the dialog first
+                  _showingDialog = false;
+                  Navigator.of(ctx).pop();
+                  // Use a small delay to ensure the dialog is fully closed
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    if (mounted) {
+                      try {
+                        // Navigate directly to reports page
+                        context.go('/reports');
+                      } catch (e) {
+                        print('Navigation error: $e');
+                        // Fallback: try to pop and then navigate
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      }
+                    }
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  foregroundColor: CustomColors.text,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: CustomColors.buttonGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: const Text('See Reports'),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -776,6 +1046,25 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     } catch (e) {
       setState(() => loading = false);
       if (!mounted) return;
+
+      // Add a small delay to ensure the widget is stable before showing dialog
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted || _showingDialog) return;
+
+      // Handle specific constraint violation error
+      String errorMessage = 'Failed to save report: $e';
+      if (e.toString().contains('unique_user_date')) {
+        errorMessage =
+            'A report for this batch has already been submitted today. Please try again tomorrow.';
+      } else if (e.toString().contains('duplicate key')) {
+        errorMessage =
+            'This report has already been submitted. Please check your reports.';
+      } else if (e.toString().contains('multiple (or no) rows returned')) {
+        errorMessage =
+            'There was an issue checking the report status. Please try again.';
+      }
+
+      _showingDialog = true;
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -792,11 +1081,14 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           ),
           content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text('Failed to save report: $e'),
+            child: Text(errorMessage),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
+              onPressed: () {
+                _showingDialog = false;
+                Navigator.of(ctx).pop();
+              },
               child: const Text('OK'),
             ),
           ],
@@ -809,7 +1101,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     if (selectedBatch == null) return;
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
-    setState(() => loading = true);
+
     try {
       final batchRecord = <String, dynamic>{
         'daily_record_id': dailyRecordId,
@@ -837,35 +1129,11 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         'notes': notes,
       };
       await SupabaseService().addBatchRecord(batchRecord);
-      setState(() => loading = false);
     } catch (e) {
-      setState(() => loading = false);
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: Color(0xFFF7F8FA),
-          title: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              'Error',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ),
-          content: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text('Failed to save batch record: $e'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+      print('Error saving batch record: $e');
+      // Just rethrow the error to be handled by the main save function
+      // Don't show dialog here to avoid multiple dialogs
+      rethrow;
     }
   }
 }

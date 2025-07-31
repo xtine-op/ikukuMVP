@@ -51,11 +51,30 @@ class _FeedsSelector extends StatefulWidget {
 
 class _FeedsSelectorState extends State<_FeedsSelector> {
   late List<Map<String, dynamic>> _selectedFeeds;
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
     super.initState();
     _selectedFeeds = List<Map<String, dynamic>>.from(widget.selectedFeeds);
+    _initializeControllers();
+  }
+
+  @override
+  void dispose() {
+    _controllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
+  }
+
+  void _initializeControllers() {
+    for (final feed in _selectedFeeds) {
+      final name = feed['name'] as String;
+      if (!_controllers.containsKey(name)) {
+        _controllers[name] = TextEditingController(
+          text: feed['quantity']?.toString() ?? '',
+        );
+      }
+    }
   }
 
   void _toggleFeed(InventoryItem feed, bool selected) {
@@ -63,9 +82,12 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
       if (selected) {
         if (!_selectedFeeds.any((f) => f['name'] == feed.name)) {
           _selectedFeeds.add({'name': feed.name, 'quantity': null});
+          _controllers[feed.name] = TextEditingController();
         }
       } else {
         _selectedFeeds.removeWhere((f) => f['name'] == feed.name);
+        _controllers[feed.name]?.dispose();
+        _controllers.remove(feed.name);
       }
       widget.onSelectedFeedsChanged(_selectedFeeds);
     });
@@ -91,6 +113,9 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
                 backgroundColor: Colors.red,
               ),
             );
+            // Reset the controller to the previous valid value
+            _controllers[feedName]?.text =
+                _selectedFeeds[idx]['quantity']?.toString() ?? '';
             return;
           }
         } else {
@@ -115,35 +140,44 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
           final isSelected = _selectedFeeds.any((f) => f['name'] == feed.name);
           return CheckboxListTile(
             value: isSelected,
-            title: Text('${feed.name} (Stock: ${feed.quantity})'),
+            title: Text('${feed.name} (Stock: ${feed.quantity} kg)'),
             onChanged: (checked) => _toggleFeed(feed, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
         }).toList(),
         const SizedBox(height: 16),
         ..._selectedFeeds.map((f) {
+          final feedName = f['name'] as String;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(f['name'], style: const TextStyle(fontSize: 16)),
+              Text(
+                feedName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 6),
               TextField(
+                controller: _controllers[feedName],
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
-                  hintText: 'Qty (Kg)',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
+                decoration: InputDecoration(
+                  hintText: 'Enter quantity (kg)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
-                  filled: false,
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixText: 'kg',
                 ),
-                onChanged: (v) => _updateQuantity(f['name'], v),
-                controller: TextEditingController(
-                  text: f['quantity']?.toString() ?? '',
-                ),
+                onChanged: (v) => _updateQuantity(feedName, v),
               ),
               const SizedBox(height: 16),
             ],
