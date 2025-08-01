@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../app_theme.dart';
 import '../../batches/data/batch_model.dart';
 
@@ -26,7 +27,7 @@ class SelectBatchPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select the batch you are reporting for',
+            'select_batch_title'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -72,9 +73,9 @@ class SelectBatchPage extends StatelessWidget {
                                     color: CustomColors.primary,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text(
-                                    'Reported today',
-                                    style: TextStyle(
+                                  child: Text(
+                                    'reported_today'.tr(),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -129,7 +130,11 @@ class SelectBatchPage extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                'Age: ${batch.ageInDays} days',
+                                'batch_age_days'.tr(
+                                  namedArgs: {
+                                    'days': batch.ageInDays.toString(),
+                                  },
+                                ),
                                 style: const TextStyle(
                                   color: Colors.grey,
                                   fontWeight: FontWeight.w500,
@@ -175,9 +180,9 @@ class SelectBatchPage extends StatelessWidget {
                     foregroundColor: CustomColors.text,
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  child: const Text(
-                    'CONTINUE',
-                    style: TextStyle(color: CustomColors.text),
+                  child: Text(
+                    'continue'.tr(),
+                    style: const TextStyle(color: CustomColors.text),
                   ),
                 ),
               ),
@@ -187,7 +192,7 @@ class SelectBatchPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Text(
-                'Please select a batch to continue.',
+                'select_batch_error'.tr(),
                 style: TextStyle(color: CustomColors.textDisabled),
               ),
             ),

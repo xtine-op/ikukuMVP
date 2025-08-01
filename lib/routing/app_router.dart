@@ -123,8 +123,9 @@ class AppRouter {
 
       if (!langSet && !language) return '/language';
       if (!onboardingComplete && !onboarding && langSet) return '/onboarding';
-      if (user == null && !loggingIn && langSet && onboardingComplete)
+      if (user == null && !loggingIn && langSet && onboardingComplete) {
         return '/sign-in';
+      }
       if (user != null && loggingIn) return '/';
       return null;
     },

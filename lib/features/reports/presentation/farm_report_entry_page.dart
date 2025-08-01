@@ -32,8 +32,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   List<Batch> batches = [];
   Batch? selectedBatch;
   String? chickenReduction; // yes/no
-  String? reductionReason; // curled/stolen/death
-  int? reductionCount;
+  Map<String, int> reductionCounts = {'curled': 0, 'stolen': 0, 'death': 0};
   bool? collectedEggs; // only for layers/kienyeji
   int? eggsCollected;
   bool? gradeEggs;
@@ -55,7 +54,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   bool loading = true;
   String? error;
   bool _hasNoInventory = false; // Track if there are no inventory items
-  bool _hasShownAddReportDialog =
+  final bool _hasShownAddReportDialog =
       false; // Track if dialog was shown in this session
   bool _showingDialog = false; // Track if a dialog is currently being shown
 
@@ -128,9 +127,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               throw Exception('Timeout while fetching daily records');
             },
           );
-      print('[FarmReportEntryPage] batchListRaw = ' + batchListRaw.toString());
-      print('[FarmReportEntryPage] inventoryRaw = ' + inventoryRaw.toString());
-      print('[FarmReportEntryPage] dailyRecords = ' + dailyRecords.toString());
+      print('[FarmReportEntryPage] batchListRaw = $batchListRaw');
+      print('[FarmReportEntryPage] inventoryRaw = $inventoryRaw');
+      print('[FarmReportEntryPage] dailyRecords = $dailyRecords');
       final reportedBatchIds = <String>[];
       for (final record in dailyRecords) {
         if (record['batch_id'] != null) {
@@ -242,11 +241,14 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: const Color(0xFFF7F8FA),
-            title: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Text(
-                'Error',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                'error'.tr(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
             content: Padding(
@@ -258,7 +260,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                 onPressed: () {
                   Navigator.of(ctx).pop();
                 },
-                child: const Text('OK'),
+                child: Text('ok'.tr()),
               ),
             ],
           ),
@@ -274,25 +276,26 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: const Color(0xFFF7F8FA),
-            title: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Text(
-                'Already Reported',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                'already_reported'.tr(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
-            content: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(
-                'You have already submitted a report for this batch today. Please try again tomorrow.',
-              ),
+            content: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Text('already_reported_desc'.tr()),
             ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
                 },
-                child: const Text('OK'),
+                child: Text('ok'.tr()),
               ),
             ],
           ),
@@ -327,64 +330,49 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       print(
         '[FarmReportEntryPage] On chicken reduction step, moving to next step',
       );
-
-      // Check if we need to skip the egg production step for non-layer/non-kienyeji batches
       if (selectedBatch != null) {
         final isLayerOrKienyeji =
             selectedBatch!.birdType.toLowerCase().contains('layer') ||
             selectedBatch!.birdType.toLowerCase().contains('kienyeji');
-
+        // Build pages to check if EggProductionPage is present
+        final pages = _buildPages();
+        int nextStep = 2;
         if (!isLayerOrKienyeji) {
-          // Skip egg production step (step 2) for non-layer/non-kienyeji batches
+          // Skip egg production step for non-layer/non-kienyeji batches
           print(
             '[FarmReportEntryPage] Skipping egg production for ${selectedBatch!.birdType}',
           );
-          setState(() {
-            step = 3;
-            _invalidatePagesCache();
-          }); // Jump directly to feeds step
-          // Use a small delay to ensure state is updated before animating
-          Future.delayed(const Duration(milliseconds: 50), () {
-            if (mounted && _pageController != null) {
-              print('[FarmReportEntryPage] Navigating to page 3 (feeds)');
-              _pageController!.animateToPage(
-                3,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.ease,
-              );
-            }
-          });
-          return;
+          nextStep = pages.indexWhere((w) => w.runtimeType == FeedsPage);
+          if (nextStep == -1) nextStep = 3; // fallback
         }
+        setState(() {
+          step = nextStep;
+          _invalidatePagesCache();
+        });
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted && _pageController != null) {
+            print('[FarmReportEntryPage] Navigating to page $nextStep');
+            _pageController!.animateToPage(
+              nextStep,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.ease,
+            );
+          }
+        });
+        return;
       }
-
-      // Move to egg production step (step 2) for layer/kienyeji batches
-      print(
-        '[FarmReportEntryPage] Moving to egg production step for ${selectedBatch?.birdType}',
-      );
-      print(
-        '[FarmReportEntryPage] Batch type check: ${selectedBatch?.birdType.toLowerCase().contains('layer')} or ${selectedBatch?.birdType.toLowerCase().contains('kienyeji')}',
-      );
+      // Default: move to next step
       setState(() {
         step = 2;
         _invalidatePagesCache();
       });
-      // Use a small delay to ensure state is updated before animating
       Future.delayed(const Duration(milliseconds: 50), () {
         if (mounted && _pageController != null) {
-          print('[FarmReportEntryPage] Navigating to page 2 (egg production)');
-          print(
-            '[FarmReportEntryPage] PageController current page: ${_pageController!.page}',
+          _pageController!.animateToPage(
+            2,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.ease,
           );
-          try {
-            _pageController!.animateToPage(
-              2,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.ease,
-            );
-          } catch (e) {
-            print('[FarmReportEntryPage] Error animating to page 2: $e');
-          }
         }
       });
       return;
@@ -422,8 +410,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       _pageController = PageController(initialPage: step);
     }
 
-    if (loading)
+    if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (error != null) {
       if (_hasNoInventory) {
         return Scaffold(
@@ -589,49 +578,52 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           chickenReduction = v;
           _invalidatePagesCache();
         }),
-        reductionReason: reductionReason,
-        onReasonChanged: (v) => setState(() {
-          reductionReason = v;
-          _invalidatePagesCache();
-        }),
-        reductionCount: reductionCount,
-        onCountChanged: (v) => setState(() {
-          reductionCount = int.tryParse(v);
+        reductionCounts: reductionCounts,
+        onCountsChanged: (counts) => setState(() {
+          reductionCounts = Map<String, int>.from(counts);
           _invalidatePagesCache();
         }),
         onContinue: _nextStep,
         selectedBatch: selectedBatch,
       ),
       // Page 3: Egg Production (only for layers/kienyeji)
-      Container(
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Egg Production Page',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Batch: ${selectedBatch?.name ?? 'None'}',
-                style: TextStyle(fontSize: 16),
-              ),
-              Text(
-                'Type: ${selectedBatch?.birdType ?? 'None'}',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _nextStep,
-                child: Text('Continue to Feeds'),
-              ),
-            ],
-          ),
+      if (selectedBatch != null &&
+          (selectedBatch!.birdType.toLowerCase().contains('layer') ||
+              selectedBatch!.birdType.toLowerCase().contains('kienyeji')))
+        EggProductionPage(
+          selectedBatch: selectedBatch,
+          collectedEggs: collectedEggs,
+          onCollectedEggsChanged: (v) => setState(() {
+            collectedEggs = v;
+            _invalidatePagesCache();
+          }),
+          eggsCollected: eggsCollected,
+          onEggsCollectedChanged: (v) => setState(() {
+            eggsCollected = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          gradeEggs: gradeEggs,
+          onGradeEggsChanged: (v) => setState(() {
+            gradeEggs = v;
+            _invalidatePagesCache();
+          }),
+          bigEggs: bigEggs,
+          onBigEggsChanged: (v) => setState(() {
+            bigEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          deformedEggs: deformedEggs,
+          onDeformedEggsChanged: (v) => setState(() {
+            deformedEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          brokenEggs: brokenEggs,
+          onBrokenEggsChanged: (v) => setState(() {
+            brokenEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          onContinue: _nextStep,
         ),
-      ),
       // Page 4: Feeds
       FeedsPage(
         feeds: feeds,
@@ -667,8 +659,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       ReviewAndSavePage(
         selectedBatch: selectedBatch,
         chickenReduction: chickenReduction,
-        reductionReason: reductionReason,
-        reductionCount: reductionCount,
+        reductionCounts: reductionCounts,
         collectedEggs: collectedEggs,
         eggsCollected: eggsCollected,
         gradeEggs: gradeEggs,
@@ -828,7 +819,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               ),
             ],
           );
-        }).toList(),
+        }),
         SizedBox(height: 16),
       ],
     );
@@ -855,25 +846,26 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: const Color(0xFFF7F8FA),
-            title: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Text(
-                'Already Reported',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                'already_reported'.tr(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
-            content: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(
-                'You have already submitted a report for this batch today. Please try again tomorrow.',
-              ),
+            content: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Text('already_reported_desc'.tr()),
             ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
                 },
-                child: const Text('OK'),
+                child: Text('ok'.tr()),
               ),
             ],
           ),
@@ -889,14 +881,10 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       };
 
       // Update batch chicken count if deaths reported
-      if (chickenReduction == 'yes' &&
-          reductionReason == 'death' &&
-          reductionCount != null &&
-          reductionCount! > 0) {
-        final newCount = (selectedBatch!.totalChickens - reductionCount!).clamp(
-          0,
-          selectedBatch!.totalChickens,
-        );
+      if (chickenReduction == 'yes' && (reductionCounts['death'] ?? 0) > 0) {
+        final newCount =
+            (selectedBatch!.totalChickens - (reductionCounts['death'] ?? 0))
+                .clamp(0, selectedBatch!.totalChickens);
         await SupabaseService().updateBatch({
           'id': selectedBatch!.id,
           'total_chickens': newCount,
@@ -982,17 +970,20 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             borderRadius: BorderRadius.circular(24),
           ),
           backgroundColor: const Color(0xFFF7F8FA),
-          title: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Text(
-              'Success',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              'success'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ),
           content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Text(
-              'Report for ${selectedBatch?.name ?? ''} has been saved and inventory updated.',
+              tr(
+                'report_saved',
+                namedArgs: {'batch': selectedBatch?.name ?? ''},
+              ),
             ),
           ),
           actions: [
@@ -1037,7 +1028,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                   child: Container(
                     alignment: Alignment.center,
                     constraints: const BoxConstraints(minHeight: 48),
-                    child: const Text('See Reports'),
+                    child: Text('see_reports'.tr()),
                   ),
                 ),
               ),
@@ -1074,16 +1065,16 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             borderRadius: BorderRadius.circular(24),
           ),
           backgroundColor: const Color(0xFFF7F8FA),
-          title: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Text(
-              'Error',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              'error'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ),
           content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(errorMessage),
+            child: Text(errorMessage.tr()),
           ),
           actions: [
             TextButton(
@@ -1091,7 +1082,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                 _showingDialog = false;
                 Navigator.of(ctx).pop();
               },
-              child: const Text('OK'),
+              child: Text('ok'.tr()),
             ),
           ],
         ),
@@ -1110,13 +1101,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         'batch_id': selectedBatch!.id,
         'chicken_reduction': chickenReduction == 'yes',
         'chickens_sold': 0,
-        'chickens_curled': reductionReason == 'curled'
-            ? (reductionCount ?? 0)
-            : 0,
-        'chickens_died': reductionReason == 'death' ? (reductionCount ?? 0) : 0,
-        'chickens_stolen': reductionReason == 'stolen'
-            ? (reductionCount ?? 0)
-            : 0,
+        'chickens_curled': reductionCounts['curled'] ?? 0,
+        'chickens_died': reductionCounts['death'] ?? 0,
+        'chickens_stolen': reductionCounts['stolen'] ?? 0,
         'eggs_collected': (collectedEggs == true && eggsCollected != null)
             ? eggsCollected
             : null,

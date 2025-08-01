@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
@@ -49,18 +51,18 @@ class _BatchesPageState extends State<BatchesPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: const Color(0xFFF7F8FA),
-        title: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Text(
-            'Add Report?',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            tr('add_report_q'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
-        content: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Text(
-            'Do you want to add a report for this batch?',
-            style: TextStyle(fontSize: 16),
+            tr('add_report_desc'),
+            style: const TextStyle(fontSize: 16),
           ),
         ),
         actions: [
@@ -77,7 +79,7 @@ class _BatchesPageState extends State<BatchesPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('No'),
+                  child: Text(tr('no')),
                 ),
               ),
               const SizedBox(width: 16),
@@ -105,7 +107,7 @@ class _BatchesPageState extends State<BatchesPage> {
                     child: Container(
                       alignment: Alignment.center,
                       constraints: const BoxConstraints(minHeight: 48),
-                      child: const Text('Yes'),
+                      child: Text(tr('yes')),
                     ),
                   ),
                 ),
@@ -130,7 +132,7 @@ class _BatchesPageState extends State<BatchesPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Color(0xFFF7F8FA),
-        title: const Text('Add Batch'),
+        title: Text(tr('add_batch')),
         content: SizedBox(
           width: 400, // Make dialog a little wider
           child: Form(
@@ -142,7 +144,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 children: [
                   TextFormField(
                     decoration: InputDecoration(
-                      labelText: 'Batch Name',
+                      labelText: tr('batch_name'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -160,20 +162,23 @@ class _BatchesPageState extends State<BatchesPage> {
                   SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     value: birdType,
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'broiler',
-                        child: Text('Broiler'),
+                        child: Text(tr('broiler')),
                       ),
                       DropdownMenuItem(
                         value: 'kienyeji',
-                        child: Text('Kienyeji'),
+                        child: Text(tr('kienyeji')),
                       ),
-                      DropdownMenuItem(value: 'layer', child: Text('Layer')),
+                      DropdownMenuItem(
+                        value: 'layer',
+                        child: Text(tr('layer')),
+                      ),
                     ],
                     onChanged: (v) => birdType = v ?? 'broiler',
                     decoration: InputDecoration(
-                      labelText: 'Bird Type',
+                      labelText: tr('bird_type'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -188,7 +193,7 @@ class _BatchesPageState extends State<BatchesPage> {
                   SizedBox(height: 18),
                   TextFormField(
                     decoration: InputDecoration(
-                      labelText: 'Age in Days',
+                      labelText: tr('age_in_days'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -208,7 +213,7 @@ class _BatchesPageState extends State<BatchesPage> {
                   SizedBox(height: 18),
                   TextFormField(
                     decoration: InputDecoration(
-                      labelText: 'Total Chickens',
+                      labelText: tr('total_chickens'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -244,7 +249,7 @@ class _BatchesPageState extends State<BatchesPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(tr('cancel')),
                 ),
               ),
               const SizedBox(width: 16),
@@ -295,7 +300,7 @@ class _BatchesPageState extends State<BatchesPage> {
                     child: Container(
                       alignment: Alignment.center,
                       constraints: const BoxConstraints(minHeight: 48),
-                      child: const Text('Add Batch'),
+                      child: Text(tr('add_batch')),
                     ),
                   ),
                 ),
@@ -318,7 +323,7 @@ class _BatchesPageState extends State<BatchesPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Color(0xFFF7F8FA),
-        title: const Text('Edit Batch'),
+        title: Text(tr('edit_batch')),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -329,7 +334,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 TextFormField(
                   initialValue: name,
                   decoration: InputDecoration(
-                    labelText: 'Batch Name',
+                    labelText: tr('batch_name'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -346,17 +351,20 @@ class _BatchesPageState extends State<BatchesPage> {
                 SizedBox(height: 18),
                 DropdownButtonFormField<String>(
                   value: birdType,
-                  items: const [
-                    DropdownMenuItem(value: 'broiler', child: Text('Broiler')),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'broiler',
+                      child: Text(tr('broiler')),
+                    ),
                     DropdownMenuItem(
                       value: 'kienyeji',
-                      child: Text('Kienyeji'),
+                      child: Text(tr('kienyeji')),
                     ),
-                    DropdownMenuItem(value: 'layer', child: Text('Layer')),
+                    DropdownMenuItem(value: 'layer', child: Text(tr('layer'))),
                   ],
                   onChanged: (v) => birdType = v ?? 'broiler',
                   decoration: InputDecoration(
-                    labelText: 'Bird Type',
+                    labelText: tr('bird_type'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -372,7 +380,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 TextFormField(
                   initialValue: ageInDays.toString(),
                   decoration: InputDecoration(
-                    labelText: 'Age in Days',
+                    labelText: tr('age_in_days'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -393,7 +401,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 TextFormField(
                   initialValue: totalChickens.toString(),
                   decoration: InputDecoration(
-                    labelText: 'Total Chickens',
+                    labelText: tr('total_chickens'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -424,7 +432,7 @@ class _BatchesPageState extends State<BatchesPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Cancel'),
+            child: Text(tr('cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -461,7 +469,7 @@ class _BatchesPageState extends State<BatchesPage> {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text('Save'),
+                child: Text(tr('save')),
               ),
             ),
           ),
@@ -479,7 +487,7 @@ class _BatchesPageState extends State<BatchesPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/'),
         ),
-        title: const Text('Batches'),
+        title: Text('batches'.tr()),
         actions: [
           IconButton(
             icon: Stack(
@@ -627,7 +635,15 @@ class _BatchesPageState extends State<BatchesPage> {
                 return ListTile(
                   title: Text(batch.name),
                   subtitle: Text(
-                    'Type: ${batch.birdType}, Chickens: ${batch.totalChickens}',
+                    '${'bird_type'.tr()}: ' +
+                        (batch.birdType == 'broiler'
+                            ? 'broiler'.tr()
+                            : batch.birdType == 'layer'
+                            ? 'layer'.tr()
+                            : batch.birdType == 'kienyeji'
+                            ? 'kienyeji'.tr()
+                            : 'unknown_type'.tr()) +
+                        ', ${'chickens'.tr()}: ${batch.totalChickens}',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -670,10 +686,10 @@ class _BatchesPageState extends State<BatchesPage> {
                                 ),
                                 ElevatedButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Delete'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
+                                  child: const Text('Delete'),
                                 ),
                               ],
                             ),

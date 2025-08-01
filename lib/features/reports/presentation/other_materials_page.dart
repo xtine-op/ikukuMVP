@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
 
@@ -54,6 +55,7 @@ class _OtherMaterialsSelector extends StatefulWidget {
 
 class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
   late List<Map<String, dynamic>> _selectedOtherMaterials;
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
@@ -61,6 +63,20 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
     _selectedOtherMaterials = List<Map<String, dynamic>>.from(
       widget.selectedOtherMaterials,
     );
+    for (final m in _selectedOtherMaterials) {
+      final name = m['name'];
+      _controllers[name] = TextEditingController(
+        text: m['quantity']?.toString() ?? '',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   void _toggleMaterial(InventoryItem material, bool selected) {
@@ -71,9 +87,12 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
             'name': material.name,
             'quantity': null,
           });
+          _controllers[material.name] = TextEditingController();
         }
       } else {
         _selectedOtherMaterials.removeWhere((m) => m['name'] == material.name);
+        _controllers[material.name]?.dispose();
+        _controllers.remove(material.name);
       }
       widget.onSelectedOtherMaterialsChanged(_selectedOtherMaterials);
     });
@@ -93,12 +112,19 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
           );
           if (quantity <= material.quantity) {
             _selectedOtherMaterials[idx]['quantity'] = quantity;
+            _controllers[materialName]?.text = value;
           } else {
             // Show error for exceeding stock
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Cannot use more than ${material.quantity} ${material.unit} of ${material.name}',
+                  'cannot_use_more_than_other_materials'.tr(
+                    namedArgs: {
+                      'quantity': material.quantity.toString(),
+                      'unit': material.unit,
+                      'item': material.name,
+                    },
+                  ),
                 ),
                 backgroundColor: Colors.red,
               ),
@@ -118,11 +144,11 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select the other materials you used today.',
+        Text(
+          'select_other_materials_today'.tr(),
           style: TextStyle(fontSize: 18),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         ...widget.otherMaterials.map((material) {
           final isSelected = _selectedOtherMaterials.any(
             (m) => m['name'] == material.name,
@@ -133,20 +159,22 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
             onChanged: (checked) => _toggleMaterial(material, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
-        }).toList(),
-        const SizedBox(height: 16),
+        }),
+        SizedBox(height: 16),
         ..._selectedOtherMaterials.map((m) {
+          final name = m['name'];
+          _controllers[name] ??= TextEditingController(
+            text: m['quantity']?.toString() ?? '',
+          );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(m['name'], style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 6),
+              Text(name, style: TextStyle(fontSize: 16)),
+              SizedBox(height: 6),
               TextField(
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Qty',
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  hintText: 'qty_hint'.tr(),
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
@@ -154,16 +182,14 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
                   ),
                   filled: false,
                 ),
-                onChanged: (val) => _updateQuantity(m['name'], val),
-                controller: TextEditingController(
-                  text: m['quantity']?.toString() ?? '',
-                ),
+                onChanged: (val) => _updateQuantity(name, val),
+                controller: _controllers[name],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
           );
-        }).toList(),
-        const SizedBox(height: 24),
+        }),
+        SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -176,7 +202,7 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
                 borderRadius: BorderRadius.circular(12),
               ),
               foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              textStyle: TextStyle(fontWeight: FontWeight.w600),
             ),
             child: Ink(
               decoration: BoxDecoration(
@@ -185,9 +211,9 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
               ),
               child: Container(
                 alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: const Text(
-                  'CONTINUE',
+                constraints: BoxConstraints(minHeight: 48),
+                child: Text(
+                  'continue'.tr(),
                   style: TextStyle(color: CustomColors.text),
                 ),
               ),

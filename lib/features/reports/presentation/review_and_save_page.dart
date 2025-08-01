@@ -6,8 +6,7 @@ import '../../../app_theme.dart';
 class ReviewAndSavePage extends StatelessWidget {
   final Batch? selectedBatch;
   final String? chickenReduction;
-  final String? reductionReason;
-  final int? reductionCount;
+  final Map<String, int> reductionCounts;
   final bool? collectedEggs;
   final int? eggsCollected;
   final bool? gradeEggs;
@@ -29,8 +28,7 @@ class ReviewAndSavePage extends StatelessWidget {
     super.key,
     required this.selectedBatch,
     required this.chickenReduction,
-    required this.reductionReason,
-    required this.reductionCount,
+    required this.reductionCounts,
     required this.collectedEggs,
     required this.eggsCollected,
     required this.gradeEggs,
@@ -53,7 +51,7 @@ class ReviewAndSavePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateTime.now();
     final isBroiler =
-        (selectedBatch?.birdType?.toLowerCase() ?? '') == 'broiler';
+        (selectedBatch?.birdType.toLowerCase() ?? '') == 'broiler';
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -120,27 +118,21 @@ class ReviewAndSavePage extends StatelessWidget {
           ),
           // Birds Section
           _SectionCard(
-            title: 'BIRDS- ${selectedBatch?.birdType?.toUpperCase() ?? ''}',
+            title: 'BIRDS- ${selectedBatch?.birdType.toUpperCase() ?? ''}',
             onEdit: () {},
             items: [
-              _SectionItem(
-                label: 'Sold',
-                value: '0',
-              ), // No sold field in form, set to 0 or add if needed
+              _SectionItem(label: 'Sold', value: '0'),
               _SectionItem(
                 label: 'Died',
-                value: (reductionReason == 'death' ? (reductionCount ?? 0) : 0)
-                    .toString(),
+                value: (reductionCounts['death'] ?? 0).toString(),
               ),
               _SectionItem(
                 label: 'Curled',
-                value: (reductionReason == 'curled' ? (reductionCount ?? 0) : 0)
-                    .toString(),
+                value: (reductionCounts['curled'] ?? 0).toString(),
               ),
               _SectionItem(
                 label: 'Stolen',
-                value: (reductionReason == 'stolen' ? (reductionCount ?? 0) : 0)
-                    .toString(),
+                value: (reductionCounts['stolen'] ?? 0).toString(),
               ),
             ],
           ),

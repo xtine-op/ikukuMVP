@@ -1,6 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/services/supabase_service.dart';
 
@@ -31,14 +31,14 @@ class _SignInPageState extends State<SignInPage> {
         password.isEmpty ||
         (_isSignUp && repeatPassword.isEmpty)) {
       setState(() {
-        _error = 'Please fill in all fields.';
+        _error = 'please_fill_all_fields'.tr();
         _isLoading = false;
       });
       return;
     }
     if (_isSignUp && password != repeatPassword) {
       setState(() {
-        _error = 'Passwords do not match.';
+        _error = 'passwords_do_not_match'.tr();
         _isLoading = false;
       });
       return;
@@ -49,8 +49,7 @@ class _SignInPageState extends State<SignInPage> {
       final isConnected = await supabaseService.testConnection();
       if (!isConnected) {
         setState(() {
-          _error =
-              'Unable to connect to server. Please check your internet connection.';
+          _error = 'unable_to_connect'.tr();
           _isLoading = false;
         });
         return;
@@ -84,7 +83,7 @@ class _SignInPageState extends State<SignInPage> {
           }
         } else {
           setState(() {
-            _error = 'Sign up failed. Please try again.';
+            _error = 'sign_up_failed'.tr();
           });
         }
       } else {
@@ -140,7 +139,7 @@ class _SignInPageState extends State<SignInPage> {
           }
         } else {
           setState(() {
-            _error = 'Sign in failed.';
+            _error = 'sign_in_failed'.tr();
           });
         }
       }
@@ -152,23 +151,21 @@ class _SignInPageState extends State<SignInPage> {
             e.toString().contains('Failed host lookup') ||
             e.toString().contains('No address associated with hostname') ||
             e.toString().contains('Network is unreachable')) {
-          _error =
-              'No internet connection. Please check your network and try again.';
+          _error = 'no_internet_connection'.tr();
         } else if (e.toString().contains('Invalid login credentials')) {
-          _error = 'Invalid email or password. Please try again.';
+          _error = 'invalid_email_or_password'.tr();
         } else if (e.toString().contains('Email not confirmed')) {
-          _error =
-              'Please check your email and confirm your account before signing in.';
+          _error = 'email_not_confirmed'.tr();
         } else if (e.toString().contains('User already registered')) {
-          _error =
-              'An account with this email already exists. Please sign in instead.';
+          _error = 'user_already_registered'.tr();
         } else if (e.toString().contains('Invalid API key')) {
-          _error = 'Configuration error. Please contact support.';
+          _error = 'configuration_error'.tr();
         } else if (e.toString().contains('timeout')) {
-          _error =
-              'Request timed out. Please check your connection and try again.';
+          _error = 'request_timed_out'.tr();
         } else {
-          _error = 'An error occurred: ${e.toString().split(':').last.trim()}';
+          _error = 'an_error_occurred'.tr(
+            args: [e.toString().split(':').last.trim()],
+          );
         }
       });
     }
@@ -229,7 +226,7 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 SizedBox(height: 32),
                 Text(
-                  _isSignUp ? "Create Account" : "Sign In",
+                  _isSignUp ? "create_account".tr() : "sign_in".tr(),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -239,8 +236,8 @@ class _SignInPageState extends State<SignInPage> {
                 SizedBox(height: 12),
                 Text(
                   _isSignUp
-                      ? 'Enter your email and password to create an account.'
-                      : 'Enter your email and password to sign in.',
+                      ? 'enter_email_password_create'.tr()
+                      : 'enter_email_password_signin'.tr(),
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 SizedBox(height: 32),
@@ -249,7 +246,7 @@ class _SignInPageState extends State<SignInPage> {
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: _inputDecoration('Type your email'),
+                  decoration: _inputDecoration('type_your_email'.tr()),
                 ),
                 SizedBox(height: 20),
                 Text('Password', style: TextStyle(fontWeight: FontWeight.w500)),
@@ -257,19 +254,19 @@ class _SignInPageState extends State<SignInPage> {
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: _inputDecoration('Type your password'),
+                  decoration: _inputDecoration('type_your_password'.tr()),
                 ),
                 if (_isSignUp) ...[
                   SizedBox(height: 20),
                   Text(
-                    'Repeat Password',
+                    'repeat_password'.tr(),
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
                   TextField(
                     controller: _repeatPasswordController,
                     obscureText: true,
-                    decoration: _inputDecoration('Repeat your password'),
+                    decoration: _inputDecoration('repeat_your_password'.tr()),
                   ),
                 ],
                 if (_error != null) ...[
@@ -291,8 +288,8 @@ class _SignInPageState extends State<SignInPage> {
                               .testConnection();
                           setState(() {
                             _error = isConnected
-                                ? 'Connection test successful!'
-                                : 'Connection test failed. Check your Supabase configuration.';
+                                ? 'connection_test_successful'.tr()
+                                : 'connection_test_failed'.tr();
                             _isLoading = false;
                           });
                         } catch (e) {
@@ -336,7 +333,7 @@ class _SignInPageState extends State<SignInPage> {
                                 ),
                               )
                             : Text(
-                                _isSignUp ? 'SIGN UP' : 'SIGN IN',
+                                _isSignUp ? 'sign_up'.tr() : 'sign_in'.tr(),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,
@@ -353,8 +350,8 @@ class _SignInPageState extends State<SignInPage> {
                     children: [
                       Text(
                         _isSignUp
-                            ? 'Have an account? '
-                            : "Don't have an account? ",
+                            ? 'have_an_account'.tr()
+                            : "dont_have_account".tr(),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -364,7 +361,7 @@ class _SignInPageState extends State<SignInPage> {
                           });
                         },
                         child: Text(
-                          _isSignUp ? 'SIGN IN' : 'SIGN UP',
+                          _isSignUp ? 'sign_in'.tr() : 'sign_up'.tr(),
                           style: TextStyle(
                             color: Colors.green[800],
                             decoration: TextDecoration.underline,

@@ -41,9 +41,9 @@ class FeatureButton extends StatelessWidget {
                 foregroundColor: CustomColors.text,
                 textStyle: const TextStyle(fontWeight: FontWeight.w600),
               ).copyWith(
-                elevation: MaterialStateProperty.all(0),
-                backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                shadowColor: MaterialStateProperty.all(Colors.transparent),
+                elevation: WidgetStateProperty.all(0),
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                shadowColor: WidgetStateProperty.all(Colors.transparent),
               ),
         ),
       ),

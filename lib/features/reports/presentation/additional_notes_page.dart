@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../batches/data/batch_model.dart';
 import '../../../app_theme.dart';
 
@@ -24,13 +25,18 @@ class AdditionalNotesPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Write any additional notes for this batch (${selectedBatch?.name ?? ''} - ${selectedBatch?.birdType ?? ''})',
+            'additional_notes_title'.tr(
+              namedArgs: {
+                'batch': selectedBatch?.name ?? '',
+                'type': selectedBatch?.birdType ?? '',
+              },
+            ),
             style: TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 24),
           TextField(
             decoration: InputDecoration(
-              labelText: 'Notes',
+              labelText: 'notes_label'.tr(),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -65,9 +71,9 @@ class AdditionalNotesPage extends StatelessWidget {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text(
-                  'CONTINUE',
-                  style: TextStyle(color: CustomColors.text),
+                child: Text(
+                  'continue'.tr(),
+                  style: const TextStyle(color: CustomColors.text),
                 ),
               ),
             ),

@@ -1,26 +1,24 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../app_theme.dart';
+import 'package:ikuku/features/reports/presentation/_reduction_reason_checkboxes_multi.dart';
 
 class ChickenReductionPage extends StatelessWidget {
   final String? chickenReduction;
   final ValueChanged<String?> onReductionChanged;
-  final String? reductionReason;
-  final ValueChanged<String?> onReasonChanged;
-  final int? reductionCount;
-  final ValueChanged<String> onCountChanged;
+  final Map<String, int> reductionCounts;
+  final ValueChanged<Map<String, int>> onCountsChanged;
   final VoidCallback onContinue;
-  final dynamic selectedBatch; // Add this line
+  final dynamic selectedBatch;
 
   const ChickenReductionPage({
     super.key,
     required this.chickenReduction,
     required this.onReductionChanged,
-    required this.reductionReason,
-    required this.onReasonChanged,
-    required this.reductionCount,
-    required this.onCountChanged,
+    required this.reductionCounts,
+    required this.onCountsChanged,
     required this.onContinue,
-    this.selectedBatch, // Add this line
+    this.selectedBatch,
   });
 
   @override
@@ -31,7 +29,7 @@ class ChickenReductionPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Chicken Reduction',
+            'chicken_reduction'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -42,7 +40,7 @@ class ChickenReductionPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Have your chickens reduced today?',
+                'have_chickens_reduced_today'.tr(),
                 style: TextStyle(color: CustomColors.text, fontSize: 16),
               ),
               Row(
@@ -53,29 +51,26 @@ class ChickenReductionPage extends StatelessWidget {
                     onChanged: onReductionChanged,
                     activeColor: CustomColors.primary,
                   ),
-                  const Text('Yes'),
+                  Text('yes'.tr()),
                   Radio<String>(
                     value: 'no',
                     groupValue: chickenReduction,
                     onChanged: onReductionChanged,
                     activeColor: CustomColors.primary,
                   ),
-                  const Text('No'),
+                  Text('no'.tr()),
                 ],
               ),
               if (chickenReduction == 'yes') ...[
                 const SizedBox(height: 24),
                 Text(
-                  'What is the reason for the reduction?',
+                  'reduction_reason'.tr(),
                   style: TextStyle(color: CustomColors.text, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
-                _ReductionReasonCheckboxes(
-                  selectedReasons: reductionReason,
-                  onReasonChanged: onReasonChanged,
-                  onCountChanged: onCountChanged,
-                  reductionCount: reductionCount,
-                  showCountsBelow: true,
+                ReductionReasonCheckboxesMulti(
+                  reductionCounts: reductionCounts,
+                  onCountsChanged: onCountsChanged,
                 ),
               ],
               const SizedBox(height: 24),
@@ -92,7 +87,7 @@ class ChickenReductionPage extends StatelessWidget {
                     ),
                     foregroundColor: CustomColors.text,
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                  ).copyWith(backgroundColor: MaterialStateProperty.all(null)),
+                  ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
                   child: Ink(
                     decoration: BoxDecoration(
                       gradient: CustomColors.buttonGradient,
@@ -101,9 +96,9 @@ class ChickenReductionPage extends StatelessWidget {
                     child: Container(
                       alignment: Alignment.center,
                       constraints: const BoxConstraints(minHeight: 48),
-                      child: const Text(
-                        'CONTINUE',
-                        style: TextStyle(color: CustomColors.text),
+                      child: Text(
+                        'continue'.tr(),
+                        style: const TextStyle(color: CustomColors.text),
                       ),
                     ),
                   ),
@@ -181,7 +176,7 @@ class _ReductionReasonCheckboxesState
                   widget.onReasonChanged(selected.isEmpty ? null : selected);
                 },
               ),
-              Text(reason[0].toUpperCase() + reason.substring(1)),
+              Text(reason[0].toUpperCase() + reason.substring(1).tr()),
             ],
           ),
         ),
@@ -196,7 +191,9 @@ class _ReductionReasonCheckboxesState
                     padding: const EdgeInsets.only(left: 0, bottom: 12),
                     child: TextField(
                       decoration: InputDecoration(
-                        labelText: 'How many chickens were $reason?',
+                        labelText: 'how_many_chickens_reason'.tr(
+                          namedArgs: {'reason': reason},
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

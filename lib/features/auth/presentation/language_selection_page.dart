@@ -5,7 +5,7 @@ import '../../../app_theme.dart';
 
 class LanguageSelectionPage extends StatefulWidget {
   final VoidCallback? onContinue;
-  const LanguageSelectionPage({Key? key, this.onContinue}) : super(key: key);
+  const LanguageSelectionPage({super.key, this.onContinue});
 
   @override
   State<LanguageSelectionPage> createState() => _LanguageSelectionPageState();

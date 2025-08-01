@@ -56,18 +56,18 @@ final ThemeData appTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
-      padding: MaterialStateProperty.all(
+      padding: WidgetStateProperty.all(
         EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       ),
-      shape: MaterialStateProperty.all(
+      shape: WidgetStateProperty.all(
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      foregroundColor: MaterialStateProperty.all(CustomColors.text),
-      backgroundColor: MaterialStateProperty.all(
+      foregroundColor: WidgetStateProperty.all(CustomColors.text),
+      backgroundColor: WidgetStateProperty.all(
         Colors.transparent,
       ), // Use gradient
-      elevation: MaterialStateProperty.all(0),
-      overlayColor: MaterialStateProperty.all(
+      elevation: WidgetStateProperty.all(0),
+      overlayColor: WidgetStateProperty.all(
         CustomColors.lightGreen.withOpacity(0.1),
       ),
     ),

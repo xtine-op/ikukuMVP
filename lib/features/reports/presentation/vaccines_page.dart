@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
@@ -64,7 +65,9 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -135,9 +138,9 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select the vaccines you used today.',
-          style: TextStyle(fontSize: 18),
+        Text(
+          'select_vaccines_today'.tr(),
+          style: const TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 8),
         ...widget.vaccines.map((vaccine) {
@@ -146,11 +149,15 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           );
           return CheckboxListTile(
             value: isSelected,
-            title: Text('${vaccine.name} (Stock: ${vaccine.quantity} litres)'),
+            title: Text(
+              'feed_with_stock'.tr(
+                args: [vaccine.name, vaccine.quantity.toString()],
+              ),
+            ),
             onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
-        }).toList(),
+        }),
         const SizedBox(height: 16),
         ..._selectedVaccines.map((v) {
           final vaccineName = v['name'] as String;
@@ -188,7 +195,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
               const SizedBox(height: 16),
             ],
           );
-        }).toList(),
+        }),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,

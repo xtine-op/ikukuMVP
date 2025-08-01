@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CategorySelectionPage extends StatefulWidget {
-  const CategorySelectionPage({Key? key}) : super(key: key);
+  const CategorySelectionPage({super.key});
 
   @override
   State<CategorySelectionPage> createState() => _CategorySelectionPageState();
@@ -35,23 +36,23 @@ class _CategorySelectionPageState extends State<CategorySelectionPage> {
   Widget build(BuildContext context) {
     final categories = [
       _CategoryCardData(
-        label: 'Feeds',
+        label: tr('feeds'),
         iconPath: 'assets/icons/feeds.svg',
-        subtitle: 'Feeds available in your inventory',
+        subtitle: tr('feeds_available_inventory'),
         color: Colors.green.shade800,
         category: 'feed',
       ),
       _CategoryCardData(
-        label: 'Vaccines',
+        label: tr('vaccines'),
         iconPath: 'assets/icons/vaccines.svg',
-        subtitle: 'Vaccines available in your inventory',
+        subtitle: tr('vaccines_available_inventory'),
         color: Colors.green.shade800,
         category: 'vaccine',
       ),
       _CategoryCardData(
-        label: 'Others',
+        label: tr('others'),
         iconPath: 'assets/icons/others.svg',
-        subtitle: 'Others available in your inventory',
+        subtitle: tr('others_available_inventory'),
         color: Colors.green.shade800,
         category: 'other',
       ),
@@ -62,14 +63,13 @@ class _CategorySelectionPageState extends State<CategorySelectionPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => context.go('/'),
         ),
-        title: const Text(
-          'My Farm Store',
-          style: TextStyle(color: Colors.black87),
+        title: Text(
+          tr('my_farm_store'),
+          style: const TextStyle(color: Colors.black87),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        // Removed notification icon from actions
       ),
       backgroundColor: Colors.white,
       body: Padding(

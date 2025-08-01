@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
@@ -54,7 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
       userName =
           user.userMetadata?['full_name'] ??
           user.email?.split('@').first ??
-          'Farmer';
+          'type_here'.tr();
       final batches = await SupabaseService().fetchBatches(user.id);
       final inventory = await SupabaseService().fetchInventory(user.id);
       int birds = 0;
@@ -85,7 +86,7 @@ class _DashboardPageState extends State<DashboardPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load summary:  [31m${e.toString()} [0m'),
+            content: Text('failed_to_load_summary'.tr(args: [e.toString()])),
           ),
         );
       }
@@ -94,7 +95,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget _summaryItem(String label, String value) {
+    Widget summaryItem(String label, String value) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -112,7 +113,7 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    Widget _quickAction(
+    Widget quickAction(
       BuildContext context,
       String label,
       Widget icon,
@@ -153,7 +154,10 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         leading: Navigator.of(context).canPop() ? const BackButton() : null,
-        title: Text('Dashboard', style: Theme.of(context).textTheme.bodyLarge),
+        title: Text(
+          'dashboard'.tr(),
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
         // Removed notification icon from actions
       ),
       body: loading
@@ -167,11 +171,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     const SizedBox(height: 8),
                     Text(
-                      'Welcome back,',
+                      'welcome_back'.tr(),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     Text(
-                      userName != null ? userName! : 'Type here',
+                      userName != null ? userName! : 'type_here'.tr(),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.green[800],
                         fontWeight: FontWeight.bold,
@@ -209,7 +213,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Birds',
+                                    'birds'.tr(),
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: CustomColors.text,
@@ -241,7 +245,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Feeds',
+                                    'feeds'.tr(),
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: CustomColors.text,
@@ -273,7 +277,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Eggs',
+                                    'eggs'.tr(),
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: CustomColors.text,
@@ -298,7 +302,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                     const SizedBox(height: 16),
                     Text(
-                      'Quick Actions',
+                      'quick_actions'.tr(),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 12),
@@ -311,9 +315,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         crossAxisSpacing: 12,
                         childAspectRatio: 1.3,
                         children: [
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Farm report',
+                            'farm_report'.tr(),
                             SvgPicture.asset(
                               'assets/icons/farm-report.svg',
                               width: 36,
@@ -321,9 +325,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             '/reports',
                           ),
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Farm Store',
+                            'farm_store'.tr(),
                             SvgPicture.asset(
                               'assets/icons/farm-store.svg',
                               width: 36,
@@ -332,9 +336,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             '/inventory',
                           ),
 
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Add Chick Batch',
+                            'add_chick_batch'.tr(),
                             SvgPicture.asset(
                               'assets/icons/add-batch.svg',
                               width: 36,
@@ -342,9 +346,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             '/batches',
                           ),
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Request Farm Summary',
+                            'request_farm_summary'.tr(),
                             SvgPicture.asset(
                               'assets/icons/Request-farm-summary.svg',
                               width: 36,
@@ -352,9 +356,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             '/#',
                           ),
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Extension Service',
+                            'extension_service'.tr(),
                             SvgPicture.asset(
                               'assets/icons/extension-farmers.svg',
                               width: 36,
@@ -362,9 +366,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             '/#',
                           ),
-                          _quickAction(
+                          quickAction(
                             context,
-                            'Smart Tips',
+                            'smart_tips'.tr(),
                             Icon(
                               Icons.lightbulb,
                               color: CustomColors.text,

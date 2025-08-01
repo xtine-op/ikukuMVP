@@ -6,7 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -163,7 +163,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             const SnackBar(content: Text('Coming soon.')),
                           );
                         },
-                        child: const Text('Edit Profile'),
+                        child: Text('edit_profile'.tr()),
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class FeedsPage extends StatelessWidget {
   final List<InventoryItem> feeds;
@@ -62,7 +63,9 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -131,20 +134,22 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select the feed types you used today.',
-          style: TextStyle(fontSize: 18),
+        Text(
+          'select_feed_types_today'.tr(),
+          style: const TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 8),
         ...widget.feeds.map((feed) {
           final isSelected = _selectedFeeds.any((f) => f['name'] == feed.name);
           return CheckboxListTile(
             value: isSelected,
-            title: Text('${feed.name} (Stock: ${feed.quantity} kg)'),
+            title: Text(
+              '${feed.name.tr()} (${"stock".tr()}: ${feed.quantity} ${"kg".tr()})',
+            ),
             onChanged: (checked) => _toggleFeed(feed, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
-        }).toList(),
+        }),
         const SizedBox(height: 16),
         ..._selectedFeeds.map((f) {
           final feedName = f['name'] as String;
@@ -152,7 +157,7 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                feedName,
+                feedName.tr(),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -165,7 +170,7 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter quantity (kg)',
+                  hintText: 'enter_quantity_kg'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -175,14 +180,14 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  suffixText: 'kg',
+                  suffixText: 'kg'.tr(),
                 ),
                 onChanged: (v) => _updateQuantity(feedName, v),
               ),
               const SizedBox(height: 16),
             ],
           );
-        }).toList(),
+        }),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
@@ -206,9 +211,9 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text(
-                  'CONTINUE',
-                  style: TextStyle(color: CustomColors.text),
+                child: Text(
+                  'continue'.tr(),
+                  style: const TextStyle(color: CustomColors.text),
                 ),
               ),
             ),

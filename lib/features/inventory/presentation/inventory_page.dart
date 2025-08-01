@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../data/inventory_item_model.dart';
@@ -20,7 +20,7 @@ class _InventoryPageState extends State<InventoryPage> {
   List<InventoryItem> items = [];
   bool loading = true;
   // Set to a valid tab index (e.g., 0 for Home, or 1 for Batches if you want Batches active)
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -82,14 +82,17 @@ class _InventoryPageState extends State<InventoryPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Add item in store',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Text(
+                  tr('add_item_in_store'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   decoration: InputDecoration(
-                    labelText: 'Name of item',
+                    labelText: tr('name_of_item'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -103,7 +106,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 const SizedBox(height: 18),
                 TextFormField(
                   decoration: InputDecoration(
-                    labelText: 'Quantity',
+                    labelText: tr('quantity'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -121,11 +124,13 @@ class _InventoryPageState extends State<InventoryPage> {
                 DropdownButtonFormField<String>(
                   value: unit,
                   items: units
-                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                      .map(
+                        (u) => DropdownMenuItem(value: u, child: Text(u.tr())),
+                      )
                       .toList(),
                   onChanged: (v) => unit = v ?? 'kg',
                   decoration: InputDecoration(
-                    labelText: 'Unit',
+                    labelText: tr('unit'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -151,9 +156,9 @@ class _InventoryPageState extends State<InventoryPage> {
                         ),
                         backgroundColor: Colors.white,
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: CustomColors.primary),
+                      child: Text(
+                        tr('cancel'),
+                        style: const TextStyle(color: CustomColors.primary),
                       ),
                     ),
                     ElevatedButton(
@@ -187,7 +192,7 @@ class _InventoryPageState extends State<InventoryPage> {
                           vertical: 12,
                         ),
                       ),
-                      child: const Text('Add Item'),
+                      child: Text(tr('add_item')),
                     ),
                   ],
                 ),
@@ -218,15 +223,18 @@ class _InventoryPageState extends State<InventoryPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Edit Farm Store Item',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  Text(
+                    tr('edit_farm_store_item'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 18),
                   TextFormField(
                     initialValue: name,
                     decoration: InputDecoration(
-                      labelText: 'Item Name',
+                      labelText: tr('item_name'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -241,17 +249,20 @@ class _InventoryPageState extends State<InventoryPage> {
                   const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     value: category,
-                    items: const [
-                      DropdownMenuItem(value: 'feed', child: Text('Feed')),
+                    items: [
+                      DropdownMenuItem(value: 'feed', child: Text(tr('feeds'))),
                       DropdownMenuItem(
                         value: 'vaccine',
-                        child: Text('Vaccine'),
+                        child: Text(tr('vaccines')),
                       ),
-                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                      DropdownMenuItem(
+                        value: 'other',
+                        child: Text(tr('others')),
+                      ),
                     ],
                     onChanged: (v) => category = v ?? 'feed',
                     decoration: InputDecoration(
-                      labelText: 'Category',
+                      labelText: tr('category'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -264,7 +275,7 @@ class _InventoryPageState extends State<InventoryPage> {
                   TextFormField(
                     initialValue: quantity.toString(),
                     decoration: InputDecoration(
-                      labelText: 'Quantity',
+                      labelText: tr('quantity'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -282,7 +293,7 @@ class _InventoryPageState extends State<InventoryPage> {
                   TextFormField(
                     initialValue: unit,
                     decoration: InputDecoration(
-                      labelText: 'Unit',
+                      labelText: tr('unit'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -311,9 +322,9 @@ class _InventoryPageState extends State<InventoryPage> {
                           ),
                           backgroundColor: Colors.white,
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.green),
+                        child: Text(
+                          tr('cancel'),
+                          style: const TextStyle(color: Colors.green),
                         ),
                       ),
                       ElevatedButton(
@@ -345,7 +356,7 @@ class _InventoryPageState extends State<InventoryPage> {
                             vertical: 12,
                           ),
                         ),
-                        child: const Text('Save'),
+                        child: Text(tr('save')),
                       ),
                     ],
                   ),
@@ -374,7 +385,7 @@ class _InventoryPageState extends State<InventoryPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Add amount to ${item.name}',
+                  tr('add_amount_to', namedArgs: {'item': item.name}),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -383,7 +394,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 const SizedBox(height: 18),
                 TextFormField(
                   decoration: InputDecoration(
-                    labelText: 'Amount to add',
+                    labelText: tr('amount_to_add'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -414,9 +425,9 @@ class _InventoryPageState extends State<InventoryPage> {
                         ),
                         backgroundColor: Colors.white,
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.green),
+                      child: Text(
+                        tr('cancel'),
+                        style: const TextStyle(color: Colors.green),
                       ),
                     ),
                     ElevatedButton(
@@ -445,7 +456,7 @@ class _InventoryPageState extends State<InventoryPage> {
                           vertical: 12,
                         ),
                       ),
-                      child: const Text('Add'),
+                      child: Text(tr('add')),
                     ),
                   ],
                 ),
@@ -463,19 +474,16 @@ class _InventoryPageState extends State<InventoryPage> {
     String tip;
     String tipIcon;
     if (widget.category == 'feed') {
-      heading = 'Feeds available in your inventory';
-      tip =
-          'Tip: You can adjust feed amounts when recording daily farm reports .';
+      heading = tr('feeds_available_inventory');
+      tip = tr('tip_adjust_feed');
       tipIcon = 'assets/icons/tip-chicken.png';
     } else if (widget.category == 'vaccine') {
-      heading = 'Vaccines available in your inventory';
-      tip =
-          'Tip: You can adjust vaccine amounts when recording daily farm reports .';
+      heading = tr('vaccines_available_inventory');
+      tip = tr('tip_adjust_vaccine');
       tipIcon = 'assets/icons/tip-chicken.png';
     } else {
-      heading = 'Items available in your inventory';
-      tip =
-          'Tip: You can adjust item amounts when recording daily farm reports .';
+      heading = tr('items_available_inventory');
+      tip = tr('tip_adjust_item');
       tipIcon = 'assets/icons/tip-chicken.png';
     }
     return Scaffold(
@@ -521,10 +529,10 @@ class _InventoryPageState extends State<InventoryPage> {
                   ),
                   const SizedBox(height: 18),
                   if (items.isEmpty)
-                    const Center(
+                    Center(
                       child: Text(
-                        'No items in store yet',
-                        style: TextStyle(fontSize: 16),
+                        tr('no_items_in_store_yet'),
+                        style: const TextStyle(fontSize: 16),
                       ),
                     )
                   else
@@ -574,7 +582,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                         Icons.add_circle_outline,
                                         color: CustomColors.secondary,
                                       ),
-                                      tooltip: 'Add amount',
+                                      tooltip: tr('add_amount'),
                                       onPressed: () async {
                                         int? addAmount = await showDialog<int>(
                                           context: context,
@@ -588,14 +596,21 @@ class _InventoryPageState extends State<InventoryPage> {
                                                     BorderRadius.circular(24),
                                               ),
                                               title: Text(
-                                                'Add to ${item.name}',
+                                                tr(
+                                                  'add_to',
+                                                  namedArgs: {
+                                                    'item': item.name,
+                                                  },
+                                                ),
                                               ),
                                               content: TextFormField(
                                                 autofocus: true,
                                                 keyboardType:
                                                     TextInputType.number,
                                                 decoration: InputDecoration(
-                                                  labelText: 'Amount to add',
+                                                  labelText: tr(
+                                                    'amount_to_add',
+                                                  ),
                                                   filled: true,
                                                   fillColor: Colors
                                                       .white, // Ensure input is white
@@ -642,7 +657,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                                 TextButton(
                                                   onPressed: () =>
                                                       Navigator.pop(context),
-                                                  child: const Text('Cancel'),
+                                                  child: Text(tr('cancel')),
                                                 ),
                                                 ElevatedButton(
                                                   style: ElevatedButton.styleFrom(
@@ -667,7 +682,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                                         context,
                                                         value,
                                                       ),
-                                                  child: const Text('Add'),
+                                                  child: Text(tr('add')),
                                                 ),
                                               ],
                                             );
@@ -717,11 +732,11 @@ class _InventoryPageState extends State<InventoryPage> {
 String _categoryLabel(String category) {
   switch (category) {
     case 'feed':
-      return 'Feeds';
+      return tr('feeds');
     case 'vaccine':
-      return 'Vaccines';
+      return tr('vaccines');
     case 'other':
-      return 'Others';
+      return tr('others');
     default:
       return category;
   }

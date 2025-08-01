@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CreateFarmPage extends StatefulWidget {
   final String name;
   final String phone;
-  const CreateFarmPage({Key? key, this.name = '', this.phone = ''})
-    : super(key: key);
+  const CreateFarmPage({super.key, this.name = '', this.phone = ''});
 
   @override
   State<CreateFarmPage> createState() => _CreateFarmPageState();
@@ -37,7 +37,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
         _farmNameController.text.trim().isEmpty ||
         _farmLocationController.text.trim().isEmpty) {
       setState(() {
-        _error = 'Please fill in all fields.';
+        _error = 'please_fill_all_fields'.tr();
         _isLoading = false;
       });
       return;
@@ -45,7 +45,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       setState(() {
-        _error = 'You must be signed in.';
+        _error = 'must_be_signed_in'.tr();
         _isLoading = false;
       });
       return;
@@ -68,7 +68,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
       context.go('/');
     } catch (e) {
       setState(() {
-        _error = 'Failed to create farm: ' + e.toString();
+        _error = 'failed_to_create_farm'.tr(args: [e.toString()]);
       });
     }
     setState(() {
@@ -91,7 +91,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
               children: [
                 SizedBox(height: 16),
                 Text(
-                  'Create your farm',
+                  'create_your_farm'.tr(),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -100,19 +100,19 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'Enter your details to set up your farm',
+                  'enter_farm_details'.tr(),
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 SizedBox(height: 32),
                 Text(
-                  'First Name',
+                  'first_name'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 8),
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    hintText: 'Type here',
+                    hintText: 'type_here'.tr(),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -120,7 +120,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Phone Number',
+                  'phone_number'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 8),
@@ -129,7 +129,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.phone_outlined),
-                    hintText: '0723 456 789',
+                    hintText: 'phone_hint'.tr(),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -137,14 +137,14 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Farm Name',
+                  'farm_name'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 8),
                 TextField(
                   controller: _farmNameController,
                   decoration: InputDecoration(
-                    hintText: 'Farm name',
+                    hintText: 'farm_name_hint'.tr(),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -152,14 +152,14 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Farm Location',
+                  'farm_location'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 8),
                 TextField(
                   controller: _farmLocationController,
                   decoration: InputDecoration(
-                    hintText: 'Farm location',
+                    hintText: 'farm_location_hint'.tr(),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -200,7 +200,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                                 ),
                               )
                             : Text(
-                                'Continue',
+                                'continue'.tr(),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,

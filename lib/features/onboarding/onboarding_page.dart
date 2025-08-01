@@ -1,7 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app_theme.dart';
-import 'dart:ui'; // Added for BackdropFilter
+// Added for BackdropFilter
 
 class OnboardingPage extends StatefulWidget {
   final VoidCallback onFinish;
@@ -18,20 +19,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final List<_OnboardingScreenData> _screens = [
     _OnboardingScreenData(
       image: 'assets/icons/onboarding-image-1.png',
-      title: 'Manage Your Poultry Farm',
-      description: 'Track, manage, and grow your farm with ease.',
+      title: 'onboarding_title_1',
+      description: 'onboarding_desc_1',
     ),
     _OnboardingScreenData(
       image: 'assets/icons/onboarding-image-2.png',
-      title: 'Never Miss a Schedule',
-      description:
-          'Get reminders for vaccinatons and feeding stages to ensure your kukus are healthy.',
+      title: 'onboarding_title_2',
+      description: 'onboarding_desc_2',
     ),
     _OnboardingScreenData(
       image: 'assets/icons/onboarding-image-3.png',
-      title: 'Farm Smart',
-      description:
-          'Keep your important records in one place and only one tap away.',
+      title: 'onboarding_title_3',
+      description: 'onboarding_desc_3',
     ),
   ];
 
@@ -150,7 +149,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         const Spacer(),
                         // Title and description at the bottom
                         Text(
-                          _screens[_currentPage].title,
+                          context.tr(_screens[_currentPage].title),
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 color: _currentPage == 0
@@ -167,7 +166,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _screens[_currentPage].description,
+                          context.tr(_screens[_currentPage].description),
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 color: _currentPage == 0
@@ -196,7 +195,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   widget.onFinish();
                                 },
                                 child: Text(
-                                  'Skip',
+                                  'skip'.tr(),
                                   style: TextStyle(color: CustomColors.text),
                                 ),
                               ),
@@ -246,7 +245,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                       ),
                                     ),
                                     child: Text(
-                                      'CONTINUE',
+                                      'continue'.tr(),
                                       style: TextStyle(
                                         color: CustomColors.text,
                                         fontSize: 18,

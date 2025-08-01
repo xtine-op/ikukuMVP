@@ -92,8 +92,8 @@ class _ReportsPageState extends State<ReportsPage> {
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
-            const Text(
-              'It seems you have not created your batches yet, go to batches and add a chick batch to continue',
+            Text(
+              'no_batches_message'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
@@ -111,7 +111,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
                 child: ElevatedButton.icon(
                   label: Text(
-                    'Go to Batches',
+                    'go_to_batches'.tr(),
                     style: TextStyle(color: CustomColors.text),
                   ),
                   onPressed: () {
@@ -152,7 +152,7 @@ class _ReportsPageState extends State<ReportsPage> {
               child: ElevatedButton.icon(
                 icon: Icon(Icons.add, color: CustomColors.text),
                 label: Text(
-                  'Add Farm Report',
+                  'add_farm_report'.tr(),
                   style: TextStyle(color: CustomColors.text),
                 ),
                 onPressed: () {
@@ -176,7 +176,7 @@ class _ReportsPageState extends State<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'Previous Records',
+            'previous_records'.tr(),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
@@ -199,7 +199,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   });
                   final latestRecord = recordsForBatch.first;
                   // Format date
-                  String formattedDate = 'Unknown Date';
+                  String formattedDate = 'unknown_date'.tr();
                   final rawDate = latestRecord['record_date'];
                   if (rawDate is String && rawDate.isNotEmpty) {
                     try {
@@ -212,11 +212,24 @@ class _ReportsPageState extends State<ReportsPage> {
                     formattedDate = DateFormat('yyyy-MM-dd').format(rawDate);
                   }
                   return ListTile(
-                    title: Text(batch['name'] ?? 'Unknown Batch'),
+                    title: Text(batch['name'] ?? 'unknown_batch'.tr()),
                     subtitle: Text(
-                      '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
+                      '$formattedDate • ' +
+                          (batch['bird_type'] == 'broiler'
+                              ? 'broiler'.tr()
+                              : batch['bird_type'] == 'layer'
+                              ? 'layer'.tr()
+                              : batch['bird_type'] == 'kienyeji'
+                              ? 'kienyeji'.tr()
+                              : 'unknown_type'.tr()) +
+                          (batch['total_chickens'] != null
+                              ? ' • ' +
+                                    'chickens'.tr() +
+                                    ': ${batch['total_chickens']}'
+                              : ''),
                     ),
                     onTap: () {
+                      // Pass both batch and the full report (with date) to the detail page
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ReportDetailPage(
