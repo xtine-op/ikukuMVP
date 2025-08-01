@@ -4,13 +4,17 @@ import '../../../shared/services/supabase_service.dart';
 import '../../batches/data/batch_model.dart';
 import '../data/batch_record_model.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RecordDetailPage extends StatefulWidget {
   final DailyRecord record;
   const RecordDetailPage({super.key, required this.record});
 
   @override
-  State<RecordDetailPage> createState() => _RecordDetailPageState();
+  State<RecordDetailPage> createState() {
+    print('RecordDetailPage - createState called with record: ${record.id}');
+    return _RecordDetailPageState();
+  }
 }
 
 class _RecordDetailPageState extends State<RecordDetailPage> {
@@ -20,18 +24,38 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
 
   @override
   void initState() {
+    print('RecordDetailPage - initState called');
     super.initState();
     _fetchDetails();
   }
 
   Future<void> _fetchDetails() async {
+    print('RecordDetailPage - _fetchDetails called');
+    print('RecordDetailPage - widget.record.id: ${widget.record.id}');
+    print(
+      'RecordDetailPage - widget.record.recordDate: ${widget.record.recordDate}',
+    );
+    print('RecordDetailPage - widget.record.userId: ${widget.record.userId}');
     setState(() => loading = true);
     final batchRecordsRaw = await SupabaseService()
         .fetchBatchRecordsForDailyRecord(widget.record.id);
+
+    // Debug: Print the raw data from database
+    print('RecordDetailPage - Raw batch records from DB: $batchRecordsRaw');
+
     if (batchRecordsRaw.isNotEmpty) {
       batchRecords = batchRecordsRaw
           .map((e) => BatchRecord.fromJson(e))
           .toList();
+
+      // Debug: Print the parsed batch records
+      for (final record in batchRecords) {
+        print('RecordDetailPage - Parsed batch record:');
+        print('  feedsUsed: ${record.feedsUsed}');
+        print('  vaccinesUsed: ${record.vaccinesUsed}');
+        print('  otherMaterialsUsed: ${record.otherMaterialsUsed}');
+      }
+
       // Fetch batch info for the first batch (assuming one batch per record for now)
       final batchId = batchRecords.first.batchId;
       final batchesRaw = await SupabaseService().fetchBatches(
@@ -49,14 +73,15 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('RecordDetailPage - build called, loading: $loading');
     if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final dateStr = DateFormat('d MMMM yyyy').format(widget.record.recordDate);
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm')),
+      appBar: AppBar(title: Text('confirm'.tr())),
       body: batch == null || batchRecords.isEmpty
-          ? const Center(child: Text('No details found for this record.'))
+          ? Center(child: Text('no_details_found'.tr()))
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
@@ -118,7 +143,7 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                   Center(
                     child: Column(
                       children: [
-                        const Text('This report was prepared by'),
+                        Text('this_report_prepared_by'.tr()),
                         Text(
                           'Type here on ${DateFormat('dd/MM/yyyy').format(widget.record.createdAt)} at ${DateFormat('jm').format(widget.record.createdAt)}',
                           style: const TextStyle(
@@ -141,13 +166,13 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 24),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
-                      child: const Text('FINISH REPORTING'),
+                      child: Text('finish_reporting'.tr()),
                     ),
                   ),
                 ],
@@ -295,53 +320,69 @@ class _BatchRecordSectionUI extends StatelessWidget {
     final birdsItems = <_SectionItem>[];
     if (rec.chickensSold != 0)
       birdsItems.add(
-        _SectionItem(label: 'Sold', value: rec.chickensSold.toString()),
+        _SectionItem(label: 'sold'.tr(), value: rec.chickensSold.toString()),
       );
     if (rec.chickensDied != 0)
       birdsItems.add(
-        _SectionItem(label: 'Died', value: rec.chickensDied.toString()),
+        _SectionItem(label: 'died'.tr(), value: rec.chickensDied.toString()),
       );
     if (rec.chickensCurled != 0)
       birdsItems.add(
-        _SectionItem(label: 'Curled', value: rec.chickensCurled.toString()),
+        _SectionItem(
+          label: 'curled'.tr(),
+          value: rec.chickensCurled.toString(),
+        ),
       );
     if (rec.chickensStolen != 0)
       birdsItems.add(
-        _SectionItem(label: 'Stolen', value: rec.chickensStolen.toString()),
+        _SectionItem(
+          label: 'stolen'.tr(),
+          value: rec.chickensStolen.toString(),
+        ),
       );
 
     final eggsItems = <_SectionItem>[];
     if ((rec.eggsCollected ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
-          label: 'Collected',
+          label: 'collected'.tr(),
           value: (rec.eggsCollected ?? 0).toString(),
         ),
       );
     if ((rec.eggsBroken ?? 0) != 0)
       eggsItems.add(
-        _SectionItem(label: 'Broken', value: (rec.eggsBroken ?? 0).toString()),
+        _SectionItem(
+          label: 'broken'.tr(),
+          value: (rec.eggsBroken ?? 0).toString(),
+        ),
       );
     if ((rec.eggsSmall ?? 0) != 0)
       eggsItems.add(
-        _SectionItem(label: 'Small', value: (rec.eggsSmall ?? 0).toString()),
+        _SectionItem(
+          label: 'small'.tr(),
+          value: (rec.eggsSmall ?? 0).toString(),
+        ),
       );
     if ((rec.eggsDeformed ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
-          label: 'Deformed',
+          label: 'deformed'.tr(),
           value: (rec.eggsDeformed ?? 0).toString(),
         ),
       );
     if ((rec.eggsStandard ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
-          label: 'Standard',
+          label: 'standard'.tr(),
           value: (rec.eggsStandard ?? 0).toString(),
         ),
       );
 
     final feedsItems = <_SectionItem>[];
+    print('_BatchRecordSectionUI - rec.feedsUsed: ${rec.feedsUsed}');
+    print(
+      '_BatchRecordSectionUI - rec.feedsUsed.isNotEmpty: ${rec.feedsUsed.isNotEmpty}',
+    );
     if (rec.feedsUsed.isNotEmpty) {
       feedsItems.addAll(
         rec.feedsUsed.map(
@@ -358,6 +399,10 @@ class _BatchRecordSectionUI extends StatelessWidget {
     }
 
     final vaccinesItems = <_SectionItem>[];
+    print('_BatchRecordSectionUI - rec.vaccinesUsed: ${rec.vaccinesUsed}');
+    print(
+      '_BatchRecordSectionUI - rec.vaccinesUsed.isNotEmpty: ${rec.vaccinesUsed.isNotEmpty}',
+    );
     if (rec.vaccinesUsed.isNotEmpty) {
       vaccinesItems.addAll(
         rec.vaccinesUsed.map(
@@ -373,16 +418,19 @@ class _BatchRecordSectionUI extends StatelessWidget {
     final sawdustItems = <_SectionItem>[];
     if (rec.sawdustInStore != null)
       sawdustItems.add(
-        _SectionItem(label: 'In store', value: rec.sawdustInStore.toString()),
+        _SectionItem(
+          label: 'in_store'.tr(),
+          value: rec.sawdustInStore.toString(),
+        ),
       );
     if (rec.sawdustUsed != null)
       sawdustItems.add(
-        _SectionItem(label: 'Used', value: rec.sawdustUsed.toString()),
+        _SectionItem(label: 'used'.tr(), value: rec.sawdustUsed.toString()),
       );
     if (rec.sawdustRemaining != null)
       sawdustItems.add(
         _SectionItem(
-          label: 'Remaining',
+          label: 'remaining'.tr(),
           value: rec.sawdustRemaining.toString(),
         ),
       );
@@ -391,15 +439,35 @@ class _BatchRecordSectionUI extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (birdsItems.isNotEmpty)
-          _SectionCardUI(title: 'BIRDS- LAYERS', edit: true, items: birdsItems),
+          _SectionCardUI(
+            title: 'birds'.tr().toUpperCase(),
+            edit: true,
+            items: birdsItems,
+          ),
         if (eggsItems.isNotEmpty)
-          _SectionCardUI(title: 'EGGS', edit: true, items: eggsItems),
+          _SectionCardUI(
+            title: 'eggs'.tr().toUpperCase(),
+            edit: true,
+            items: eggsItems,
+          ),
         if (feedsItems.isNotEmpty)
-          _SectionCardUI(title: 'FEEDS USED', edit: true, items: feedsItems),
+          _SectionCardUI(
+            title: 'feeds_used'.tr().toUpperCase(),
+            edit: true,
+            items: feedsItems,
+          ),
         if (vaccinesItems.isNotEmpty)
-          _SectionCardUI(title: 'VACCINES', edit: true, items: vaccinesItems),
+          _SectionCardUI(
+            title: 'vaccines'.tr().toUpperCase(),
+            edit: true,
+            items: vaccinesItems,
+          ),
         if (sawdustItems.isNotEmpty)
-          _SectionCardUI(title: 'SAWDUST', edit: true, items: sawdustItems),
+          _SectionCardUI(
+            title: 'sawdust'.tr().toUpperCase(),
+            edit: true,
+            items: sawdustItems,
+          ),
       ],
     );
   }
@@ -444,9 +512,9 @@ class _SectionCardUI extends StatelessWidget {
               if (edit)
                 GestureDetector(
                   onTap: () {}, // TODO: Implement edit navigation
-                  child: const Text(
-                    'EDIT ITEMS',
-                    style: TextStyle(
+                  child: Text(
+                    'edit_items'.tr(),
+                    style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,

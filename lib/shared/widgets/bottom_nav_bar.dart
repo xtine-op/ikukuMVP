@@ -23,7 +23,7 @@ class BottomNavBar extends StatelessWidget {
           // My Shop: Show coming soon message (inactive)
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('This feature is coming soon!'),
+              content: Text('coming_soon'.tr()),
               duration: Duration(seconds: 2),
               backgroundColor: CustomColors.primary,
             ),

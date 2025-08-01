@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../batches/data/batch_model.dart';
 import '../../../app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class EggProductionPage extends StatelessWidget {
   final Batch? selectedBatch;
@@ -51,7 +52,7 @@ class EggProductionPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Have you collected eggs today?'),
+            Text('have_collected_eggs_today'.tr()),
             Row(
               children: [
                 Radio<bool>(
@@ -59,13 +60,13 @@ class EggProductionPage extends StatelessWidget {
                   groupValue: collectedEggs,
                   onChanged: onCollectedEggsChanged,
                 ),
-                const Text('Yes'),
+                Text('yes'.tr()),
                 Radio<bool>(
                   value: false,
                   groupValue: collectedEggs,
                   onChanged: onCollectedEggsChanged,
                 ),
-                const Text('No'),
+                Text('no'.tr()),
               ],
             ),
             if (collectedEggs == true) ...[
@@ -81,7 +82,7 @@ class EggProductionPage extends StatelessWidget {
                 onChanged: onEggsCollectedChanged,
               ),
               const SizedBox(height: 8),
-              const Text('Would you like to grade your eggs?'),
+              Text('would_like_to_grade_eggs'.tr()),
               Row(
                 children: [
                   Radio<bool>(
@@ -89,13 +90,13 @@ class EggProductionPage extends StatelessWidget {
                     groupValue: gradeEggs,
                     onChanged: onGradeEggsChanged,
                   ),
-                  const Text('Yes'),
+                  Text('yes'.tr()),
                   Radio<bool>(
                     value: false,
                     groupValue: gradeEggs,
                     onChanged: onGradeEggsChanged,
                   ),
-                  const Text('No'),
+                  Text('no'.tr()),
                 ],
               ),
               if (gradeEggs == true) ...[

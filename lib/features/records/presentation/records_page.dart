@@ -35,7 +35,11 @@ class _RecordsPageState extends State<RecordsPage> {
       return;
     }
     final data = await SupabaseService().fetchDailyRecords(user.id);
+    print('RecordsPage - Fetched daily records: $data');
     final recs = data.map((e) => DailyRecord.fromJson(e)).toList();
+    print(
+      'RecordsPage - Parsed daily records: ${recs.map((r) => '${r.id} - ${r.recordDate}').toList()}',
+    );
     setState(() {
       records = recs;
       loading = false;
@@ -131,6 +135,7 @@ class _RecordsPageState extends State<RecordsPage> {
                           )
                         : null,
                     onTap: () {
+                      print('RecordsPage - Tapped on record: ${record.id}');
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => RecordDetailPage(record: record),

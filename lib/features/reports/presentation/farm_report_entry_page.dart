@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
@@ -431,7 +432,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => context.go('/'),
             ),
-            title: const Text('Farm Report Entry'),
+            title: Text('farm_report_entry'.tr()),
           ),
           body: Center(
             child: Padding(
@@ -446,10 +447,10 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'It seems you have no items in your store. Go to your store and add items to continue.',
+                  Text(
+                    'no_items_in_store'.tr(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                       color: CustomColors.text,
@@ -466,8 +467,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                       child: ElevatedButton.icon(
                         icon: Icon(Icons.store, color: CustomColors.text),
                         label: Text(
-                          'Go to Store',
-                          style: TextStyle(color: CustomColors.text),
+                          'go_to_store'.tr(),
+                          style: const TextStyle(color: CustomColors.text),
                         ),
                         onPressed: () {
                           context.go('/inventory-categories');
@@ -499,7 +500,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.go('/'),
           ),
-          title: const Text('Farm Report Entry'),
+          title: Text('farm_report_entry'.tr()),
         ),
         body: Center(
           child: Column(
@@ -512,7 +513,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _fetchInitialData,
-                child: const Text('Retry'),
+                child: Text('retry'.tr()),
               ),
             ],
           ),
@@ -525,7 +526,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/'),
         ),
-        title: const Text('Farm Report Entry'),
+        title: Text('farm_report_entry'.tr()),
       ),
       body: PageView(
         controller: _pageController,
@@ -963,6 +964,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       }
 
       final dailyRecordId = await SupabaseService().addDailyRecord(report);
+      print('_saveBatchRecord - dailyRecordId: $dailyRecordId');
       await _saveBatchRecord(dailyRecordId);
 
       setState(() => loading = false);
@@ -1122,12 +1124,26 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         'eggs_small': null,
         'eggs_deformed': deformedEggs,
         'eggs_standard': bigEggs,
-        'feeds_used': selectedFeeds, // List of {name, quantity}
-        'vaccines_used': selectedVaccines, // List of {name, quantity}
-        'other_materials_used':
-            selectedOtherMaterials, // List of {name, quantity}
+        'feeds_used': selectedFeeds
+            .where((f) => f['quantity'] != null)
+            .toList(), // List of {name, quantity}
+        'vaccines_used': selectedVaccines
+            .where((v) => v['quantity'] != null)
+            .toList(), // List of {name, quantity}
+        'other_materials_used': selectedOtherMaterials
+            .where((m) => m['quantity'] != null)
+            .toList(), // List of {name, quantity}
         'notes': notes,
       };
+
+      // Debug: Print what's being saved
+      print('_saveBatchRecord - selectedFeeds: $selectedFeeds');
+      print('_saveBatchRecord - selectedVaccines: $selectedVaccines');
+      print(
+        '_saveBatchRecord - selectedOtherMaterials: $selectedOtherMaterials',
+      );
+      print('_saveBatchRecord - batchRecord: $batchRecord');
+
       await SupabaseService().addBatchRecord(batchRecord);
     } catch (e) {
       print('Error saving batch record: $e');

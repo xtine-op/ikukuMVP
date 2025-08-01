@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
@@ -66,7 +67,7 @@ class _ReportsPageState extends State<ReportsPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => context.go('/'),
         ),
-        title: const Text('My Farm Reports'),
+        title: Text('my_farm_reports'.tr()),
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
