@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
@@ -65,9 +66,12 @@ class ReviewAndSavePage extends StatelessWidget {
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
               const Spacer(),
-              const Text(
-                'Confirm',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              Text(
+                'confirm'.tr(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
               const Spacer(flex: 2),
             ],
@@ -84,8 +88,8 @@ class ReviewAndSavePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Kuku's Farm report",
-                  style: TextStyle(
+                  'farm_report'.tr(),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                     color: CustomColors.primary,
@@ -118,20 +122,23 @@ class ReviewAndSavePage extends StatelessWidget {
           ),
           // Birds Section
           _SectionCard(
-            title: 'BIRDS- ${selectedBatch?.birdType.toUpperCase() ?? ''}',
+            title:
+                'birds'.tr() +
+                '- ' +
+                (selectedBatch?.birdType.toUpperCase() ?? ''),
             onEdit: () {},
             items: [
-              _SectionItem(label: 'Sold', value: '0'),
+              _SectionItem(label: 'sold'.tr(), value: '0'),
               _SectionItem(
-                label: 'Died',
+                label: 'died'.tr(),
                 value: (reductionCounts['death'] ?? 0).toString(),
               ),
               _SectionItem(
-                label: 'Curled',
+                label: 'curled'.tr(),
                 value: (reductionCounts['curled'] ?? 0).toString(),
               ),
               _SectionItem(
-                label: 'Stolen',
+                label: 'stolen'.tr(),
                 value: (reductionCounts['stolen'] ?? 0).toString(),
               ),
             ],
@@ -139,27 +146,30 @@ class ReviewAndSavePage extends StatelessWidget {
           // Eggs Section (exclude if broiler)
           if (!isBroiler)
             _SectionCard(
-              title: 'EGGS',
+              title: 'eggs'.tr(),
               onEdit: () {},
               items: [
                 _SectionItem(
-                  label: 'Collected',
+                  label: 'collected'.tr(),
                   value: (eggsCollected ?? 0).toString(),
                 ),
                 _SectionItem(
-                  label: 'Broken',
+                  label: 'broken'.tr(),
                   value: (brokenEggs ?? 0).toString(),
                 ),
-                _SectionItem(label: 'Big', value: (bigEggs ?? 0).toString()),
                 _SectionItem(
-                  label: 'Deformed',
+                  label: 'big'.tr(),
+                  value: (bigEggs ?? 0).toString(),
+                ),
+                _SectionItem(
+                  label: 'deformed'.tr(),
                   value: (deformedEggs ?? 0).toString(),
                 ),
               ],
             ),
           // Feeds Section (show all selected feeds)
           _SectionCard(
-            title: 'FEEDS USED',
+            title: 'feeds_used'.tr(),
             onEdit: () {},
             items: [
               ...selectedFeeds.map(
@@ -172,7 +182,7 @@ class ReviewAndSavePage extends StatelessWidget {
           ),
           // Vaccines Section (show all selected vaccines)
           _SectionCard(
-            title: 'VACCINES',
+            title: 'vaccines'.tr(),
             onEdit: () {},
             items: [
               ...selectedVaccines.map(
@@ -185,7 +195,7 @@ class ReviewAndSavePage extends StatelessWidget {
           ),
           // Other Materials Section (show all selected other materials)
           _SectionCard(
-            title: 'OTHER MATERIALS',
+            title: 'other_materials'.tr(),
             onEdit: () {},
             items: [
               ...selectedOtherMaterials.map(
@@ -199,14 +209,17 @@ class ReviewAndSavePage extends StatelessWidget {
           // Additional Notes Section
           if (notes != null && notes!.trim().isNotEmpty)
             _SectionCard(
-              title: 'ADDITIONAL NOTES',
+              title: 'additional_notes_title'.tr(),
               onEdit: () {},
               items: [_SectionItem(label: '', value: notes!)],
             ),
           const SizedBox(height: 16),
           Center(
             child: Text(
-              'This report was prepared by\nType here on ${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+              'this_report_prepared_on'.tr() +
+                  '\n' +
+                  ' ${date.day}/${date.month}/${date.year} ' +
+                  'at ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
               style: const TextStyle(color: Colors.black54, fontSize: 13),
               textAlign: TextAlign.center,
             ),
@@ -233,9 +246,9 @@ class ReviewAndSavePage extends StatelessWidget {
                 child: Container(
                   alignment: Alignment.center,
                   height: 24,
-                  child: const Text(
-                    'FINISH REPORTING',
-                    style: TextStyle(
+                  child: Text(
+                    'finish_reporting'.tr(),
+                    style: const TextStyle(
                       color: CustomColors.text,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

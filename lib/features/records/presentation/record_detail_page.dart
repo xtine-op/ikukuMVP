@@ -135,7 +135,9 @@ class _RecordDetailPageState extends State<RecordDetailPage> {
                       ],
                     ),
                   ),
-                  ...batchRecords.map((rec) => _BatchRecordSectionUI(rec)),
+                  ...batchRecords
+                      .map((rec) => _BatchRecordSectionUI(rec))
+                      .toList(),
                   const SizedBox(height: 16),
                   // Footer
                   Center(
@@ -316,74 +318,65 @@ class _BatchRecordSectionUI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final birdsItems = <_SectionItem>[];
-    if (rec.chickensSold != 0) {
+    if (rec.chickensSold != 0)
       birdsItems.add(
         _SectionItem(label: 'sold'.tr(), value: rec.chickensSold.toString()),
       );
-    }
-    if (rec.chickensDied != 0) {
+    if (rec.chickensDied != 0)
       birdsItems.add(
         _SectionItem(label: 'died'.tr(), value: rec.chickensDied.toString()),
       );
-    }
-    if (rec.chickensCurled != 0) {
+    if (rec.chickensCurled != 0)
       birdsItems.add(
         _SectionItem(
           label: 'curled'.tr(),
           value: rec.chickensCurled.toString(),
         ),
       );
-    }
-    if (rec.chickensStolen != 0) {
+    if (rec.chickensStolen != 0)
       birdsItems.add(
         _SectionItem(
           label: 'stolen'.tr(),
           value: rec.chickensStolen.toString(),
         ),
       );
-    }
 
     final eggsItems = <_SectionItem>[];
-    if ((rec.eggsCollected ?? 0) != 0) {
+    if ((rec.eggsCollected ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
           label: 'collected'.tr(),
           value: (rec.eggsCollected ?? 0).toString(),
         ),
       );
-    }
-    if ((rec.eggsBroken ?? 0) != 0) {
+    if ((rec.eggsBroken ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
           label: 'broken'.tr(),
           value: (rec.eggsBroken ?? 0).toString(),
         ),
       );
-    }
-    if ((rec.eggsSmall ?? 0) != 0) {
+    if ((rec.eggsSmall ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
           label: 'small'.tr(),
           value: (rec.eggsSmall ?? 0).toString(),
         ),
       );
-    }
-    if ((rec.eggsDeformed ?? 0) != 0) {
+    if ((rec.eggsDeformed ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
           label: 'deformed'.tr(),
           value: (rec.eggsDeformed ?? 0).toString(),
         ),
       );
-    }
-    if ((rec.eggsStandard ?? 0) != 0) {
+    if ((rec.eggsStandard ?? 0) != 0)
       eggsItems.add(
         _SectionItem(
           label: 'standard'.tr(),
           value: (rec.eggsStandard ?? 0).toString(),
         ),
       );
-    }
 
     final feedsItems = <_SectionItem>[];
     print('_BatchRecordSectionUI - rec.feedsUsed: ${rec.feedsUsed}');
@@ -392,9 +385,9 @@ class _BatchRecordSectionUI extends StatelessWidget {
     );
     if (rec.feedsUsed.isNotEmpty) {
       feedsItems.addAll(
-        rec.feedsUsed.map(
-          (f) => _SectionItem(label: f.name, value: '${f.quantity} Kg'),
-        ),
+        rec.feedsUsed
+            .where((f) => (f.quantity) > 0)
+            .map((f) => _SectionItem(label: f.name, value: '${f.quantity} Kg')),
       );
     } else if ((rec.feedUsedKg ?? 0) != 0) {
       feedsItems.add(
@@ -412,9 +405,11 @@ class _BatchRecordSectionUI extends StatelessWidget {
     );
     if (rec.vaccinesUsed.isNotEmpty) {
       vaccinesItems.addAll(
-        rec.vaccinesUsed.map(
-          (v) => _SectionItem(label: v.name, value: '${v.quantity} Lit'),
-        ),
+        rec.vaccinesUsed
+            .where((v) => (v.quantity) > 0)
+            .map(
+              (v) => _SectionItem(label: v.name, value: '${v.quantity} Lit'),
+            ),
       );
     } else if ((rec.vaccinesGiven != null && rec.vaccinesGiven!.isNotEmpty)) {
       vaccinesItems.add(
@@ -423,27 +418,24 @@ class _BatchRecordSectionUI extends StatelessWidget {
     }
 
     final sawdustItems = <_SectionItem>[];
-    if (rec.sawdustInStore != null) {
+    if (rec.sawdustInStore != null)
       sawdustItems.add(
         _SectionItem(
           label: 'in_store'.tr(),
           value: rec.sawdustInStore.toString(),
         ),
       );
-    }
-    if (rec.sawdustUsed != null) {
+    if (rec.sawdustUsed != null)
       sawdustItems.add(
         _SectionItem(label: 'used'.tr(), value: rec.sawdustUsed.toString()),
       );
-    }
-    if (rec.sawdustRemaining != null) {
+    if (rec.sawdustRemaining != null)
       sawdustItems.add(
         _SectionItem(
           label: 'remaining'.tr(),
           value: rec.sawdustRemaining.toString(),
         ),
       );
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

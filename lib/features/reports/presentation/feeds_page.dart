@@ -111,7 +111,13 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Cannot use more than ${feed.quantity} kg of ${feed.name}',
+                  'cannot_use_more_than'.tr(
+                    namedArgs: {
+                      'quantity': feed.quantity.toString(),
+                      'unit': 'kg'.tr(),
+                      'item': feed.name,
+                    },
+                  ),
                 ),
                 backgroundColor: Colors.red,
               ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
@@ -20,7 +19,6 @@ class _InventoryPageState extends State<InventoryPage> {
   List<InventoryItem> items = [];
   bool loading = true;
   // Set to a valid tab index (e.g., 0 for Home, or 1 for Batches if you want Batches active)
-  final int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -726,18 +724,5 @@ class _InventoryPageState extends State<InventoryPage> {
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
-  }
-}
-
-String _categoryLabel(String category) {
-  switch (category) {
-    case 'feed':
-      return tr('feeds');
-    case 'vaccine':
-      return tr('vaccines');
-    case 'other':
-      return tr('others');
-    default:
-      return category;
   }
 }

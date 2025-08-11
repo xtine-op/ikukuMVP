@@ -28,12 +28,90 @@ class ChickenReductionPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(width: 24),
           Text(
             'chicken_reduction'.tr(),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
+          const SizedBox(
+            height: 24,
+          ), // Increased space between heading and summary
+          if (selectedBatch != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                // No boxShadow for this summary
+                border: Border.all(color: const Color(0xFFE6E8EC)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Type icon (use farm icon as placeholder)
+                          const SizedBox(width: 8),
+                          Text(
+                            'Chicken Type',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: CustomColors.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        selectedBatch.birdType,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: CustomColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Bird count icon (use numbers icon as placeholder)
+                          const SizedBox(width: 8),
+                          Text(
+                            'Number of Birds',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: CustomColors.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        selectedBatch.totalChickens.toString(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: CustomColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
           const SizedBox(height: 8),
           // Remove yellow card and use a plain container for form fields
           Column(

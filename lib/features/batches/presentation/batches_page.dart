@@ -134,11 +134,11 @@ class _BatchesPageState extends State<BatchesPage> {
         backgroundColor: Color(0xFFF7F8FA),
         title: Text(tr('add_batch')),
         content: SizedBox(
-          width: 400, // Make dialog a little wider
+          width: 500, // Increase dialog width for better UI
           child: Form(
             key: formKey,
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              padding: EdgeInsets.all(8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -237,70 +237,78 @@ class _BatchesPageState extends State<BatchesPage> {
         ),
         actions: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: CustomColors.primary,
-                    side: BorderSide(color: CustomColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: CustomColors.primary,
+                      side: BorderSide(color: CustomColors.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
+                    child: Text(tr('cancel')),
                   ),
-                  child: Text(tr('cancel')),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() ?? false) {
-                      formKey.currentState?.save();
-                      final batch = Batch.empty(user.id).copyWith(
-                        name: name,
-                        birdType: birdType,
-                        ageInDays: ageInDays,
-                        totalChickens: totalChickens,
-                        createdAt: DateTime.now(),
-                      );
-                      await SupabaseService().addBatch(batch.toJson());
-                      if (mounted) {
-                        Navigator.pop(context);
-                        fetchBatches();
-
-                        // Show popup asking if user wants to add a report
-                        // Only if they came from the reports page and haven't shown dialog yet
-                        if (widget.fromReportsPage &&
-                            !_hasShownAddReportDialog) {
-                          setState(() {
-                            _hasShownAddReportDialog = true;
-                          });
-                          _showAddReportDialog();
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState?.validate() ?? false) {
+                        formKey.currentState?.save();
+                        final batch = Batch.empty(user.id).copyWith(
+                          name: name,
+                          birdType: birdType,
+                          ageInDays: ageInDays,
+                          totalChickens: totalChickens,
+                          createdAt: DateTime.now(),
+                        );
+                        await SupabaseService().addBatch(batch.toJson());
+                        if (mounted) {
+                          Navigator.pop(context);
+                          fetchBatches();
+                          // Show popup asking if user wants to add a report
+                          // Only if they came from the reports page and haven't shown dialog yet
+                          if (widget.fromReportsPage &&
+                              !_hasShownAddReportDialog) {
+                            setState(() {
+                              _hasShownAddReportDialog = true;
+                            });
+                            _showAddReportDialog();
+                          }
                         }
                       }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: CustomColors.primary,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
-                    foregroundColor: CustomColors.text,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: CustomColors.buttonGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      constraints: const BoxConstraints(minHeight: 48),
-                      child: Text(tr('add_batch')),
+                    child: Text(
+                      tr('add_batch'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -485,7 +493,13 @@ class _BatchesPageState extends State<BatchesPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
         title: Text('batches'.tr()),
         actions: [

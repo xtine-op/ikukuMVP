@@ -71,9 +71,9 @@ class EggProductionPage extends StatelessWidget {
             ),
             if (collectedEggs == true) ...[
               TextField(
-                decoration: InputDecoration(
-                  labelText: 'how_many_eggs_collected'.tr(),
-                  border: const OutlineInputBorder(),
+                decoration: const InputDecoration(
+                  labelText: 'How many eggs have you collected?',
+                  border: OutlineInputBorder(),
                   filled: false,
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
@@ -101,9 +101,9 @@ class EggProductionPage extends StatelessWidget {
               ),
               if (gradeEggs == true) ...[
                 TextField(
-                  decoration: InputDecoration(
-                    labelText: 'number_of_big_eggs'.tr(),
-                    border: const OutlineInputBorder(),
+                  decoration: const InputDecoration(
+                    labelText: 'Number of big eggs',
+                    border: OutlineInputBorder(),
                     filled: false,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -113,9 +113,9 @@ class EggProductionPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 TextField(
-                  decoration: InputDecoration(
-                    labelText: 'number_of_deformed_eggs'.tr(),
-                    border: const OutlineInputBorder(),
+                  decoration: const InputDecoration(
+                    labelText: 'Number of deformed eggs',
+                    border: OutlineInputBorder(),
                     filled: false,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -125,9 +125,9 @@ class EggProductionPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 TextField(
-                  decoration: InputDecoration(
-                    labelText: 'number_of_broken_eggs'.tr(),
-                    border: const OutlineInputBorder(),
+                  decoration: const InputDecoration(
+                    labelText: 'Number of broken eggs',
+                    border: OutlineInputBorder(),
                     filled: false,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -138,7 +138,7 @@ class EggProductionPage extends StatelessWidget {
                 const SizedBox(height: 8),
               ],
             ],
-            const SizedBox(height: 24),
+            const Spacer(),
             ElevatedButton(
               onPressed: onContinue,
               style: ElevatedButton.styleFrom(
@@ -159,9 +159,9 @@ class EggProductionPage extends StatelessWidget {
                 child: Container(
                   alignment: Alignment.center,
                   constraints: const BoxConstraints(minHeight: 48),
-                  child: Text(
-                    'continue'.tr(),
-                    style: const TextStyle(color: CustomColors.text),
+                  child: const Text(
+                    'CONTINUE',
+                    style: TextStyle(color: CustomColors.text),
                   ),
                 ),
               ),

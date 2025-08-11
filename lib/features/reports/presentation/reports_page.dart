@@ -65,7 +65,13 @@ class _ReportsPageState extends State<ReportsPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.go('/'),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
         title: Text('my_farm_reports'.tr()),
       ),
@@ -92,8 +98,8 @@ class _ReportsPageState extends State<ReportsPage> {
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
-            Text(
-              'no_batches_message'.tr(),
+            const Text(
+              'It seems you have not created your batches yet, go to batches and add a chick batch to continue',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
@@ -111,7 +117,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
                 child: ElevatedButton.icon(
                   label: Text(
-                    'go_to_batches'.tr(),
+                    'Go to Batches',
                     style: TextStyle(color: CustomColors.text),
                   ),
                   onPressed: () {
@@ -152,7 +158,7 @@ class _ReportsPageState extends State<ReportsPage> {
               child: ElevatedButton.icon(
                 icon: Icon(Icons.add, color: CustomColors.text),
                 label: Text(
-                  'add_farm_report'.tr(),
+                  'Add Farm Report',
                   style: TextStyle(color: CustomColors.text),
                 ),
                 onPressed: () {
@@ -176,7 +182,7 @@ class _ReportsPageState extends State<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Text(
-            'previous_records'.tr(),
+            'Previous Records',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
@@ -199,7 +205,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   });
                   final latestRecord = recordsForBatch.first;
                   // Format date
-                  String formattedDate = 'unknown_date'.tr();
+                  String formattedDate = 'Unknown Date';
                   final rawDate = latestRecord['record_date'];
                   if (rawDate is String && rawDate.isNotEmpty) {
                     try {
@@ -212,24 +218,11 @@ class _ReportsPageState extends State<ReportsPage> {
                     formattedDate = DateFormat('yyyy-MM-dd').format(rawDate);
                   }
                   return ListTile(
-                    title: Text(batch['name'] ?? 'unknown_batch'.tr()),
+                    title: Text(batch['name'] ?? 'Unknown Batch'),
                     subtitle: Text(
-                      '$formattedDate • ' +
-                          (batch['bird_type'] == 'broiler'
-                              ? 'broiler'.tr()
-                              : batch['bird_type'] == 'layer'
-                              ? 'layer'.tr()
-                              : batch['bird_type'] == 'kienyeji'
-                              ? 'kienyeji'.tr()
-                              : 'unknown_type'.tr()) +
-                          (batch['total_chickens'] != null
-                              ? ' • ' +
-                                    'chickens'.tr() +
-                                    ': ${batch['total_chickens']}'
-                              : ''),
+                      '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
                     ),
                     onTap: () {
-                      // Pass both batch and the full report (with date) to the detail page
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ReportDetailPage(

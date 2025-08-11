@@ -115,7 +115,13 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Cannot use more than ${vaccine.quantity} litres of ${vaccine.name}',
+                  'cannot_use_more_than'.tr(
+                    namedArgs: {
+                      'quantity': vaccine.quantity.toString(),
+                      'unit': 'lit'.tr(),
+                      'item': vaccine.name,
+                    },
+                  ),
                 ),
                 backgroundColor: Colors.red,
               ),
@@ -150,7 +156,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           return CheckboxListTile(
             value: isSelected,
             title: Text(
-              'feed_with_stock'.tr(
+              'vaccine_with_stock'.tr(
                 args: [vaccine.name, vaccine.quantity.toString()],
               ),
             ),
@@ -178,7 +184,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter quantity (litres)',
+                  hintText: 'enter_quantity_litres'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -188,7 +194,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  suffixText: 'litres',
+                  suffixText: 'lit'.tr(),
                 ),
                 onChanged: (val) => _updateQuantity(vaccineName, val),
               ),
@@ -219,9 +225,9 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
               child: Container(
                 alignment: Alignment.center,
                 constraints: const BoxConstraints(minHeight: 48),
-                child: const Text(
-                  'CONTINUE',
-                  style: TextStyle(color: CustomColors.text),
+                child: Text(
+                  'continue'.tr(),
+                  style: const TextStyle(color: CustomColors.text),
                 ),
               ),
             ),

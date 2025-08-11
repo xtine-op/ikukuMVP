@@ -213,7 +213,7 @@ class SupabaseService {
           .gte('record_date', startOfDay.toIso8601String())
           .lt('record_date', endOfDay.toIso8601String());
 
-      if (dailyRecords.isEmpty) return false;
+      if (dailyRecords == null || dailyRecords.isEmpty) return false;
 
       // 2. Check if a batch_record exists for this batch and any of the daily_records
       final dailyRecordIds = dailyRecords
@@ -228,7 +228,7 @@ class SupabaseService {
           .inFilter('daily_record_id', dailyRecordIds);
 
       // Return true if any batch records exist for this batch
-      return batchRecords.isNotEmpty;
+      return batchRecords != null && batchRecords.isNotEmpty;
     } catch (e) {
       print('Error checking daily record for batch: $e');
       return false; // Return false on error to allow reporting
@@ -267,9 +267,12 @@ class SupabaseService {
         .gte('record_date', startOfDay.toIso8601String())
         .lt('record_date', endOfDay.toIso8601String());
     print(
-      '[SupabaseService] fetchDailyRecordsForDate: dailyRecords =  [33m$dailyRecords\u001b[0m',
+      '[SupabaseService] fetchDailyRecordsForDate: dailyRecords = '
+              ' [33m' +
+          dailyRecords.toString() +
+          '\u001b[0m',
     );
-    if (dailyRecords.isEmpty) return [];
+    if (dailyRecords == null || dailyRecords.isEmpty) return [];
     final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
     if (dailyRecordIds.isEmpty) return [];
     // 2. Find all batch_records for these daily_record_ids
@@ -278,10 +281,13 @@ class SupabaseService {
         .select('batch_id')
         .inFilter('daily_record_id', dailyRecordIds);
     print(
-      '[SupabaseService] fetchDailyRecordsForDate: batchRecords = \u001b[36m$batchRecords\u001b[0m',
+      '[SupabaseService] fetchDailyRecordsForDate: batchRecords = '
+              '\u001b[36m' +
+          batchRecords.toString() +
+          '\u001b[0m',
     );
     // Ensure every record is a map with a batch_id key
-    if (batchRecords.isEmpty) return [];
+    if (batchRecords == null || batchRecords.isEmpty) return [];
     final result = List<Map<String, dynamic>>.from(
       batchRecords,
     ).where((r) => r.containsKey('batch_id') && r['batch_id'] != null).toList();
@@ -297,7 +303,7 @@ class SupabaseService {
         .from('daily_records')
         .select('id')
         .eq('user_id', userId);
-    if (dailyRecords.isEmpty) return 0;
+    if (dailyRecords == null || dailyRecords.isEmpty) return 0;
     final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
     if (dailyRecordIds.isEmpty) return 0;
     // 2. Get all batch_records for these daily_record_ids
@@ -305,7 +311,7 @@ class SupabaseService {
         .from('batch_records')
         .select('eggs_collected')
         .inFilter('daily_record_id', dailyRecordIds);
-    if (batchRecords.isEmpty) return 0;
+    if (batchRecords == null || batchRecords.isEmpty) return 0;
     // 3. Sum eggs_collected
     int totalEggs = 0;
     for (final record in batchRecords) {

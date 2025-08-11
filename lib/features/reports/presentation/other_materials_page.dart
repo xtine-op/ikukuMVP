@@ -146,21 +146,23 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
       children: [
         Text(
           'select_other_materials_today'.tr(),
-          style: TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         ...widget.otherMaterials.map((material) {
           final isSelected = _selectedOtherMaterials.any(
             (m) => m['name'] == material.name,
           );
           return CheckboxListTile(
             value: isSelected,
-            title: Text('${material.name} (Stock: ${material.quantity})'),
+            title: Text(
+              '${material.name} (${"stock".tr()}: ${material.quantity})',
+            ),
             onChanged: (checked) => _toggleMaterial(material, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,
           );
         }),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         ..._selectedOtherMaterials.map((m) {
           final name = m['name'];
           _controllers[name] ??= TextEditingController(
@@ -169,14 +171,16 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: TextStyle(fontSize: 16)),
-              SizedBox(height: 6),
+              Text(name, style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 6),
               TextField(
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   hintText: 'qty_hint'.tr(),
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
@@ -185,11 +189,11 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
                 onChanged: (val) => _updateQuantity(name, val),
                 controller: _controllers[name],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
           );
         }),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -202,7 +206,7 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
                 borderRadius: BorderRadius.circular(12),
               ),
               foregroundColor: CustomColors.text,
-              textStyle: TextStyle(fontWeight: FontWeight.w600),
+              textStyle: const TextStyle(fontWeight: FontWeight.w600),
             ),
             child: Ink(
               decoration: BoxDecoration(
@@ -211,10 +215,10 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
               ),
               child: Container(
                 alignment: Alignment.center,
-                constraints: BoxConstraints(minHeight: 48),
+                constraints: const BoxConstraints(minHeight: 48),
                 child: Text(
                   'continue'.tr(),
-                  style: TextStyle(color: CustomColors.text),
+                  style: const TextStyle(color: CustomColors.text),
                 ),
               ),
             ),

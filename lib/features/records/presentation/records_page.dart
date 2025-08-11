@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
-import 'package:easy_localization/easy_localization.dart';
-
 import '../../../shared/services/supabase_service.dart';
 import '../data/daily_record_model.dart';
 import 'record_detail_page.dart';
@@ -106,7 +104,7 @@ class _RecordsPageState extends State<RecordsPage> {
                     title: batch == null
                         ? const Text('Loading batch info...')
                         : (batch.name.isEmpty
-                              ? Text('batch_info_unavailable'.tr())
+                              ? const Text('Batch info unavailable')
                               : Text(
                                   '${batch.name} (${batch.birdType})',
                                   style: const TextStyle(
