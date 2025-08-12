@@ -4,10 +4,13 @@ import 'routing/app_router.dart';
 import 'app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'shared/services/supabase_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('offline_reports');
   await Supabase.initialize(
     url: 'https://vrhujilkhtedvkhybtdx.supabase.co',
     anonKey:
