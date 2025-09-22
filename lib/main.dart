@@ -4,13 +4,17 @@ import 'routing/app_router.dart';
 import 'app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'shared/services/supabase_service.dart';
+import 'shared/services/connectivity_manager.dart';
+import 'shared/services/offline_service.dart';
+import 'shared/services/offline_data_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await Hive.initFlutter();
-  await Hive.openBox('offline_reports');
+  await Hive.openBox<String>('offline_reports');
+  await Hive.openBox<String>('sync_status');
   await Supabase.initialize(
     url: 'https://vrhujilkhtedvkhybtdx.supabase.co',
     anonKey:
@@ -22,6 +26,15 @@ void main() async {
     await SupabaseService().fixDatabaseConstraints();
   } catch (e) {
     print('Failed to fix database constraints: $e');
+  }
+
+  // Initialize offline services
+  try {
+    await OfflineService.instance.initialize();
+    await OfflineDataService.instance.initialize();
+    await ConnectivityManager.instance.initialize();
+  } catch (e) {
+    print('Failed to initialize offline services: $e');
   }
 
   runApp(

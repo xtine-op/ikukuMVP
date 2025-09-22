@@ -19,6 +19,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
   final _farmLocationController = TextEditingController();
   bool _isLoading = false;
   String? _error;
+  bool _acceptedTerms = false;
 
   @override
   void initState() {
@@ -32,6 +33,13 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
       _isLoading = true;
       _error = null;
     });
+    if (!_acceptedTerms) {
+      setState(() {
+        _error = 'You must accept the Terms and Conditions to continue.';
+        _isLoading = false;
+      });
+      return;
+    }
     if (_nameController.text.trim().isEmpty ||
         _phoneController.text.trim().isEmpty ||
         _farmNameController.text.trim().isEmpty ||
@@ -169,6 +177,36 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                   SizedBox(height: 16),
                   Text(_error!, style: TextStyle(color: Colors.red)),
                 ],
+                SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _acceptedTerms,
+                      onChanged: (val) {
+                        setState(() {
+                          _acceptedTerms = val ?? false;
+                        });
+                      },
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _acceptedTerms = !_acceptedTerms;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Text(
+                            'By using this app, you accept the Terms and Conditions.',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,

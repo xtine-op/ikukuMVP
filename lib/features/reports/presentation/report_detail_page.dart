@@ -148,7 +148,7 @@ class ReportDetailPage extends StatelessWidget {
                         (v) => _SectionItem(
                           label: v['name'] ?? '',
                           value: v['quantity'] != null
-                              ? '${v['quantity']} Lit'
+                              ? '${v['quantity']} ${'lit'.tr()}'
                               : '',
                         ),
                       ),
@@ -177,9 +177,35 @@ class ReportDetailPage extends StatelessWidget {
               ),
             const SizedBox(height: 16),
             Center(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('close_report'.tr()),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    foregroundColor: CustomColors.text,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: CustomColors.buttonGradient,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: Text(
+                        'close_report'.tr(),
+                        style: const TextStyle(color: CustomColors.text),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

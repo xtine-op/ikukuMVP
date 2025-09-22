@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../shared/services/supabase_service.dart';
+import '../../../shared/services/offline_service.dart';
+import '../../../shared/services/connectivity_manager.dart';
+import '../../../shared/providers/offline_data_provider.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
@@ -127,6 +130,33 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         });
         return;
       }
+
+      final isOnline = ConnectivityManager.instance.isOnline;
+
+      if (isOnline) {
+        // Try to fetch from server when online
+        await _fetchOnlineData(user);
+      } else {
+        // Load from cache when offline
+        await _fetchOfflineData(user);
+      }
+    } catch (e) {
+      print('[FarmReportEntryPage] Error in _fetchInitialData: $e');
+      // Fallback to offline data on any error
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        await _fetchOfflineData(user);
+      } else {
+        setState(() {
+          loading = false;
+          error = 'Failed to load data: $e';
+        });
+      }
+    }
+  }
+
+  Future<void> _fetchOnlineData(User user) async {
+    try {
       // Fetch batches and inventory with timeout
       final batchListRaw = await SupabaseService()
           .fetchBatches(user.id)
@@ -154,73 +184,120 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               throw Exception('Timeout while fetching daily records');
             },
           );
-      print('[FarmReportEntryPage] batchListRaw = ' + batchListRaw.toString());
-      print('[FarmReportEntryPage] inventoryRaw = ' + inventoryRaw.toString());
-      print('[FarmReportEntryPage] dailyRecords = ' + dailyRecords.toString());
-      final reportedBatchIds = <String>[];
-      for (final record in dailyRecords) {
-        if (record['batch_id'] != null) {
-          reportedBatchIds.add(record['batch_id']);
-        }
-      }
-      List<Batch> loadedBatches = [];
-      List<InventoryItem> inventoryItems = [];
-      try {
-        loadedBatches = batchListRaw.map((e) => Batch.fromJson(e)).toList();
-        inventoryItems = inventoryRaw
-            .map((e) => InventoryItem.fromJson(e))
-            .toList();
-      } catch (e) {
-        setState(() {
-          loading = false;
-          error = 'Data error: $e';
-        });
-        print('[FarmReportEntryPage] Data error: $e');
-        return;
-      }
-      if (loadedBatches.isEmpty) {
-        setState(() {
-          loading = false;
-          error = 'No batches found. Please add a batch first.';
-        });
-        print('[FarmReportEntryPage] No batches found.');
-        return;
-      }
-      if (inventoryItems.where((i) => i.category == 'feed').isEmpty &&
-          inventoryItems.where((i) => i.category == 'vaccine').isEmpty &&
-          inventoryItems.where((i) => i.category == 'other').isEmpty) {
-        setState(() {
-          loading = false;
-          error = 'No inventory found. Please add inventory items first.';
-          _hasNoInventory = true;
-        });
-        print('[FarmReportEntryPage] No inventory found.');
-        return;
-      }
+
+      // Cache data for offline use
+      await OfflineDataProvider.instance.cacheBatches(user.id, batchListRaw);
+      await OfflineDataProvider.instance.cacheInventory(user.id, inventoryRaw);
+
+      await _processDataAndUpdateUI(batchListRaw, inventoryRaw, dailyRecords);
+    } catch (e) {
+      print('[FarmReportEntryPage] Error in _fetchOnlineData: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _fetchOfflineData(User user) async {
+    try {
+      print('[FarmReportEntryPage] Loading data from cache...');
+
+      // Load cached data
+      await OfflineDataProvider.instance.loadBatches();
+      await OfflineDataProvider.instance.loadInventory();
+
+      final cachedBatches = OfflineDataProvider.instance.batches;
+      final cachedInventory = OfflineDataProvider.instance.inventory;
+
+      // Convert to raw format for processing
+      final batchListRaw = cachedBatches.map((b) => b.toJson()).toList();
+      final inventoryRaw = cachedInventory.map((i) => i.toJson()).toList();
+
+      // For offline mode, assume no reports today (can't check server)
+      final dailyRecords = <Map<String, dynamic>>[];
+
+      await _processDataAndUpdateUI(batchListRaw, inventoryRaw, dailyRecords);
+
+      print(
+        '[FarmReportEntryPage] Loaded ${cachedBatches.length} batches and ${cachedInventory.length} inventory items from cache',
+      );
+    } catch (e) {
+      print('[FarmReportEntryPage] Error in _fetchOfflineData: $e');
       setState(() {
-        batches = loadedBatches;
-        feeds = inventoryItems
-            .where((i) => i.category == 'feed' && i.quantity > 0)
-            .toList();
-        vaccines = inventoryItems
-            .where((i) => i.category == 'vaccine' && i.quantity > 0)
-            .toList();
-        otherMaterials = inventoryItems
-            .where((i) => i.category == 'other' && i.quantity > 0)
-            .toList();
-        batchesReportedToday = reportedBatchIds;
         loading = false;
-        error = null;
-        _invalidatePagesCache(); // Invalidate cache when data is loaded
+        error = 'Failed to load offline data: $e';
       });
-      print('[FarmReportEntryPage] Initialization complete.');
+    }
+  }
+
+  Future<void> _processDataAndUpdateUI(
+    List<Map<String, dynamic>> batchListRaw,
+    List<Map<String, dynamic>> inventoryRaw,
+    List<Map<String, dynamic>> dailyRecords,
+  ) async {
+    print('[FarmReportEntryPage] batchListRaw = ' + batchListRaw.toString());
+    print('[FarmReportEntryPage] inventoryRaw = ' + inventoryRaw.toString());
+    print('[FarmReportEntryPage] dailyRecords = ' + dailyRecords.toString());
+
+    final reportedBatchIds = <String>[];
+    for (final record in dailyRecords) {
+      if (record['batch_id'] != null) {
+        reportedBatchIds.add(record['batch_id']);
+      }
+    }
+
+    List<Batch> loadedBatches = [];
+    List<InventoryItem> inventoryItems = [];
+    try {
+      loadedBatches = batchListRaw.map((e) => Batch.fromJson(e)).toList();
+      inventoryItems = inventoryRaw
+          .map((e) => InventoryItem.fromJson(e))
+          .toList();
     } catch (e) {
       setState(() {
         loading = false;
-        error = 'Failed to load data: $e';
+        error = 'Data error: $e';
       });
-      print('[FarmReportEntryPage] Failed to load data: $e');
+      print('[FarmReportEntryPage] Data error: $e');
+      return;
     }
+
+    if (loadedBatches.isEmpty) {
+      setState(() {
+        loading = false;
+        error = 'No batches found. Please add a batch first.';
+      });
+      print('[FarmReportEntryPage] No batches found.');
+      return;
+    }
+
+    if (inventoryItems.where((i) => i.category == 'feed').isEmpty &&
+        inventoryItems.where((i) => i.category == 'vaccine').isEmpty &&
+        inventoryItems.where((i) => i.category == 'other').isEmpty) {
+      setState(() {
+        loading = false;
+        error = 'No inventory found. Please add inventory items first.';
+        _hasNoInventory = true;
+      });
+      print('[FarmReportEntryPage] No inventory found.');
+      return;
+    }
+
+    setState(() {
+      batches = loadedBatches;
+      feeds = inventoryItems
+          .where((i) => i.category == 'feed' && i.quantity > 0)
+          .toList();
+      vaccines = inventoryItems
+          .where((i) => i.category == 'vaccine' && i.quantity > 0)
+          .toList();
+      otherMaterials = inventoryItems
+          .where((i) => i.category == 'other' && i.quantity > 0)
+          .toList();
+      batchesReportedToday = reportedBatchIds;
+      loading = false;
+      error = null;
+      _invalidatePagesCache(); // Invalidate cache when data is loaded
+    });
+    print('[FarmReportEntryPage] Initialization complete.');
   }
 
   void _nextStep() async {
@@ -361,20 +438,19 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             selectedBatch!.birdType.toLowerCase().contains('kienyeji');
 
         if (!isLayerOrKienyeji) {
-          // Skip egg production step (step 2) for non-layer/non-kienyeji batches
+          // Skip egg production step for non-layer/non-kienyeji batches
           print(
             '[FarmReportEntryPage] Skipping egg production for ${selectedBatch!.birdType}',
           );
           setState(() {
-            step = 3;
+            step = 2; // Feeds page index
             _invalidatePagesCache();
-          }); // Jump directly to feeds step
-          // Use a small delay to ensure state is updated before animating
+          });
           Future.delayed(const Duration(milliseconds: 50), () {
             if (mounted && _pageController != null) {
-              print('[FarmReportEntryPage] Navigating to page 3 (feeds)');
+              print('[FarmReportEntryPage] Navigating to page 2 (feeds)');
               _pageController!.animateToPage(
-                3,
+                2,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.ease,
               );
@@ -384,33 +460,22 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         }
       }
 
-      // Move to egg production step (step 2) for layer/kienyeji batches
+      // Move to egg production step for layer/kienyeji batches
       print(
         '[FarmReportEntryPage] Moving to egg production step for ${selectedBatch?.birdType}',
       );
-      print(
-        '[FarmReportEntryPage] Batch type check: ${selectedBatch?.birdType.toLowerCase().contains('layer')} or ${selectedBatch?.birdType.toLowerCase().contains('kienyeji')}',
-      );
       setState(() {
-        step = 2;
+        step = 2; // Egg production page index
         _invalidatePagesCache();
       });
-      // Use a small delay to ensure state is updated before animating
       Future.delayed(const Duration(milliseconds: 50), () {
         if (mounted && _pageController != null) {
           print('[FarmReportEntryPage] Navigating to page 2 (egg production)');
-          print(
-            '[FarmReportEntryPage] PageController current page: ${_pageController!.page}',
+          _pageController!.animateToPage(
+            2,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.ease,
           );
-          try {
-            _pageController!.animateToPage(
-              2,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.ease,
-            );
-          } catch (e) {
-            print('[FarmReportEntryPage] Error animating to page 2: $e');
-          }
         }
       });
       return;
@@ -584,6 +649,39 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           },
         ),
         title: Text('farm_report_entry'.tr()),
+        actions: [
+          // Offline indicator - only show when offline
+          ValueListenableBuilder<bool>(
+            valueListenable: ConnectivityManager.instance.isOnlineNotifier,
+            builder: (context, isOnline, _) {
+              if (isOnline) return const SizedBox.shrink();
+
+              return Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: CustomColors.lightYellow,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_off, size: 16, color: CustomColors.text),
+                    const SizedBox(width: 4),
+                    Text(
+                      'offline_mode'.tr(),
+                      style: TextStyle(
+                        color: CustomColors.text,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: WillPopScope(
         onWillPop: () async {
@@ -673,36 +771,44 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         selectedBatch: selectedBatch,
       ),
       // Page 3: Egg Production (only for layers/kienyeji)
-      Container(
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Egg Production Page',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Batch: ${selectedBatch?.name ?? 'None'}',
-                style: TextStyle(fontSize: 16),
-              ),
-              Text(
-                'Type: ${selectedBatch?.birdType ?? 'None'}',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _nextStep,
-                child: Text('Continue to Feeds'),
-              ),
-            ],
-          ),
+      if (selectedBatch != null &&
+          (selectedBatch!.birdType.toLowerCase().contains('layer') ||
+              selectedBatch!.birdType.toLowerCase().contains('kienyeji')))
+        EggProductionPage(
+          selectedBatch: selectedBatch,
+          collectedEggs: collectedEggs,
+          onCollectedEggsChanged: (v) => setState(() {
+            collectedEggs = v;
+            _invalidatePagesCache();
+          }),
+          eggsCollected: eggsCollected,
+          onEggsCollectedChanged: (v) => setState(() {
+            eggsCollected = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          gradeEggs: gradeEggs,
+          onGradeEggsChanged: (v) => setState(() {
+            gradeEggs = v;
+            _invalidatePagesCache();
+          }),
+          bigEggs: bigEggs,
+          onBigEggsChanged: (v) => setState(() {
+            bigEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          deformedEggs: deformedEggs,
+          onDeformedEggsChanged: (v) => setState(() {
+            deformedEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          brokenEggs: brokenEggs,
+          onBrokenEggsChanged: (v) => setState(() {
+            brokenEggs = int.tryParse(v);
+            _invalidatePagesCache();
+          }),
+          onContinue: _nextStep,
         ),
-      ),
-      // Page 4: Feeds
+      // Page 4: Feeds (always shown)
       FeedsPage(
         feeds: feeds,
         selectedFeeds: selectedFeeds,
@@ -910,132 +1016,95 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     setState(() => loading = true);
 
     try {
-      // Check again before saving (in case of race condition)
-      final alreadyReported = await SupabaseService().hasDailyRecordForBatch(
-        selectedBatch!.id,
-        DateTime.now(),
-      );
-      if (alreadyReported) {
-        setState(() => loading = false);
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            backgroundColor: const Color(0xFFF7F8FA),
-            title: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(
-                'already_reported_title'.tr(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+      // Check if device is online
+      final isOnline = await OfflineService.instance.isOnline();
+      print('[FarmReportEntry] Device online status: $isOnline');
+
+      if (isOnline) {
+        print(
+          '[FarmReportEntry] Device is online, proceeding with online save',
+        );
+        // Check again before saving (in case of race condition)
+        final alreadyReported = await SupabaseService().hasDailyRecordForBatch(
+          selectedBatch!.id,
+          DateTime.now(),
+        );
+        if (alreadyReported) {
+          setState(() => loading = false);
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              backgroundColor: const Color(0xFFF7F8FA),
+              title: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Text(
+                  'already_reported_title'.tr(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ),
-            ),
-            content: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text('already_reported_message'.tr()),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: Text('ok'.tr()),
+              content: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
+                child: Text('already_reported_message'.tr()),
               ),
-            ],
-          ),
-        );
-        return;
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: Text('ok'.tr()),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
       }
 
       final now = DateTime.now();
-      final report = <String, dynamic>{
+
+      // Prepare comprehensive report data
+      final reportData = <String, dynamic>{
         'user_id': user.id,
         'record_date': now.toIso8601String(),
-        'created_at': now.toIso8601String(),
+        'notes': notes,
+        'batch_id': selectedBatch!.id,
+        'chicken_reduction': chickenReduction == 'yes',
+        'chickens_sold': 0, // Not currently tracked in the UI
+        'chickens_died': reductionCounts['death'] ?? 0,
+        'chickens_curled': reductionCounts['curled'] ?? 0,
+        'chickens_stolen': reductionCounts['stolen'] ?? 0,
+        'eggs_collected': (collectedEggs == true && eggsCollected != null)
+            ? eggsCollected
+            : 0,
+        'grade_eggs': gradeEggs == true,
+        'eggs_standard': bigEggs ?? 0, // Fixed: big_eggs -> eggs_standard
+        'eggs_deformed':
+            deformedEggs ?? 0, // Fixed: deformed_eggs -> eggs_deformed
+        'eggs_broken': brokenEggs ?? 0, // Fixed: broken_eggs -> eggs_broken
+        'selected_feeds': selectedFeeds,
+        'selected_vaccines': selectedVaccines,
+        'selected_other_materials': selectedOtherMaterials,
       };
 
-      // Update batch chicken count if deaths reported
-      if (chickenReduction == 'yes' &&
-          reductionReason == 'death' &&
-          reductionCount != null &&
-          reductionCount! > 0) {
-        final newCount = (selectedBatch!.totalChickens - reductionCount!).clamp(
-          0,
-          selectedBatch!.totalChickens,
+      if (isOnline) {
+        // Online mode - save directly to server
+        await _saveReportOnline(reportData);
+      } else {
+        // Offline mode - save locally
+        print(
+          '[FarmReportEntry] Device is offline, proceeding with offline save',
         );
-        await SupabaseService().updateBatch({
-          'id': selectedBatch!.id,
-          'total_chickens': newCount,
-        });
+        await _saveReportOffline(reportData);
       }
-
-      // Update inventory for selected feeds
-      for (final feedData in selectedFeeds) {
-        final feedName = feedData['name'] as String?;
-        final quantity = feedData['quantity'] as double?;
-        if (feedName != null && quantity != null && quantity > 0) {
-          final feed = feeds.firstWhere(
-            (f) => f.name == feedName,
-            orElse: () => throw Exception('Feed not found: $feedName'),
-          );
-          final newQty = (feed.quantity - quantity.toInt()).clamp(
-            0,
-            feed.quantity,
-          );
-          await SupabaseService().updateInventoryItem({
-            'id': feed.id,
-            'quantity': newQty,
-          });
-        }
-      }
-
-      // Update inventory for selected vaccines
-      for (final vaccineData in selectedVaccines) {
-        final vaccineName = vaccineData['name'] as String?;
-        final quantity = vaccineData['quantity'] as double?;
-        if (vaccineName != null && quantity != null && quantity > 0) {
-          final vaccine = vaccines.firstWhere(
-            (v) => v.name == vaccineName,
-            orElse: () => throw Exception('Vaccine not found: $vaccineName'),
-          );
-          final newQty = (vaccine.quantity - quantity.toInt()).clamp(
-            0,
-            vaccine.quantity,
-          );
-          await SupabaseService().updateInventoryItem({
-            'id': vaccine.id,
-            'quantity': newQty,
-          });
-        }
-      }
-
-      // Update inventory for selected other materials
-      for (final materialData in selectedOtherMaterials) {
-        final materialName = materialData['name'] as String?;
-        final quantity = materialData['quantity'] as double?;
-        if (materialName != null && quantity != null && quantity > 0) {
-          final material = otherMaterials.firstWhere(
-            (m) => m.name == materialName,
-            orElse: () => throw Exception('Material not found: $materialName'),
-          );
-          final newQty = (material.quantity - quantity.toInt()).clamp(
-            0,
-            material.quantity,
-          );
-          await SupabaseService().updateInventoryItem({
-            'id': material.id,
-            'quantity': newQty,
-          });
-        }
-      }
-
-      final dailyRecordId = await SupabaseService().addDailyRecord(report);
-      print('_saveBatchRecord - dailyRecordId: $dailyRecordId');
-      await _saveBatchRecord(dailyRecordId);
 
       setState(() => loading = false);
       if (!mounted) return;
@@ -1053,18 +1122,30 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           ),
           backgroundColor: const Color(0xFFF7F8FA),
           title: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              'success'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isOnline ? 'success'.tr() : 'saved_offline'.tr(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.check_circle, color: Colors.green, size: 24),
+              ],
             ),
           ),
           content: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Text(
-              'report_saved_message'.tr(
-                namedArgs: {'batch': selectedBatch?.name ?? ''},
-              ),
+              isOnline
+                  ? 'report_saved_message'.tr(
+                      namedArgs: {'batch': selectedBatch?.name ?? ''},
+                    )
+                  : 'report_saved_offline_message'.tr(),
             ),
           ),
           actions: [
@@ -1096,20 +1177,23 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                   shadowColor: Colors.transparent,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   foregroundColor: CustomColors.text,
                   textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+                ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
                 child: Ink(
                   decoration: BoxDecoration(
                     gradient: CustomColors.buttonGradient,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Container(
                     alignment: Alignment.center,
                     constraints: const BoxConstraints(minHeight: 48),
-                    child: Text('see_reports'.tr()),
+                    child: Text(
+                      'see_reports'.tr(),
+                      style: const TextStyle(color: CustomColors.text),
+                    ),
                   ),
                 ),
               ),
@@ -1171,56 +1255,145 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     }
   }
 
-  Future<void> _saveBatchRecord(String dailyRecordId) async {
-    if (selectedBatch == null) return;
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-
-    try {
-      final batchRecord = <String, dynamic>{
-        'daily_record_id': dailyRecordId,
-        'batch_id': selectedBatch!.id,
-        'chicken_reduction': chickenReduction == 'yes',
-        'chickens_sold': 0,
-        'chickens_curled': reductionReason == 'curled'
-            ? (reductionCount ?? 0)
-            : 0,
-        'chickens_died': reductionReason == 'death' ? (reductionCount ?? 0) : 0,
-        'chickens_stolen': reductionReason == 'stolen'
-            ? (reductionCount ?? 0)
-            : 0,
-        'eggs_collected': (collectedEggs == true && eggsCollected != null)
-            ? eggsCollected
-            : null,
-        'grade_eggs': gradeEggs == true,
-        'eggs_small': null,
-        'eggs_deformed': deformedEggs,
-        'eggs_standard': bigEggs,
-        'feeds_used': selectedFeeds
-            .where((f) => f['quantity'] != null)
-            .toList(), // List of {name, quantity}
-        'vaccines_used': selectedVaccines
-            .where((v) => v['quantity'] != null)
-            .toList(), // List of {name, quantity}
-        'other_materials_used': selectedOtherMaterials
-            .where((m) => m['quantity'] != null)
-            .toList(), // List of {name, quantity}
-        'notes': notes,
-      };
-
-      // Debug: Print what's being saved
-      print('_saveBatchRecord - selectedFeeds: $selectedFeeds');
-      print('_saveBatchRecord - selectedVaccines: $selectedVaccines');
-      print(
-        '_saveBatchRecord - selectedOtherMaterials: $selectedOtherMaterials',
+  /// Save report online (when connected)
+  Future<void> _saveReportOnline(Map<String, dynamic> reportData) async {
+    // Update batch chicken count if deaths reported
+    final totalDeaths = (reportData['chickens_died'] as int? ?? 0);
+    if (totalDeaths > 0) {
+      final newCount = (selectedBatch!.totalChickens - totalDeaths).clamp(
+        0,
+        selectedBatch!.totalChickens,
       );
-      print('_saveBatchRecord - batchRecord: $batchRecord');
+      await SupabaseService().updateBatch({
+        'id': selectedBatch!.id,
+        'total_chickens': newCount,
+      });
+    }
 
-      await SupabaseService().addBatchRecord(batchRecord);
+    // Update inventory for selected feeds
+    final selectedFeeds = reportData['selected_feeds'] as List<dynamic>? ?? [];
+    for (final feedData in selectedFeeds) {
+      final feedName = feedData['name'] as String?;
+      final quantity = feedData['quantity'] as double?;
+      if (feedName != null && quantity != null && quantity > 0) {
+        final feed = feeds.firstWhere(
+          (f) => f.name == feedName,
+          orElse: () => throw Exception('Feed not found: $feedName'),
+        );
+        final newQty = (feed.quantity - quantity.toInt()).clamp(
+          0,
+          feed.quantity,
+        );
+        await SupabaseService().updateInventoryItem({
+          'id': feed.id,
+          'quantity': newQty,
+        });
+      }
+    }
+
+    // Update inventory for selected vaccines
+    final selectedVaccines =
+        reportData['selected_vaccines'] as List<dynamic>? ?? [];
+    for (final vaccineData in selectedVaccines) {
+      final vaccineName = vaccineData['name'] as String?;
+      final quantity = vaccineData['quantity'] as double?;
+      if (vaccineName != null && quantity != null && quantity > 0) {
+        final vaccine = vaccines.firstWhere(
+          (v) => v.name == vaccineName,
+          orElse: () => throw Exception('Vaccine not found: $vaccineName'),
+        );
+        final newQty = (vaccine.quantity - quantity.toInt()).clamp(
+          0,
+          vaccine.quantity,
+        );
+        await SupabaseService().updateInventoryItem({
+          'id': vaccine.id,
+          'quantity': newQty,
+        });
+      }
+    }
+
+    // Update inventory for selected other materials
+    final selectedOtherMaterials =
+        reportData['selected_other_materials'] as List<dynamic>? ?? [];
+    for (final materialData in selectedOtherMaterials) {
+      final materialName = materialData['name'] as String?;
+      final quantity = materialData['quantity'] as double?;
+      if (materialName != null && quantity != null && quantity > 0) {
+        final material = otherMaterials.firstWhere(
+          (m) => m.name == materialName,
+          orElse: () => throw Exception('Material not found: $materialName'),
+        );
+        final newQty = (material.quantity - quantity.toInt()).clamp(
+          0,
+          material.quantity,
+        );
+        await SupabaseService().updateInventoryItem({
+          'id': material.id,
+          'quantity': newQty,
+        });
+      }
+    }
+
+    // Create daily record (notes go to batch record, not daily record)
+    final dailyRecordData = {
+      'user_id': reportData['user_id'],
+      'record_date': reportData['record_date'],
+    };
+    final dailyRecordId = await SupabaseService().addDailyRecord(
+      dailyRecordData,
+    );
+
+    // Create batch record
+    final batchRecordData = Map<String, dynamic>.from(reportData);
+    batchRecordData['daily_record_id'] = dailyRecordId;
+    batchRecordData.remove('user_id');
+    batchRecordData.remove('record_date');
+    // Keep notes in batch record - don't remove it
+
+    // Convert selected materials to the format expected by database
+    final feedsData = reportData['selected_feeds'] as List<dynamic>? ?? [];
+    final vaccinesData =
+        reportData['selected_vaccines'] as List<dynamic>? ?? [];
+    final materialsData =
+        reportData['selected_other_materials'] as List<dynamic>? ?? [];
+
+    batchRecordData['feeds_used'] = feedsData
+        .where((f) => f['quantity'] != null)
+        .toList();
+    batchRecordData['vaccines_used'] = vaccinesData
+        .where((v) => v['quantity'] != null)
+        .toList();
+    batchRecordData['other_materials_used'] = materialsData
+        .where((m) => m['quantity'] != null)
+        .toList();
+
+    // Remove the original selected_ fields
+    batchRecordData.remove('selected_feeds');
+    batchRecordData.remove('selected_vaccines');
+    batchRecordData.remove('selected_other_materials');
+
+    await SupabaseService().addBatchRecord(batchRecordData);
+  }
+
+  /// Save report offline (when disconnected)
+  Future<void> _saveReportOffline(Map<String, dynamic> reportData) async {
+    try {
+      print('[FarmReportEntry] Attempting to save report offline');
+      print('[FarmReportEntry] Report data keys: ${reportData.keys}');
+
+      final reportId = await OfflineService.instance.saveFarmReportOffline(
+        reportData,
+      );
+      print(
+        '[FarmReportEntry] Successfully saved offline report with ID: $reportId',
+      );
+
+      // Update connectivity manager to refresh pending count
+      await ConnectivityManager.instance.refreshConnectivity();
+      print('[FarmReportEntry] Updated connectivity manager');
     } catch (e) {
-      print('Error saving batch record: $e');
-      // Just rethrow the error to be handled by the main save function
-      // Don't show dialog here to avoid multiple dialogs
+      print('[FarmReportEntry] Error saving offline report: $e');
       rethrow;
     }
   }

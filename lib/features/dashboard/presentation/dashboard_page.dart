@@ -5,6 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
+import '../../../shared/providers/offline_data_provider.dart';
+import '../../../shared/services/connectivity_manager.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -52,30 +54,33 @@ class _DashboardPageState extends State<DashboardPage> {
         setState(() => loading = false);
         return;
       }
-      userName =
-          user.userMetadata?['full_name'] ??
-          user.email?.split('@').first ??
-          'type_here'.tr();
-      final batches = await SupabaseService().fetchBatches(user.id);
-      final inventory = await SupabaseService().fetchInventory(user.id);
-      int birds = 0;
-      int feeds = 0;
-      for (final b in batches) {
-        final val = b['total_chickens'] ?? 0;
-        birds += val is int ? val : (val is num ? val.toInt() : 0);
+      // Load dashboard data with offline fallback
+      await OfflineDataProvider.instance.loadDashboardData();
+
+      final dashboardData = OfflineDataProvider.instance.dashboardData;
+
+      String? fullName;
+      try {
+        final userResponse = await Supabase.instance.client
+            .from('users')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle();
+        fullName = userResponse?['full_name'];
+      } catch (_) {
+        fullName = null;
       }
-      for (final i in inventory) {
-        if (i['category'] == 'feed') {
-          final val = i['quantity'] ?? 0;
-          feeds += val is int ? val : (val is num ? val.toInt() : 0);
-        }
-      }
-      // Fetch total eggs collected from batch records
-      final eggs = await SupabaseService().fetchTotalEggsCollected(user.id);
+
       setState(() {
-        totalBirds = birds;
-        totalFeeds = feeds;
-        totalEggs = eggs;
+        totalBirds = dashboardData?['totalBirds'] ?? 0;
+        totalFeeds = dashboardData?['totalFeeds'] ?? 0;
+        totalEggs = dashboardData?['totalEggs'] ?? 0;
+        userName = (fullName != null && fullName.trim().isNotEmpty)
+            ? fullName.split(' ').first
+            : (user.userMetadata?['full_name'] != null &&
+                  (user.userMetadata?['full_name'] as String).trim().isNotEmpty)
+            ? (user.userMetadata?['full_name'] as String).split(' ').first
+            : (user.email?.split('@').first ?? 'type_here'.tr());
         loading = false;
       });
     } catch (e) {
@@ -117,14 +122,26 @@ class _DashboardPageState extends State<DashboardPage> {
       BuildContext context,
       String label,
       Widget icon,
-      String route,
-    ) {
+      String route, {
+      bool isComingSoon = false,
+    }) {
       return Material(
         color: Colors.transparent, // Remove yellow background
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => context.go(route),
+          onTap: () {
+            if (isComingSoon) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('coming_soon'.tr()),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            } else {
+              context.go(route);
+            }
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             child: Column(
@@ -355,6 +372,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               height: 36,
                             ),
                             '/#',
+                            isComingSoon: true,
                           ),
                           quickAction(
                             context,
@@ -365,6 +383,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               height: 36,
                             ),
                             '/#',
+                            isComingSoon: true,
                           ),
                           quickAction(
                             context,
@@ -375,6 +394,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               size: 36,
                             ),
                             '/#',
+                            isComingSoon: true,
                           ),
                         ],
                       ),

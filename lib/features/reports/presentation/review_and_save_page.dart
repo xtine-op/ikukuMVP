@@ -209,7 +209,7 @@ class ReviewAndSavePage extends StatelessWidget {
           // Additional Notes Section
           if (notes != null && notes!.trim().isNotEmpty)
             _SectionCard(
-              title: 'additional_notes_title'.tr(),
+              title: 'additional_notes'.tr(),
               onEdit: () {},
               items: [_SectionItem(label: '', value: notes!)],
             ),
@@ -234,25 +234,22 @@ class ReviewAndSavePage extends StatelessWidget {
                 shadowColor: Colors.transparent,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+                foregroundColor: CustomColors.text,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
               child: Ink(
                 decoration: BoxDecoration(
                   gradient: CustomColors.buttonGradient,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Container(
                   alignment: Alignment.center,
-                  height: 24,
+                  constraints: const BoxConstraints(minHeight: 48),
                   child: Text(
                     'finish_reporting'.tr(),
-                    style: const TextStyle(
-                      color: CustomColors.text,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: CustomColors.text),
                   ),
                 ),
               ),

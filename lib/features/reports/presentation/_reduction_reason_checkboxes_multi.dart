@@ -64,7 +64,7 @@ class _ReductionReasonCheckboxesMultiState
                         _emitCounts();
                       },
                     ),
-                    Text(reason[0].toUpperCase() + reason.substring(1)),
+                    Text(reason.tr()),
                     const SizedBox(width: 16),
                   ],
                 ),
@@ -81,9 +81,7 @@ class _ReductionReasonCheckboxesMultiState
                   decoration: InputDecoration(
                     labelText: tr(
                       'how_many_reason',
-                      namedArgs: {
-                        'reason': reason[0].toUpperCase() + reason.substring(1),
-                      },
+                      namedArgs: {'reason': reason.tr()},
                     ),
                     border: OutlineInputBorder(),
                     isDense: true,

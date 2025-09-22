@@ -156,9 +156,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           return CheckboxListTile(
             value: isSelected,
             title: Text(
-              'vaccine_with_stock'.tr(
-                args: [vaccine.name, vaccine.quantity.toString()],
-              ),
+              '${vaccine.name} (${"stock".tr()}: ${vaccine.quantity} ${"lit".tr()})',
             ),
             onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
             controlAffinity: ListTileControlAffinity.leading,

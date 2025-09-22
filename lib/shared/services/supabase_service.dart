@@ -95,6 +95,34 @@ class SupabaseService {
     await supabase.from('inventory_items').delete().eq('id', id);
   }
 
+  // Update inventory item quantity (for consumption tracking)
+  Future<void> updateInventoryQuantity(
+    String itemId,
+    double quantityChange,
+  ) async {
+    // Get current quantity
+    final response = await supabase
+        .from('inventory_items')
+        .select('quantity')
+        .eq('id', itemId)
+        .single();
+
+    final currentQuantity = (response['quantity'] as num?)?.toDouble() ?? 0.0;
+    final newQuantity = currentQuantity + quantityChange;
+
+    // Ensure quantity doesn't go below 0
+    final finalQuantity = newQuantity < 0 ? 0.0 : newQuantity;
+
+    await supabase
+        .from('inventory_items')
+        .update({'quantity': finalQuantity})
+        .eq('id', itemId);
+
+    print(
+      '[SupabaseService] Updated inventory $itemId: $currentQuantity -> $finalQuantity',
+    );
+  }
+
   // Fetch all daily records for a user
   Future<List<Map<String, dynamic>>> fetchDailyRecords(String userId) async {
     final response = await supabase

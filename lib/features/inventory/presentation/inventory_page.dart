@@ -76,125 +76,129 @@ class _InventoryPageState extends State<InventoryPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tr('add_item_in_store'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: tr('name_of_item'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.green, width: 1.2),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('add_item_in_store'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                  onSaved: (v) => name = v ?? '',
-                ),
-                const SizedBox(height: 18),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: tr('quantity'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.green, width: 1.2),
-                    ),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || int.tryParse(v) == null
-                      ? 'Enter a number'
-                      : null,
-                  onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
-                ),
-                const SizedBox(height: 18),
-                DropdownButtonFormField<String>(
-                  value: unit,
-                  items: units
-                      .map(
-                        (u) => DropdownMenuItem(value: u, child: Text(u.tr())),
-                      )
-                      .toList(),
-                  onChanged: (v) => unit = v ?? 'kg',
-                  decoration: InputDecoration(
-                    labelText: tr('unit'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.green, width: 1.2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: CustomColors.primary),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        backgroundColor: Colors.white,
-                      ),
-                      child: Text(
-                        tr('cancel'),
-                        style: const TextStyle(color: CustomColors.primary),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: tr('name_of_item'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (formKey.currentState?.validate() ?? false) {
-                          formKey.currentState?.save();
-                          final item = InventoryItem.empty(user.id).copyWith(
-                            name: name,
-                            category: category,
-                            quantity: quantity,
-                            unit: unit,
-                            addedOn: DateTime.now(),
-                          );
-                          await SupabaseService().addInventoryItem(
-                            item.toJson(),
-                          );
-                          if (mounted) {
-                            Navigator.pop(context);
-                            fetchItems();
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                    onSaved: (v) => name = v ?? '',
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: tr('quantity'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v == null || int.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
+                  ),
+                  const SizedBox(height: 18),
+                  DropdownButtonFormField<String>(
+                    value: unit,
+                    items: units
+                        .map(
+                          (u) =>
+                              DropdownMenuItem(value: u, child: Text(u.tr())),
+                        )
+                        .toList(),
+                    onChanged: (v) => unit = v ?? 'kg',
+                    decoration: InputDecoration(
+                      labelText: tr('unit'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: CustomColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                        child: Text(
+                          tr('cancel'),
+                          style: const TextStyle(color: CustomColors.primary),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (formKey.currentState?.validate() ?? false) {
+                            formKey.currentState?.save();
+                            final item = InventoryItem.empty(user.id).copyWith(
+                              name: name,
+                              category: category,
+                              quantity: quantity,
+                              unit: unit,
+                              addedOn: DateTime.now(),
+                            );
+                            await SupabaseService().addInventoryItem(
+                              item.toJson(),
+                            );
+                            if (mounted) {
+                              Navigator.pop(context);
+                              fetchItems();
+                            }
                           }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: CustomColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: CustomColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
+                        child: Text(tr('add_item')),
                       ),
-                      child: Text(tr('add_item')),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -484,245 +488,257 @@ class _InventoryPageState extends State<InventoryPage> {
       tip = tr('tip_adjust_item');
       tipIcon = 'assets/icons/tip-chicken.png';
     }
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => context.go('/inventory-categories'),
+    return WillPopScope(
+      onWillPop: () async {
+        context.go('/inventory-categories');
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            onPressed: () => context.go('/inventory-categories'),
+          ),
+          title: const Text('', style: TextStyle(color: Colors.black87)),
+          backgroundColor: Colors.white,
+          elevation: 0,
         ),
-        title: const Text('', style: TextStyle(color: Colors.black87)),
         backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    heading,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      heading,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 20,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Image.asset(tipIcon, width: 48, height: 48),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          tip,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Image.asset(tipIcon, width: 48, height: 48),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            tip,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  if (items.isEmpty)
-                    Center(
-                      child: Text(
-                        tr('no_items_in_store_yet'),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: items.length,
-                        separatorBuilder: (context, i) =>
-                            const SizedBox(height: 16),
-                        itemBuilder: (context, i) {
-                          final item = items[i];
-                          return Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.black12,
-                                width: 1.2,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              color: Colors.white,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 18,
-                              horizontal: 18,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 16,
-                                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    if (items.isEmpty)
+                      Center(
+                        child: Text(
+                          tr('no_items_in_store_yet'),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: items.length,
+                          separatorBuilder: (context, i) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, i) {
+                            final item = items[i];
+                            return Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.black12,
+                                  width: 1.2,
                                 ),
-                                Row(
-                                  children: [
-                                    Text(
-                                      '${item.quantity}${item.unit}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        color: CustomColors.primary,
-                                      ),
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 18,
+                                horizontal: 18,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
                                     ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.add_circle_outline,
-                                        color: CustomColors.secondary,
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${item.quantity}${item.unit}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                          color: CustomColors.primary,
+                                        ),
                                       ),
-                                      tooltip: tr('add_amount'),
-                                      onPressed: () async {
-                                        int? addAmount = await showDialog<int>(
-                                          context: context,
-                                          builder: (context) {
-                                            int value = 0;
-                                            return AlertDialog(
-                                              backgroundColor: Colors
-                                                  .white, // Change background to white
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(24),
-                                              ),
-                                              title: Text(
-                                                tr(
-                                                  'add_to',
-                                                  namedArgs: {
-                                                    'item': item.name,
-                                                  },
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.add_circle_outline,
+                                          color: CustomColors.secondary,
+                                        ),
+                                        tooltip: tr('add_amount'),
+                                        onPressed: () async {
+                                          int?
+                                          addAmount = await showDialog<int>(
+                                            context: context,
+                                            builder: (context) {
+                                              int value = 0;
+                                              return AlertDialog(
+                                                backgroundColor: Colors
+                                                    .white, // Change background to white
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(24),
                                                 ),
-                                              ),
-                                              content: TextFormField(
-                                                autofocus: true,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                decoration: InputDecoration(
-                                                  labelText: tr(
-                                                    'amount_to_add',
+                                                title: Text(
+                                                  tr(
+                                                    'add_to',
+                                                    namedArgs: {
+                                                      'item': item.name,
+                                                    },
                                                   ),
-                                                  filled: true,
-                                                  fillColor: Colors
-                                                      .white, // Ensure input is white
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          16,
-                                                        ),
-                                                    borderSide: BorderSide(
-                                                      color:
-                                                          CustomColors.primary,
-                                                      width: 1.2,
+                                                ),
+                                                content: TextFormField(
+                                                  autofocus: true,
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  decoration: InputDecoration(
+                                                    labelText: tr(
+                                                      'amount_to_add',
                                                     ),
-                                                  ),
-                                                  enabledBorder:
-                                                      OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              16,
-                                                            ),
-                                                        borderSide: BorderSide(
-                                                          color: CustomColors
-                                                              .primary,
-                                                          width: 1.2,
-                                                        ),
-                                                      ),
-                                                  focusedBorder:
-                                                      OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              16,
-                                                            ),
-                                                        borderSide: BorderSide(
-                                                          color: CustomColors
-                                                              .primary,
-                                                          width: 1.8,
-                                                        ),
-                                                      ),
-                                                ),
-                                                onChanged: (v) => value =
-                                                    int.tryParse(v) ?? 0,
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: Text(tr('cancel')),
-                                                ),
-                                                ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        CustomColors.primary,
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    shape: RoundedRectangleBorder(
+                                                    filled: true,
+                                                    fillColor: Colors
+                                                        .white, // Ensure input is white
+                                                    border: OutlineInputBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                            12,
+                                                            16,
                                                           ),
+                                                      borderSide: BorderSide(
+                                                        color: CustomColors
+                                                            .primary,
+                                                        width: 1.2,
+                                                      ),
                                                     ),
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 24,
-                                                          vertical: 12,
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                16,
+                                                              ),
+                                                          borderSide: BorderSide(
+                                                            color: CustomColors
+                                                                .primary,
+                                                            width: 1.2,
+                                                          ),
+                                                        ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                16,
+                                                              ),
+                                                          borderSide: BorderSide(
+                                                            color: CustomColors
+                                                                .primary,
+                                                            width: 1.8,
+                                                          ),
                                                         ),
                                                   ),
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                        context,
-                                                        value,
-                                                      ),
-                                                  child: Text(tr('add')),
+                                                  onChanged: (v) => value =
+                                                      int.tryParse(v) ?? 0,
                                                 ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        if (addAmount != null &&
-                                            addAmount > 0) {
-                                          final updatedItem = item.copyWith(
-                                            quantity: item.quantity + addAmount,
-                                          );
-                                          await SupabaseService()
-                                              .updateInventoryItem(
-                                                updatedItem.toJson(),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: Text(tr('cancel')),
+                                                  ),
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          CustomColors.primary,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              12,
+                                                            ),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 24,
+                                                            vertical: 12,
+                                                          ),
+                                                    ),
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          context,
+                                                          value,
+                                                        ),
+                                                    child: Text(tr('add')),
+                                                  ),
+                                                ],
                                               );
-                                          if (mounted) fetchItems();
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                                            },
+                                          );
+                                          if (addAmount != null &&
+                                              addAmount > 0) {
+                                            final updatedItem = item.copyWith(
+                                              quantity:
+                                                  item.quantity + addAmount,
+                                            );
+                                            await SupabaseService()
+                                                .updateInventoryItem(
+                                                  updatedItem.toJson(),
+                                                );
+                                            if (mounted) fetchItems();
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: CustomColors.buttonGradient,
-          borderRadius: BorderRadius.circular(30),
+        floatingActionButton: Container(
+          decoration: BoxDecoration(
+            gradient: CustomColors.buttonGradient,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: FloatingActionButton(
+            onPressed: _showAddItemDialog,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
         ),
-        child: FloatingActionButton(
-          onPressed: _showAddItemDialog,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
+        bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 }

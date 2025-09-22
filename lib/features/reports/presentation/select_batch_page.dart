@@ -70,13 +70,13 @@ class SelectBatchPage extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: CustomColors.primary,
+                                    color: CustomColors.lightGreen,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     'reported_today'.tr(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: CustomColors.text,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -96,9 +96,9 @@ class SelectBatchPage extends StatelessWidget {
                                 color: batch.birdType.toLowerCase() == 'broiler'
                                     ? Colors.green[100]
                                     : batch.birdType.toLowerCase() == 'layers'
-                                    ? Colors.yellow[100]
+                                    ? CustomColors.secondary
                                     : batch.birdType.toLowerCase() == 'kienyeji'
-                                    ? Colors.lightGreen[200]
+                                    ? Colors.orange[100]
                                     : Colors.grey[200],
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -109,10 +109,10 @@ class SelectBatchPage extends StatelessWidget {
                                       batch.birdType.toLowerCase() == 'broiler'
                                       ? Colors.green[800]
                                       : batch.birdType.toLowerCase() == 'layers'
-                                      ? Colors.orange[800]
+                                      ? Colors.white
                                       : batch.birdType.toLowerCase() ==
                                             'kienyeji'
-                                      ? Colors.green[700]
+                                      ? Colors.orange[800]
                                       : Colors.grey[800],
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,

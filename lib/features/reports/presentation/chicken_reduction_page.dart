@@ -23,168 +23,134 @@ class ChickenReductionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(width: 24),
-          Text(
-            'chicken_reduction'.tr(),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(
-            height: 24,
-          ), // Increased space between heading and summary
-          if (selectedBatch != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                // No boxShadow for this summary
-                border: Border.all(color: const Color(0xFFE6E8EC)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Type icon (use farm icon as placeholder)
-                          const SizedBox(width: 8),
-                          Text(
-                            'Chicken Type',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: CustomColors.text,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        selectedBatch.birdType,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: CustomColors.text,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Bird count icon (use numbers icon as placeholder)
-                          const SizedBox(width: 8),
-                          Text(
-                            'Number of Birds',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: CustomColors.text,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        selectedBatch.totalChickens.toString(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: CustomColors.text,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(width: 24),
+            Text(
+              'chicken_reduction'.tr(),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
+            const SizedBox(
+              height: 24,
+            ), // Increased space between heading and summary
+            if (selectedBatch != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE6E8EC)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'selected_batch'.tr(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      selectedBatch!.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${selectedBatch!.birdType.toUpperCase()} • ${selectedBatch!.totalChickens} ${'birds'.tr()} • ${selectedBatch!.ageInDays} ${'days_old'.tr()}',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
 
-          const SizedBox(height: 8),
-          // Remove yellow card and use a plain container for form fields
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'have_chickens_reduced_today'.tr(),
-                style: TextStyle(color: CustomColors.text, fontSize: 16),
-              ),
-              Row(
-                children: [
-                  Radio<String>(
-                    value: 'yes',
-                    groupValue: chickenReduction,
-                    onChanged: onReductionChanged,
-                    activeColor: CustomColors.primary,
-                  ),
-                  Text('yes'.tr()),
-                  Radio<String>(
-                    value: 'no',
-                    groupValue: chickenReduction,
-                    onChanged: onReductionChanged,
-                    activeColor: CustomColors.primary,
-                  ),
-                  Text('no'.tr()),
-                ],
-              ),
-              if (chickenReduction == 'yes') ...[
-                const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            // Remove yellow card and use a plain container for form fields
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  'reduction_reason'.tr(),
+                  'have_chickens_reduced_today'.tr(),
                   style: TextStyle(color: CustomColors.text, fontSize: 16),
                 ),
-                const SizedBox(height: 8),
-                ReductionReasonCheckboxesMulti(
-                  reductionCounts: reductionCounts,
-                  onCountsChanged: onCountsChanged,
+                Row(
+                  children: [
+                    Radio<String>(
+                      value: 'yes',
+                      groupValue: chickenReduction,
+                      onChanged: onReductionChanged,
+                      activeColor: CustomColors.primary,
+                    ),
+                    Text('yes'.tr()),
+                    Radio<String>(
+                      value: 'no',
+                      groupValue: chickenReduction,
+                      onChanged: onReductionChanged,
+                      activeColor: CustomColors.primary,
+                    ),
+                    Text('no'.tr()),
+                  ],
                 ),
-              ],
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    foregroundColor: CustomColors.text,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                  ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: CustomColors.buttonGradient,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      constraints: const BoxConstraints(minHeight: 48),
-                      child: Text(
-                        'continue'.tr(),
-                        style: const TextStyle(color: CustomColors.text),
+                if (chickenReduction == 'yes') ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    'reduction_reason'.tr(),
+                    style: TextStyle(color: CustomColors.text, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  ReductionReasonCheckboxesMulti(
+                    reductionCounts: reductionCounts,
+                    onCountsChanged: onCountsChanged,
+                  ),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      foregroundColor: CustomColors.text,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: CustomColors.buttonGradient,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Text(
+                          'continue'.tr(),
+                          style: const TextStyle(color: CustomColors.text),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -254,7 +220,7 @@ class _ReductionReasonCheckboxesState
                   widget.onReasonChanged(selected.isEmpty ? null : selected);
                 },
               ),
-              Text(reason[0].toUpperCase() + reason.substring(1).tr()),
+              Text(reason.tr()),
             ],
           ),
         ),

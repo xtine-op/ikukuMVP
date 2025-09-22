@@ -6,6 +6,8 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
+import '../../../shared/providers/offline_data_provider.dart';
+import '../../../shared/services/connectivity_manager.dart';
 import '../data/batch_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 
@@ -38,9 +40,10 @@ class _BatchesPageState extends State<BatchesPage> {
       });
       return;
     }
-    final data = await SupabaseService().fetchBatches(user.id);
+    // Load batches with offline fallback
+    await OfflineDataProvider.instance.loadBatches();
     setState(() {
-      batches = data.map((e) => Batch.fromJson(e)).toList();
+      batches = OfflineDataProvider.instance.batches;
       loading = false;
     });
   }
@@ -273,7 +276,9 @@ class _BatchesPageState extends State<BatchesPage> {
                           totalChickens: totalChickens,
                           createdAt: DateTime.now(),
                         );
-                        await SupabaseService().addBatch(batch.toJson());
+                        await OfflineDataProvider.instance.addBatch(
+                          batch.toJson(),
+                        );
                         if (mounted) {
                           Navigator.pop(context);
                           fetchBatches();
@@ -502,32 +507,6 @@ class _BatchesPageState extends State<BatchesPage> {
           },
         ),
         title: Text('batches'.tr()),
-        actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_none_outlined),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Coming soon.')));
-            },
-          ),
-        ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -585,17 +564,17 @@ class _BatchesPageState extends State<BatchesPage> {
                             fit: BoxFit.contain,
                           ),
                           const SizedBox(height: 24),
-                          const Text(
-                            'You have no batches yet',
-                            style: TextStyle(
+                          Text(
+                            'no_batches_yet'.tr(),
+                            style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'The batches you create will appear here',
-                            style: TextStyle(
+                          Text(
+                            'batches_empty_hint'.tr(),
+                            style: const TextStyle(
                               color: Colors.black54,
                               fontSize: 14,
                             ),
