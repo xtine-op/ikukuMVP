@@ -67,6 +67,7 @@ class _InventoryPageState extends State<InventoryPage> {
     int quantity = 0;
     String unit = 'kg';
     List<String> units = ['kg', 'g', 'litres', 'pcs'];
+    double price = 0.0;
     await showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -121,6 +122,25 @@ class _InventoryPageState extends State<InventoryPage> {
                     onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
                   ),
                   const SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: tr('price_per_unit'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => v == null || double.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
+                  ),
+                  const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     value: unit,
                     items: units
@@ -172,6 +192,7 @@ class _InventoryPageState extends State<InventoryPage> {
                               quantity: quantity,
                               unit: unit,
                               addedOn: DateTime.now(),
+                              price: price,
                             );
                             await SupabaseService().addInventoryItem(
                               item.toJson(),
@@ -212,6 +233,7 @@ class _InventoryPageState extends State<InventoryPage> {
     String category = item.category;
     int quantity = item.quantity;
     String unit = item.unit;
+    double price = item.price;
     await showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -307,6 +329,26 @@ class _InventoryPageState extends State<InventoryPage> {
                         v == null || v.isEmpty ? 'Required' : null,
                     onSaved: (v) => unit = v ?? 'kg',
                   ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    initialValue: price.toStringAsFixed(2),
+                    decoration: InputDecoration(
+                      labelText: tr('price_per_unit'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => v == null || double.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
+                  ),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -338,6 +380,7 @@ class _InventoryPageState extends State<InventoryPage> {
                               category: category,
                               quantity: quantity,
                               unit: unit,
+                              price: price,
                             );
                             await SupabaseService().updateInventoryItem(
                               updatedItem.toJson(),
@@ -588,6 +631,14 @@ class _InventoryPageState extends State<InventoryPage> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
+                                      Text(
+                                        ' @ ${item.price.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                       IconButton(
                                         icon: const Icon(
                                           Icons.add_circle_outline,
@@ -713,6 +764,15 @@ class _InventoryPageState extends State<InventoryPage> {
                                             if (mounted) fetchItems();
                                           }
                                         },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blueGrey,
+                                        ),
+                                        tooltip: tr('edit_item'),
+                                        onPressed: () =>
+                                            _showEditItemDialog(item),
                                       ),
                                     ],
                                   ),

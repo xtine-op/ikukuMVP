@@ -8,6 +8,7 @@ class InventoryItem {
   final int quantity;
   final String unit;
   final DateTime addedOn;
+  final double price; // price per unit
 
   InventoryItem({
     required this.id,
@@ -17,6 +18,7 @@ class InventoryItem {
     required this.quantity,
     required this.unit,
     required this.addedOn,
+    required this.price,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
@@ -27,6 +29,7 @@ class InventoryItem {
     quantity: json['quantity'] as int,
     unit: json['unit'] as String,
     addedOn: DateTime.parse(json['added_on'] as String),
+    price: (json['price'] as num?)?.toDouble() ?? 0.0,
   );
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +40,7 @@ class InventoryItem {
     'quantity': quantity,
     'unit': unit,
     'added_on': addedOn.toIso8601String(),
+    'price': price,
   };
 
   static InventoryItem empty(String userId) => InventoryItem(
@@ -47,6 +51,7 @@ class InventoryItem {
     quantity: 0,
     unit: 'kg',
     addedOn: DateTime.now(),
+    price: 0.0,
   );
 
   InventoryItem copyWith({
@@ -57,6 +62,7 @@ class InventoryItem {
     int? quantity,
     String? unit,
     DateTime? addedOn,
+    double? price,
   }) {
     return InventoryItem(
       id: id ?? this.id,
@@ -66,6 +72,7 @@ class InventoryItem {
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
       addedOn: addedOn ?? this.addedOn,
+      price: price ?? this.price,
     );
   }
 }

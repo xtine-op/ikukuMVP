@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../smart_tips/presentation/smart_tips_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../app_theme.dart';
-import '../../../shared/services/supabase_service.dart';
 import '../../../shared/providers/offline_data_provider.dart';
-import '../../../shared/services/connectivity_manager.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -22,24 +21,6 @@ class _DashboardPageState extends State<DashboardPage> {
   int totalEggs = 0;
   bool loading = true;
   String? userName;
-  int _selectedIndex = 0;
-
-  void _onNavBarTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        // Home: stay on dashboard
-        break;
-      case 1:
-        context.go('/profile');
-        break;
-      case 2:
-        context.go('/inventory');
-        break;
-    }
-  }
 
   @override
   void initState() {
@@ -59,28 +40,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
       final dashboardData = OfflineDataProvider.instance.dashboardData;
 
-      String? fullName;
-      try {
-        final userResponse = await Supabase.instance.client
-            .from('users')
-            .select('full_name')
-            .eq('id', user.id)
-            .maybeSingle();
-        fullName = userResponse?['full_name'];
-      } catch (_) {
-        fullName = null;
-      }
-
       setState(() {
         totalBirds = dashboardData?['totalBirds'] ?? 0;
         totalFeeds = dashboardData?['totalFeeds'] ?? 0;
         totalEggs = dashboardData?['totalEggs'] ?? 0;
-        userName = (fullName != null && fullName.trim().isNotEmpty)
-            ? fullName.split(' ').first
-            : (user.userMetadata?['full_name'] != null &&
-                  (user.userMetadata?['full_name'] as String).trim().isNotEmpty)
-            ? (user.userMetadata?['full_name'] as String).split(' ').first
-            : (user.email?.split('@').first ?? 'type_here'.tr());
+        userName = dashboardData?['userName'] ?? 'type_here'.tr();
         loading = false;
       });
     } catch (e) {
@@ -100,24 +64,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget summaryItem(String label, String value) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-              color: CustomColors.text,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontSize: 14, color: CustomColors.text)),
-        ],
-      );
-    }
-
     Widget quickAction(
       BuildContext context,
       String label,
@@ -131,7 +77,11 @@ class _DashboardPageState extends State<DashboardPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () {
-            if (isComingSoon) {
+            if (route == '/smart-tips') {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SmartTipsPage()));
+            } else if (isComingSoon) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('coming_soon'.tr()),
@@ -371,8 +321,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               width: 36,
                               height: 36,
                             ),
-                            '/#',
-                            isComingSoon: true,
+                            '/farm-summary',
                           ),
                           quickAction(
                             context,
@@ -393,8 +342,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               color: CustomColors.text,
                               size: 36,
                             ),
-                            '/#',
-                            isComingSoon: true,
+                            '/smart-tips',
                           ),
                         ],
                       ),

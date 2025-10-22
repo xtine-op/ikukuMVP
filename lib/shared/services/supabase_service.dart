@@ -145,6 +145,22 @@ class SupabaseService {
     return response['id'] as String;
   }
 
+  // Fetch daily records in a date range (inclusive start, exclusive end)
+  Future<List<Map<String, dynamic>>> fetchDailyRecordsInRange(
+    String userId,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final response = await supabase
+        .from('daily_records')
+        .select('id, record_date')
+        .eq('user_id', userId)
+        .gte('record_date', start.toIso8601String())
+        .lt('record_date', end.toIso8601String())
+        .order('record_date', ascending: true);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
   // Fetch aggregated reports for a user (example: monthly summary)
   Future<List<Map<String, dynamic>>> fetchReports(String userId) async {
     // This is a placeholder. In a real app, you might use a Supabase function or view for aggregation.
@@ -241,7 +257,7 @@ class SupabaseService {
           .gte('record_date', startOfDay.toIso8601String())
           .lt('record_date', endOfDay.toIso8601String());
 
-      if (dailyRecords == null || dailyRecords.isEmpty) return false;
+      if (dailyRecords.isEmpty) return false;
 
       // 2. Check if a batch_record exists for this batch and any of the daily_records
       final dailyRecordIds = dailyRecords
@@ -256,7 +272,7 @@ class SupabaseService {
           .inFilter('daily_record_id', dailyRecordIds);
 
       // Return true if any batch records exist for this batch
-      return batchRecords != null && batchRecords.isNotEmpty;
+      return batchRecords.isNotEmpty;
     } catch (e) {
       print('Error checking daily record for batch: $e');
       return false; // Return false on error to allow reporting
@@ -280,6 +296,18 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  // Fetch all batch records for a list of daily record ids
+  Future<List<Map<String, dynamic>>> fetchBatchRecordsForDailyRecordIds(
+    List<String> dailyRecordIds,
+  ) async {
+    if (dailyRecordIds.isEmpty) return [];
+    final response = await supabase
+        .from('batch_records')
+        .select()
+        .inFilter('daily_record_id', dailyRecordIds);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
   // Fetch all batch records for a user for a specific date
   Future<List<Map<String, dynamic>>> fetchDailyRecordsForDate(
     String userId,
@@ -300,7 +328,7 @@ class SupabaseService {
           dailyRecords.toString() +
           '\u001b[0m',
     );
-    if (dailyRecords == null || dailyRecords.isEmpty) return [];
+    if (dailyRecords.isEmpty) return [];
     final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
     if (dailyRecordIds.isEmpty) return [];
     // 2. Find all batch_records for these daily_record_ids
@@ -315,7 +343,7 @@ class SupabaseService {
           '\u001b[0m',
     );
     // Ensure every record is a map with a batch_id key
-    if (batchRecords == null || batchRecords.isEmpty) return [];
+    if (batchRecords.isEmpty) return [];
     final result = List<Map<String, dynamic>>.from(
       batchRecords,
     ).where((r) => r.containsKey('batch_id') && r['batch_id'] != null).toList();
@@ -331,7 +359,7 @@ class SupabaseService {
         .from('daily_records')
         .select('id')
         .eq('user_id', userId);
-    if (dailyRecords == null || dailyRecords.isEmpty) return 0;
+    if (dailyRecords.isEmpty) return 0;
     final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
     if (dailyRecordIds.isEmpty) return 0;
     // 2. Get all batch_records for these daily_record_ids
@@ -339,7 +367,7 @@ class SupabaseService {
         .from('batch_records')
         .select('eggs_collected')
         .inFilter('daily_record_id', dailyRecordIds);
-    if (batchRecords == null || batchRecords.isEmpty) return 0;
+    if (batchRecords.isEmpty) return 0;
     // 3. Sum eggs_collected
     int totalEggs = 0;
     for (final record in batchRecords) {

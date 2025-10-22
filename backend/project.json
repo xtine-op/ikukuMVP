@@ -1,0 +1,5 @@
+{
+  "name": "smart-tips-backend",
+  "description": "Backend for Smart Tips chatbot (FastAPI, Bing Web Search)",
+  "version": "1.0.0"
+}

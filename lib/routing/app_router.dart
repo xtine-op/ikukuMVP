@@ -12,6 +12,7 @@ import '../features/reports/presentation/reports_page.dart';
 import '../features/reports/presentation/farm_report_entry_page.dart';
 import '../features/reports/presentation/all_reports_page.dart';
 import '../features/reports/presentation/offline_test_page.dart';
+import '../features/reports/presentation/farm_summary_page.dart';
 import '../features/onboarding/onboarding_page.dart';
 import '../features/profile/profile_page.dart';
 import '../features/auth/presentation/language_selection_page.dart';
@@ -93,6 +94,10 @@ class AppRouter {
       GoRoute(
         path: '/reports',
         builder: (context, state) => const ReportsPage(),
+      ),
+      GoRoute(
+        path: '/farm-summary',
+        builder: (context, state) => const FarmSummaryPage(),
       ),
       GoRoute(
         path: '/report-entry',
