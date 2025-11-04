@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../../app_theme.dart';
-import 'package:ikuku/features/reports/presentation/_reduction_reason_checkboxes_multi.dart';
+import 'widgets/_reduction_reason_checkboxes_multi.dart';
 
 class ChickenReductionPage extends StatelessWidget {
   final String? chickenReduction;
@@ -10,6 +10,8 @@ class ChickenReductionPage extends StatelessWidget {
   final ValueChanged<Map<String, int>> onCountsChanged;
   final VoidCallback onContinue;
   final dynamic selectedBatch;
+  final double? salesAmount;
+  final ValueChanged<double>? onSalesAmountChanged;
 
   const ChickenReductionPage({
     super.key,
@@ -19,6 +21,8 @@ class ChickenReductionPage extends StatelessWidget {
     required this.onCountsChanged,
     required this.onContinue,
     this.selectedBatch,
+    this.salesAmount,
+    this.onSalesAmountChanged,
   });
 
   @override
@@ -112,8 +116,10 @@ class ChickenReductionPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   ReductionReasonCheckboxesMulti(
-                    reductionCounts: reductionCounts,
+                    counts: reductionCounts,
                     onCountsChanged: onCountsChanged,
+                    salesAmount: salesAmount,
+                    onSalesAmountChanged: onSalesAmountChanged,
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -121,16 +127,21 @@ class ChickenReductionPage extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: onContinue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      foregroundColor: CustomColors.text,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                    ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
+                    style:
+                        ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          foregroundColor: CustomColors.text,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ).copyWith(
+                          backgroundColor: MaterialStateProperty.all(null),
+                        ),
                     child: Ink(
                       decoration: BoxDecoration(
                         gradient: CustomColors.buttonGradient,
@@ -152,144 +163,6 @@ class ChickenReductionPage extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ReductionReasonCheckboxes extends StatefulWidget {
-  final String? selectedReasons;
-  final ValueChanged<String?> onReasonChanged;
-  final ValueChanged<String> onCountChanged;
-  final int? reductionCount;
-  final bool showCountsBelow;
-
-  const _ReductionReasonCheckboxes({
-    required this.selectedReasons,
-    required this.onReasonChanged,
-    required this.onCountChanged,
-    required this.reductionCount,
-    this.showCountsBelow = false,
-  });
-
-  @override
-  State<_ReductionReasonCheckboxes> createState() =>
-      _ReductionReasonCheckboxesState();
-}
-
-class _ReductionReasonCheckboxesState
-    extends State<_ReductionReasonCheckboxes> {
-  final Map<String, bool> _checked = {
-    'curled': false,
-    'stolen': false,
-    'death': false,
-  };
-  final Map<String, String> _counts = {'curled': '', 'stolen': '', 'death': ''};
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.selectedReasons != null) {
-      for (final reason in _checked.keys) {
-        _checked[reason] = widget.selectedReasons!.contains(reason);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final checkedReasons = _checked.keys
-        .where((r) => _checked[r] == true)
-        .toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Checkboxes
-        ..._checked.keys.map(
-          (reason) => Row(
-            children: [
-              Checkbox(
-                value: _checked[reason],
-                onChanged: (val) {
-                  setState(() {
-                    _checked[reason] = val ?? false;
-                  });
-                  final selected = _checked.entries
-                      .where((e) => e.value)
-                      .map((e) => e.key)
-                      .join(',');
-                  widget.onReasonChanged(selected.isEmpty ? null : selected);
-                },
-              ),
-              Text(reason.tr()),
-            ],
-          ),
-        ),
-        if (widget.showCountsBelow && checkedReasons.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final reason in checkedReasons)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 0, bottom: 12),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'how_many_chickens_reason'.tr(
-                          namedArgs: {'reason': reason},
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: false,
-                      ),
-                      onChanged: (v) {
-                        _counts[reason] = v;
-                        widget.onCountChanged(v);
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        if (!widget.showCountsBelow)
-          ..._checked.keys
-              .where((reason) => _checked[reason] == true)
-              .map(
-                (reason) => Padding(
-                  padding: const EdgeInsets.only(left: 32, bottom: 12),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'How many chickens were $reason?',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: false,
-                    ),
-                    onChanged: (v) {
-                      _counts[reason] = v;
-                      widget.onCountChanged(v);
-                    },
-                  ),
-                ),
-              ),
-      ],
     );
   }
 }

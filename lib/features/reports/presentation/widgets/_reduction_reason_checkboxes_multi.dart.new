@@ -1,0 +1,172 @@
+import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+
+class ReductionReasonCheckboxesMulti extends StatefulWidget {
+  final List<String>? selectedReasons;
+  final ValueChanged<List<String>>? onReasonsChanged;
+  final Map<String, int> counts;
+  final ValueChanged<Map<String, int>>? onCountsChanged;
+  final double? salesAmount;
+  final ValueChanged<double>? onSalesAmountChanged;
+
+  const ReductionReasonCheckboxesMulti({
+    super.key,
+    this.selectedReasons,
+    this.onReasonsChanged,
+    required this.counts,
+    this.onCountsChanged,
+    this.salesAmount,
+    this.onSalesAmountChanged,
+  });
+
+  @override
+  State<ReductionReasonCheckboxesMulti> createState() =>
+      _ReductionReasonCheckboxesMultiState();
+}
+
+class _ReductionReasonCheckboxesMultiState
+    extends State<ReductionReasonCheckboxesMulti> {
+  final Map<String, bool> _checked = {
+    'curled': false,
+    'stolen': false,
+    'death': false,
+    'sold': false
+  };
+  final Map<String, TextEditingController> _controllers = {};
+  final TextEditingController _salesAmountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize controllers and checked state
+    for (final reason in _checked.keys) {
+      _controllers[reason] = TextEditingController();
+      if (widget.counts[reason] != null && widget.counts[reason]! > 0) {
+        _controllers[reason]?.text = widget.counts[reason].toString();
+        _checked[reason] = true;
+      }
+    }
+
+    // Set up sales amount if available
+    if (widget.salesAmount != null) {
+      _salesAmountController.text = widget.salesAmount!.toString();
+    }
+
+    // Set up selected reasons
+    if (widget.selectedReasons != null) {
+      for (final reason in widget.selectedReasons!) {
+        if (_checked.containsKey(reason)) {
+          _checked[reason] = true;
+        }
+      }
+    }
+
+    _salesAmountController.addListener(_onSalesAmountChanged);
+  }
+
+  void _onSalesAmountChanged() {
+    if (_checked['sold'] == true && widget.onSalesAmountChanged != null) {
+      final amount = double.tryParse(_salesAmountController.text);
+      if (amount != null) {
+        widget.onSalesAmountChanged!(amount);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _salesAmountController.dispose();
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _updateCount(String reason, String value) {
+    final count = int.tryParse(value) ?? 0;
+    if (widget.onCountsChanged != null) {
+      final newCounts = Map<String, int>.from(widget.counts);
+      newCounts[reason] = count;
+      widget.onCountsChanged!(newCounts);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._checked.entries.map((entry) {
+          final reason = entry.key;
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Checkbox(
+                    value: _checked[reason],
+                    onChanged: (checked) {
+                      setState(() {
+                        _checked[reason] = checked ?? false;
+                        if (!checked!) {
+                          _controllers[reason]?.clear();
+                          _updateCount(reason, '0');
+                        }
+                      });
+                      
+                      // Update selected reasons
+                      if (widget.onReasonsChanged != null) {
+                        final selectedReasons = _checked.entries
+                            .where((e) => e.value)
+                            .map((e) => e.key)
+                            .toList();
+                        widget.onReasonsChanged!(selectedReasons);
+                      }
+                    },
+                  ),
+                  Text(reason.tr()),
+                  if (_checked[reason] == true) ...[
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _controllers[reason],
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'quantity'.tr(),
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (value) => _updateCount(reason, value),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (reason == 'sold' && _checked[reason] == true) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: TextFormField(
+                    controller: _salesAmountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'sale_amount'.tr(),
+                      border: const OutlineInputBorder(),
+                      prefixText: 'KES ',
+                    ),
+                    onChanged: (value) {
+                      final amount = double.tryParse(value);
+                      if (amount != null && widget.onSalesAmountChanged != null) {
+                        widget.onSalesAmountChanged!(amount);
+                      }
+                    },
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+}

@@ -7,6 +7,7 @@ class Batch {
   final String birdType; // broiler, kienyeji, layer
   final int ageInDays;
   final int totalChickens;
+  final double pricePerBird;
   final DateTime createdAt;
 
   Batch({
@@ -16,6 +17,7 @@ class Batch {
     required this.birdType,
     required this.ageInDays,
     required this.totalChickens,
+    required this.pricePerBird,
     required this.createdAt,
   });
 
@@ -26,6 +28,7 @@ class Batch {
     birdType: json['bird_type'] as String,
     ageInDays: json['age_in_days'] as int,
     totalChickens: json['total_chickens'] as int,
+    pricePerBird: (json['price_per_bird'] as num?)?.toDouble() ?? 0.0,
     createdAt: DateTime.parse(json['created_at'] as String),
   );
 
@@ -36,6 +39,7 @@ class Batch {
     'bird_type': birdType,
     'age_in_days': ageInDays,
     'total_chickens': totalChickens,
+    'price_per_bird': pricePerBird,
     'created_at': createdAt.toIso8601String(),
   };
 
@@ -46,25 +50,26 @@ class Batch {
     birdType: 'broiler',
     ageInDays: 0,
     totalChickens: 0,
+    pricePerBird: 0.0,
     createdAt: DateTime.now(),
   );
 
   Batch copyWith({
-    String? id,
-    String? userId,
     String? name,
     String? birdType,
     int? ageInDays,
     int? totalChickens,
+    double? pricePerBird,
     DateTime? createdAt,
   }) {
     return Batch(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
+      id: id,
+      userId: userId,
       name: name ?? this.name,
       birdType: birdType ?? this.birdType,
       ageInDays: ageInDays ?? this.ageInDays,
       totalChickens: totalChickens ?? this.totalChickens,
+      pricePerBird: pricePerBird ?? this.pricePerBird,
       createdAt: createdAt ?? this.createdAt,
     );
   }

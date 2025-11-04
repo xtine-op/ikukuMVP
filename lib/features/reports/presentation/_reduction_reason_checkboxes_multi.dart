@@ -4,10 +4,14 @@ import 'package:easy_localization/easy_localization.dart';
 class ReductionReasonCheckboxesMulti extends StatefulWidget {
   final Map<String, int> reductionCounts;
   final ValueChanged<Map<String, int>> onCountsChanged;
+  final ValueChanged<double>? onSalesAmountChanged;
+  final double? salesAmount;
 
   ReductionReasonCheckboxesMulti({
     required this.reductionCounts,
     required this.onCountsChanged,
+    this.onSalesAmountChanged,
+    this.salesAmount,
   });
 
   @override
@@ -27,11 +31,13 @@ class _ReductionReasonCheckboxesMultiState
       'curled': (widget.reductionCounts['curled'] ?? 0) > 0,
       'stolen': (widget.reductionCounts['stolen'] ?? 0) > 0,
       'death': (widget.reductionCounts['death'] ?? 0) > 0,
+      'sold': (widget.reductionCounts['sold'] ?? 0) > 0,
     };
     _counts = {
       'curled': (widget.reductionCounts['curled']?.toString() ?? ''),
       'stolen': (widget.reductionCounts['stolen']?.toString() ?? ''),
       'death': (widget.reductionCounts['death']?.toString() ?? ''),
+      'sold': (widget.reductionCounts['sold']?.toString() ?? ''),
     };
   }
 
@@ -75,26 +81,52 @@ class _ReductionReasonCheckboxesMultiState
         ..._checked.keys
             .where((reason) => _checked[reason] == true)
             .map(
-              (reason) => Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    labelText: tr(
-                      'how_many_reason',
-                      namedArgs: {'reason': reason.tr()},
+              (reason) => Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: tr(
+                          'how_many_reason',
+                          namedArgs: {'reason': reason.tr()},
+                        ),
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) {
+                        setState(() {
+                          _counts[reason] = v;
+                        });
+                        _emitCounts();
+                      },
+                      controller: TextEditingController(text: _counts[reason]),
                     ),
-                    border: OutlineInputBorder(),
-                    isDense: true,
                   ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) {
-                    setState(() {
-                      _counts[reason] = v;
-                    });
-                    _emitCounts();
-                  },
-                  controller: TextEditingController(text: _counts[reason]),
-                ),
+                  if (reason == 'sold' && widget.onSalesAmountChanged != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          labelText:
+                              'How nuch did you sell the chicken for?(Ksh)',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (v) {
+                          final amount = double.tryParse(v) ?? 0.0;
+                          widget.onSalesAmountChanged?.call(amount);
+                        },
+                        controller: TextEditingController(
+                          text: widget.salesAmount?.toString() ?? '',
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
       ],

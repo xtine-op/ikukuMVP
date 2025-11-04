@@ -388,6 +388,25 @@ class _InventoryPageState extends State<InventoryPage> {
                             if (mounted) {
                               Navigator.pop(context);
                               fetchItems();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    tr(
+                                      'item_updated_success',
+                                      namedArgs: {
+                                        'oldName': item.name,
+                                        'newName': name,
+                                        'oldPrice': item.price.toStringAsFixed(
+                                          2,
+                                        ),
+                                        'newPrice': price.toStringAsFixed(2),
+                                      },
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
                             }
                           }
                         },
@@ -606,22 +625,23 @@ class _InventoryPageState extends State<InventoryPage> {
                                 color: Colors.white,
                               ),
                               padding: const EdgeInsets.symmetric(
-                                vertical: 18,
+                                vertical: 12,
                                 horizontal: 18,
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    item.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                    ),
-                                  ),
                                   Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 16,
+                                        ),
+                                      ),
                                       Text(
                                         '${item.quantity}${item.unit}',
                                         style: const TextStyle(
@@ -630,66 +650,64 @@ class _InventoryPageState extends State<InventoryPage> {
                                           color: CustomColors.primary,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
                                       Text(
-                                        ' @ ${item.price.toStringAsFixed(2)}',
+                                        '${item.price} Ksh',
                                         style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
                                           fontSize: 14,
                                           color: Colors.black54,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.add_circle_outline,
-                                          color: CustomColors.secondary,
-                                        ),
-                                        tooltip: tr('add_amount'),
-                                        onPressed: () async {
-                                          int?
-                                          addAmount = await showDialog<int>(
-                                            context: context,
-                                            builder: (context) {
-                                              int value = 0;
-                                              return AlertDialog(
-                                                backgroundColor: Colors
-                                                    .white, // Change background to white
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(24),
-                                                ),
-                                                title: Text(
-                                                  tr(
-                                                    'add_to',
-                                                    namedArgs: {
-                                                      'item': item.name,
-                                                    },
-                                                  ),
-                                                ),
-                                                content: TextFormField(
-                                                  autofocus: true,
-                                                  keyboardType:
-                                                      TextInputType.number,
-                                                  decoration: InputDecoration(
-                                                    labelText: tr(
-                                                      'amount_to_add',
-                                                    ),
-                                                    filled: true,
-                                                    fillColor: Colors
-                                                        .white, // Ensure input is white
-                                                    border: OutlineInputBorder(
+
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.add_circle_outline,
+                                              color: CustomColors.secondary,
+                                            ),
+                                            tooltip: tr('add_amount'),
+                                            onPressed: () async {
+                                              int?
+                                              addAmount = await showDialog<int>(
+                                                context: context,
+                                                builder: (context) {
+                                                  int value = 0;
+                                                  return AlertDialog(
+                                                    backgroundColor:
+                                                        Colors.white,
+                                                    shape: RoundedRectangleBorder(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                            16,
+                                                            24,
                                                           ),
-                                                      borderSide: BorderSide(
-                                                        color: CustomColors
-                                                            .primary,
-                                                        width: 1.2,
+                                                    ),
+                                                    title: Text(
+                                                      tr(
+                                                        'add_to',
+                                                        namedArgs: {
+                                                          'item': item.name,
+                                                        },
                                                       ),
                                                     ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
+                                                    content: TextFormField(
+                                                      autofocus: true,
+                                                      keyboardType:
+                                                          TextInputType.number,
+                                                      decoration: InputDecoration(
+                                                        labelText: tr(
+                                                          'amount_to_add',
+                                                        ),
+                                                        filled: true,
+                                                        fillColor: Colors.white,
+                                                        border: OutlineInputBorder(
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                 16,
@@ -700,79 +718,90 @@ class _InventoryPageState extends State<InventoryPage> {
                                                             width: 1.2,
                                                           ),
                                                         ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                16,
-                                                              ),
-                                                          borderSide: BorderSide(
-                                                            color: CustomColors
-                                                                .primary,
-                                                            width: 1.8,
-                                                          ),
-                                                        ),
-                                                  ),
-                                                  onChanged: (v) => value =
-                                                      int.tryParse(v) ?? 0,
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(context),
-                                                    child: Text(tr('cancel')),
-                                                  ),
-                                                  ElevatedButton(
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          CustomColors.primary,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              12,
-                                                            ),
                                                       ),
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 24,
-                                                            vertical: 12,
-                                                          ),
+                                                      onChanged: (v) => value =
+                                                          int.tryParse(v) ?? 0,
                                                     ),
-                                                    onPressed: () =>
-                                                        Navigator.pop(
-                                                          context,
-                                                          value,
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              context,
+                                                            ),
+                                                        child: Text(
+                                                          tr('cancel'),
                                                         ),
-                                                    child: Text(tr('add')),
-                                                  ),
-                                                ],
+                                                      ),
+                                                      ElevatedButton(
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              CustomColors
+                                                                  .primary,
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  12,
+                                                                ),
+                                                          ),
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 24,
+                                                                vertical: 12,
+                                                              ),
+                                                        ),
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                              context,
+                                                              value,
+                                                            ),
+                                                        child: Text(tr('add')),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
                                               );
+                                              if (addAmount != null &&
+                                                  addAmount > 0) {
+                                                final updatedItem = item
+                                                    .copyWith(
+                                                      quantity:
+                                                          item.quantity +
+                                                          addAmount,
+                                                    );
+                                                await SupabaseService()
+                                                    .updateInventoryItem(
+                                                      updatedItem.toJson(),
+                                                    );
+                                                if (mounted) fetchItems();
+                                              }
                                             },
-                                          );
-                                          if (addAmount != null &&
-                                              addAmount > 0) {
-                                            final updatedItem = item.copyWith(
-                                              quantity:
-                                                  item.quantity + addAmount,
-                                            );
-                                            await SupabaseService()
-                                                .updateInventoryItem(
-                                                  updatedItem.toJson(),
-                                                );
-                                            if (mounted) fetchItems();
-                                          }
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.blueGrey,
-                                        ),
-                                        tooltip: tr('edit_item'),
-                                        onPressed: () =>
-                                            _showEditItemDialog(item),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () =>
+                                                _showEditItemDialog(item),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  CustomColors.primary,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            child: Text(tr('update_price')),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),

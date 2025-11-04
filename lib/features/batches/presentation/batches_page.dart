@@ -130,6 +130,7 @@ class _BatchesPageState extends State<BatchesPage> {
     String birdType = 'broiler';
     int ageInDays = 0;
     int totalChickens = 0;
+    double pricePerBird = 0;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -233,6 +234,29 @@ class _BatchesPageState extends State<BatchesPage> {
                         : null,
                     onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
                   ),
+                  SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: tr('price_per_bird'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: CustomColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => v == null || double.tryParse(v) == null
+                        ? 'Enter a valid price'
+                        : null,
+                    onSaved: (v) =>
+                        pricePerBird = double.tryParse(v ?? '0') ?? 0,
+                  ),
                 ],
               ),
             ),
@@ -274,6 +298,7 @@ class _BatchesPageState extends State<BatchesPage> {
                           birdType: birdType,
                           ageInDays: ageInDays,
                           totalChickens: totalChickens,
+                          pricePerBird: pricePerBird,
                           createdAt: DateTime.now(),
                         );
                         await OfflineDataProvider.instance.addBatch(
@@ -331,6 +356,7 @@ class _BatchesPageState extends State<BatchesPage> {
     String birdType = batch.birdType;
     int ageInDays = batch.ageInDays;
     int totalChickens = batch.totalChickens;
+    double pricePerBird = batch.pricePerBird;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -431,6 +457,29 @@ class _BatchesPageState extends State<BatchesPage> {
                       : null,
                   onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
                 ),
+                SizedBox(height: 18),
+                TextFormField(
+                  initialValue: pricePerBird.toString(),
+                  decoration: InputDecoration(
+                    labelText: tr('price_per_bird'),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: CustomColors.primary,
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (v) => v == null || double.tryParse(v) == null
+                      ? 'Enter a valid price'
+                      : null,
+                  onSaved: (v) => pricePerBird = double.tryParse(v ?? '0') ?? 0,
+                ),
               ],
             ),
           ),
@@ -456,6 +505,7 @@ class _BatchesPageState extends State<BatchesPage> {
                   birdType: birdType,
                   ageInDays: ageInDays,
                   totalChickens: totalChickens,
+                  pricePerBird: pricePerBird,
                 );
                 await SupabaseService().updateBatch(updatedBatch.toJson());
                 if (mounted) {

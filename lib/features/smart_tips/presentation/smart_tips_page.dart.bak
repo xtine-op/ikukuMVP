@@ -1,0 +1,1347 @@
+import 'package:flutter/material.dart';import 'package:flutter/material.dart';
+
+import 'package:easy_localization/easy_localization.dart';import 'package:easy_localization/easy_localization.dart';
+
+import 'package:flutter_markdown/flutter_markdown.dart';import 'package:flutter_markdown/flutter_markdown.dart';
+
+import 'package:url_launcher/url_launcher.dart';import 'package:url_launcher/url_launcher.dart';
+
+import '../../../app_theme.dart';import '../../../app_theme.dart';
+
+import '../../../shared/widgets/custom_app_bar.dart';import '../../../shared/widgets/custom_app_bar.dart';
+
+import '../../../shared/widgets/blog_card.dart';import '../../../shared/widgets/blog_card.dart';
+
+import '../../smart_tips/models/news_article.dart';import '../../smart_tips/models/news_article.dart';
+
+import '../../smart_tips/services/rss_service.dart';import '../../smart_tips/services/rss_service.dart';
+
+
+
+class SmartTipsPage extends StatefulWidget {class SmartTipsPage extends StatefulWidget {
+
+  const SmartTipsPage({Key? key}) : super(key: key);  const SmartTipsPage({Key? key}) : super(key: key);
+
+
+
+  @override  @override
+
+  State<SmartTipsPage> createState() => _SmartTipsPageState();  State<SmartTipsPage> createState() => _SmartTipsPageState();
+
+}}
+
+
+
+class _SmartTipsPageState extends State<SmartTipsPage> {class _SmartTipsPageState extends State<SmartTipsPage> {
+
+  String? _selectedBlog;  String? _selectedBlog;
+
+  List<NewsArticle> _articles = [];  List<_ExternalTip> _externalTips = [];
+
+  List<_ExternalTip> _externalTips = [];  List<NewsArticle> _articles = [];
+
+
+
+  @override  @override
+
+  void initState() {  void initState() {
+
+    super.initState();    super.initState();
+
+    _loadExternalTips();    _loadExternalTips();
+
+    _loadArticles();  }
+
+  }
+
+  void _showFullArticle(BuildContext context, NewsArticle article) {
+
+  Future<void> _loadArticles() async {    showModalBottomSheet(
+
+    try {      context: context,
+
+      final articles = await RssService().fetchLatestNews();      isScrollControlled: true,
+
+      if (mounted) {      backgroundColor: Colors.transparent,
+
+        setState(() {      builder: (context) => DraggableScrollableSheet(
+
+          _articles = articles;        initialChildSize: 0.9,
+
+        });        minChildSize: 0.5,
+
+      }        maxChildSize: 0.95,
+
+    } catch (e) {        builder: (context, scrollController) => Container(
+
+      if (mounted) {          decoration: const BoxDecoration(
+
+        ScaffoldMessenger.of(context).showSnackBar(            color: Colors.white,
+
+          SnackBar(content: Text('Error loading news: $e')),            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+
+        );          ),
+
+      }          child: Column(
+
+    }            children: [
+
+  }              Container(
+
+                margin: const EdgeInsets.all(8),
+
+  Future<void> _loadExternalTips() async {                height: 4,
+
+    final seeded = <_ExternalTip>[                width: 40,
+
+      _ExternalTip(                decoration: BoxDecoration(
+
+        title: 'PoultryWorld Africa: Biosecurity Basics',                  color: Colors.grey[300],
+
+        source: 'Poultry World',                  borderRadius: BorderRadius.circular(2),
+
+        url: Uri.parse('https://www.poultryworld.net/health-nutrition/biosecurity/'),                ),
+
+      ),              ),
+
+      _ExternalTip(              Expanded(
+
+        title: 'ILRI: African Poultry Insights',                child: SingleChildScrollView(
+
+        source: 'ILRI',                  controller: scrollController,
+
+        url: Uri.parse('https://www.ilri.org/tags/poultry'),                  padding: const EdgeInsets.all(16),
+
+      ),                  child: Column(
+
+      _ExternalTip(                    crossAxisAlignment: CrossAxisAlignment.start,
+
+        title: 'CGIAR: Smallholder Poultry Resources',                    children: [
+
+        source: 'CGIAR',                      if (article.imageUrl != null) ...[
+
+        url: Uri.parse('https://www.cgiar.org/initiative/animal-source-foods/'),                        ClipRRect(
+
+      ),                          borderRadius: BorderRadius.circular(12),
+
+    ];                          child: Image.network(
+
+    if (mounted) {                            article.imageUrl!,
+
+      setState(() => _externalTips = seeded);                            width: double.infinity,
+
+    }                            fit: BoxFit.cover,
+
+  }                            height: 200,
+
+                            loadingBuilder: (context, child, loadingProgress) {
+
+  void _showFullArticle(BuildContext context, NewsArticle article) {                              if (loadingProgress == null) return child;
+
+    showModalBottomSheet(                              return Container(
+
+      context: context,                                height: 200,
+
+      isScrollControlled: true,                                color: Colors.grey[200],
+
+      backgroundColor: Colors.transparent,                                child: const Center(
+
+      builder: (context) => DraggableScrollableSheet(                                  child: CircularProgressIndicator(),
+
+        initialChildSize: 0.9,                                ),
+
+        minChildSize: 0.5,                              );
+
+        maxChildSize: 0.95,                            },
+
+        builder: (context, scrollController) => Container(                          ),
+
+          decoration: const BoxDecoration(                        ),
+
+            color: Colors.white,                        const SizedBox(height: 16),
+
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),                      ],
+
+          ),                      Text(
+
+          child: Column(                        article.title,
+
+            children: [                        style: const TextStyle(
+
+              Container(                          fontSize: 20,
+
+                margin: const EdgeInsets.all(8),                          fontWeight: FontWeight.bold,
+
+                height: 4,                        ),
+
+                width: 40,                      ),
+
+                decoration: BoxDecoration(                      const SizedBox(height: 8),
+
+                  color: Colors.grey[300],                      Text(
+
+                  borderRadius: BorderRadius.circular(2),                        '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',
+
+                ),                        style: TextStyle(
+
+              ),                          fontSize: 14,
+
+              Expanded(                          color: CustomColors.text.withOpacity(0.6),
+
+                child: SingleChildScrollView(                        ),
+
+                  controller: scrollController,                      ),
+
+                  padding: const EdgeInsets.all(16),                      const SizedBox(height: 16),
+
+                  child: Column(                      Text(
+
+                    crossAxisAlignment: CrossAxisAlignment.start,                        article.description,
+
+                    children: [                        style: TextStyle(
+
+                      if (article.imageUrl != null) ...[                          fontSize: 16,
+
+                        ClipRRect(                          height: 1.6,
+
+                          borderRadius: BorderRadius.circular(12),                          color: CustomColors.text.withOpacity(0.8),
+
+                          child: Image.network(                        ),
+
+                            article.imageUrl!,                      ),
+
+                            width: double.infinity,                      const SizedBox(height: 24),
+
+                            fit: BoxFit.cover,                      SizedBox(
+
+                            height: 200,                        width: double.infinity,
+
+                            loadingBuilder: (context, child, loadingProgress) {                        child: ElevatedButton.icon(
+
+                              if (loadingProgress == null) return child;                          onPressed: () => _openArticle(article.link),
+
+                              return Container(                          icon: const Icon(Icons.launch),
+
+                                height: 200,                          label: const Text('View Original Article'),
+
+                                color: Colors.grey[200],                          style: ElevatedButton.styleFrom(
+
+                                child: const Center(                            padding: const EdgeInsets.all(16),
+
+                                  child: CircularProgressIndicator(),                          ),
+
+                                ),                        ),
+
+                              );                      ),
+
+                            },                    ],
+
+                          ),                  ),
+
+                        ),                ),
+
+                        const SizedBox(height: 16),              ),
+
+                      ],            ],
+
+                      Text(          ),
+
+                        article.title,        ),
+
+                        style: const TextStyle(      ),
+
+                          fontSize: 20,    );
+
+                          fontWeight: FontWeight.bold,  }
+
+                        ),
+
+                      ),  Future<void> _openArticle(String url) async {
+
+                      const SizedBox(height: 8),    final uri = Uri.parse(url);
+
+                      Text(    if (await canLaunchUrl(uri)) {
+
+                        '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',      await launchUrl(uri, mode: LaunchMode.inAppWebView);
+
+                        style: TextStyle(    }
+
+                          fontSize: 14,  }
+
+                          color: CustomColors.text.withOpacity(0.6),
+
+                        ),  Future<void> _loadExternalTips() async {
+
+                      ),    // Seed with known reputable African poultry resources
+
+                      const SizedBox(height: 16),    final seeded = <_ExternalTip>[
+
+                      Text(      _ExternalTip(
+
+                        article.description,        title: 'PoultryWorld Africa: Biosecurity Basics',
+
+                        style: TextStyle(        source: 'Poultry World',
+
+                          fontSize: 16,        url: Uri.parse(
+
+                          height: 1.6,          'https://www.poultryworld.net/health-nutrition/biosecurity/',
+
+                          color: CustomColors.text.withOpacity(0.8),        ),
+
+                        ),      ),
+
+                      ),      _ExternalTip(
+
+                      const SizedBox(height: 24),        title: 'ILRI: African Poultry Insights',
+
+                      SizedBox(        source: 'ILRI',
+
+                        width: double.infinity,        url: Uri.parse('https://www.ilri.org/tags/poultry'),
+
+                        child: ElevatedButton.icon(      ),
+
+                          onPressed: () => _openArticle(article.link),      _ExternalTip(
+
+                          icon: const Icon(Icons.launch),        title: 'CGIAR: Smallholder Poultry Resources',
+
+                          label: const Text('View Original Article'),        source: 'CGIAR',
+
+                          style: ElevatedButton.styleFrom(        url: Uri.parse('https://www.cgiar.org/initiative/animal-source-foods/'),
+
+                            padding: const EdgeInsets.all(16),      ),
+
+                          ),    ];
+
+                        ),    setState(() => _externalTips = seeded);
+
+                      ),    // Placeholder for future live fetch from curated endpoints
+
+                    ],    // try { final resp = await http.get(Uri.parse('https://example.com/africa-poultry-feed.json')); } catch (_) {}
+
+                  ),  }
+
+                ),
+
+              ),  @override
+
+            ],  void initState() {
+
+          ),    super.initState();
+
+        ),    _loadExternalTips();
+
+      ),    _loadArticles();
+
+    );  }
+
+  }
+
+  Future<void> _loadArticles() async {
+
+  Future<void> _openArticle(String url) async {    try {
+
+    final uri = Uri.parse(url);      final articles = await RssService().fetchLatestNews();
+
+    if (await canLaunchUrl(uri)) {      setState(() {
+
+      await launchUrl(uri, mode: LaunchMode.inAppWebView);        _articles = articles;
+
+    }      });
+
+  }    } catch (e) {
+
+      if (mounted) {
+
+  @override        ScaffoldMessenger.of(context).showSnackBar(
+
+  Widget build(BuildContext context) {          SnackBar(content: Text('Error loading news: $e')),
+
+    if (_selectedBlog != null) {        );
+
+      return _buildBlogDetail(context, _selectedBlog!);      }
+
+    }    }
+
+  }
+
+    return Scaffold(
+
+      appBar: CustomAppBar(  @override
+
+        title: 'smart_tips'.tr(),  Widget build(BuildContext context) {
+
+      ),    if (_selectedBlog != null) {
+
+      body: RefreshIndicator(      return _buildBlogDetail(context, _selectedBlog!);
+
+        onRefresh: _loadArticles,    }
+
+        child: SingleChildScrollView(
+
+          physics: const AlwaysScrollableScrollPhysics(),    return Scaffold(
+
+          padding: const EdgeInsets.all(16),      appBar: AppBar(
+
+          child: Column(        title: Text('smart_tips_title'.tr()),
+
+            crossAxisAlignment: CrossAxisAlignment.start,        leading: Navigator.of(context).canPop() ? const BackButton() : null,
+
+            children: [      ),
+
+              Text(      body: RefreshIndicator(
+
+                'educational_blog_title'.tr(),        onRefresh: _loadArticles,
+
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(        child: SingleChildScrollView(
+
+                  fontWeight: FontWeight.bold,          physics: const AlwaysScrollableScrollPhysics(),
+
+                  color: CustomColors.text,          padding: const EdgeInsets.all(16),
+
+                ),          child: Column(
+
+              ),            crossAxisAlignment: CrossAxisAlignment.start,
+
+              const SizedBox(height: 8),            children: [
+
+              Text(              Text(
+
+                'educational_blog_subtitle'.tr(),                'educational_blog_title'.tr(),
+
+                style: TextStyle(                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+
+                  color: CustomColors.text.withOpacity(0.7),                  fontWeight: FontWeight.bold,
+
+                  fontSize: 16,                  color: CustomColors.text,
+
+                ),                ),
+
+              ),              ),
+
+              const SizedBox(height: 24),              const SizedBox(height: 8),
+
+              _buildBlogCard(              Text(
+
+                context,                'educational_blog_subtitle'.tr(),
+
+                title: 'farm_records_blog_title'.tr(),                style: TextStyle(
+
+                summary: 'farm_records_blog_summary'.tr(),                  color: CustomColors.text.withOpacity(0.7),
+
+                emoji: '🐔',                  fontSize: 16,
+
+                blogId: 'farm_records',                ),
+
+              ),              ),
+
+              const SizedBox(height: 16),              const SizedBox(height: 24),
+
+              _buildBlogCard(              _buildBlogCard(
+
+                context,                context,
+
+                title: 'disease_management_blog_title'.tr(),                title: 'farm_records_blog_title'.tr(),
+
+                summary: 'disease_management_blog_summary'.tr(),                summary: 'farm_records_blog_summary'.tr(),
+
+                emoji: '🧫',                emoji: '🐔',
+
+                blogId: 'disease_management',                blogId: 'farm_records',
+
+              ),              ),
+
+              if (_articles.isNotEmpty) ...[              const SizedBox(height: 16),
+
+                const SizedBox(height: 32),              _buildBlogCard(
+
+                Text(                context,
+
+                  'Latest Poultry News',                title: 'disease_management_blog_title'.tr(),
+
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(                summary: 'disease_management_blog_summary'.tr(),
+
+                    fontWeight: FontWeight.bold,                emoji: '🧫',
+
+                    color: CustomColors.text,                blogId: 'disease_management',
+
+                  ),              ),
+
+                ),              if (_articles.isNotEmpty) ...[
+
+                const SizedBox(height: 16),                const SizedBox(height: 32),
+
+                SizedBox(                Text(
+
+                  height: 320,                  'Latest Poultry News',
+
+                  child: ListView.builder(                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+
+                    scrollDirection: Axis.horizontal,                    fontWeight: FontWeight.bold,
+
+                    itemCount: _articles.length,                    color: CustomColors.text,
+
+                    itemBuilder: (context, index) {                  ),
+
+                      final article = _articles[index];                ),
+
+                      return Container(                const SizedBox(height: 16),
+
+                        width: 280,                SizedBox(
+
+                        margin: const EdgeInsets.only(right: 16),                  height: 320,
+
+                        child: Card(                  child: ListView.builder(
+
+                          clipBehavior: Clip.antiAlias,                    scrollDirection: Axis.horizontal,
+
+                          shape: RoundedRectangleBorder(                    itemCount: _articles.length,
+
+                            borderRadius: BorderRadius.circular(12),                    itemBuilder: (context, index) {
+
+                          ),                      final article = _articles[index];
+
+                          child: InkWell(                      return Container(
+
+                            onTap: () => _showFullArticle(context, article),                        width: 280,
+
+                            child: Column(                        margin: const EdgeInsets.only(right: 16),
+
+                              crossAxisAlignment: CrossAxisAlignment.start,                        child: Card(
+
+                              children: [                          clipBehavior: Clip.antiAlias,
+
+                                if (article.imageUrl != null)                          shape: RoundedRectangleBorder(
+
+                                  Image.network(                            borderRadius: BorderRadius.circular(12),
+
+                                    article.imageUrl!,                          ),
+
+                                    height: 160,                          child: InkWell(
+
+                                    width: double.infinity,                            onTap: () => _showFullArticle(context, article),
+
+                                    fit: BoxFit.cover,                            child: Column(
+
+                                  ),                              crossAxisAlignment: CrossAxisAlignment.start,
+
+                                Padding(                              children: [
+
+                                  padding: const EdgeInsets.all(16),                                if (article.imageUrl != null)
+
+                                  child: Column(                                  Image.network(
+
+                                    crossAxisAlignment: CrossAxisAlignment.start,                                    article.imageUrl!,
+
+                                    children: [                                    height: 160,
+
+                                      Text(                                    width: double.infinity,
+
+                                        article.title,                                    fit: BoxFit.cover,
+
+                                        style: const TextStyle(                                  ),
+
+                                          fontSize: 16,                                Padding(
+
+                                          fontWeight: FontWeight.bold,                                  padding: const EdgeInsets.all(16),
+
+                                        ),                                  child: Column(
+
+                                        maxLines: 2,                                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                                        overflow: TextOverflow.ellipsis,                                    children: [
+
+                                      ),                                      Text(
+
+                                      const SizedBox(height: 8),                                        article.title,
+
+                                      Text(                                        style: const TextStyle(
+
+                                        article.description,                                          fontSize: 16,
+
+                                        style: TextStyle(                                          fontWeight: FontWeight.bold,
+
+                                          fontSize: 14,                                        ),
+
+                                          color: Colors.grey[600],                                        maxLines: 2,
+
+                                        ),                                        overflow: TextOverflow.ellipsis,
+
+                                        maxLines: 3,                                      ),
+
+                                        overflow: TextOverflow.ellipsis,                                      const SizedBox(height: 8),
+
+                                      ),                                      Text(
+
+                                      const SizedBox(height: 8),                                        article.description,
+
+                                      Text(                                        style: TextStyle(
+
+                                        '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',                                          fontSize: 14,
+
+                                        style: TextStyle(                                          color: Colors.grey[600],
+
+                                          fontSize: 12,                                        ),
+
+                                          color: Colors.grey[600],                                        maxLines: 3,
+
+                                        ),                                        overflow: TextOverflow.ellipsis,
+
+                                      ),                                      ),
+
+                                    ],                                      const SizedBox(height: 8),
+
+                                  ),                                      Text(
+
+                                ),                                        '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',
+
+                              ],                                        style: TextStyle(
+
+                            ),                                          fontSize: 12,
+
+                          ),                                          color: Colors.grey[600],
+
+                        ),                                        ),
+
+                      );                                      ),
+
+                    },                                    ],
+
+                  ),                                  ),
+
+                ),                                ),
+
+                const SizedBox(height: 32),                              ],
+
+              ],                            ),
+
+              _buildBlogCard(                          ),
+
+                context,                        ),
+
+                title: 'housing_biosecurity_blog_title'.tr(),                      );
+
+                summary: 'housing_biosecurity_blog_summary'.tr(),                    },
+
+                emoji: '🏠',                  ),
+
+                blogId: 'housing_biosecurity',                ),
+
+              ),                const SizedBox(height: 32),
+
+              const SizedBox(height: 16),              ],
+
+              _buildBlogCard(              _buildBlogCard(
+
+                context,                context,
+
+                title: 'chicken_breed_blog_title'.tr(),                title: 'housing_biosecurity_blog_title'.tr(),
+
+                summary: 'chicken_breed_blog_summary'.tr(),                summary: 'housing_biosecurity_blog_summary'.tr(),
+
+                emoji: '🐣',                emoji: '🏠',
+
+                blogId: 'chicken_breed',                blogId: 'housing_biosecurity',
+
+              ),              ),
+
+              const SizedBox(height: 16),              const SizedBox(height: 16),
+
+              _buildBlogCard(              _buildBlogCard(
+
+                context,                context,
+
+                title: 'climate_smart_blog_title'.tr(),                title: 'chicken_breed_blog_title'.tr(),
+
+                summary: 'climate_smart_blog_summary'.tr(),                summary: 'chicken_breed_blog_summary'.tr(),
+
+                emoji: '🌾',                emoji: '🐣',
+
+                blogId: 'climate_smart',                blogId: 'chicken_breed',
+
+              ),              ),
+
+              const SizedBox(height: 16),              const SizedBox(height: 16),
+
+              _buildBlogCard(              _buildBlogCard(
+
+                context,                context,
+
+                title: 'finance_management_blog_title'.tr(),                title: 'climate_smart_blog_title'.tr(),
+
+                summary: 'finance_management_blog_summary'.tr(),                summary: 'climate_smart_blog_summary'.tr(),
+
+                emoji: '💰',                emoji: '🌾',
+
+                blogId: 'finance_management',                blogId: 'climate_smart',
+
+              ),              ),
+
+              const SizedBox(height: 24),              const SizedBox(height: 16),
+
+              if (_externalTips.isNotEmpty) ...[              _buildBlogCard(
+
+                Text(                context,
+
+                  'More tips from trusted African poultry sources',                title: 'finance_management_blog_title'.tr(),
+
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(                summary: 'finance_management_blog_summary'.tr(),
+
+                    fontWeight: FontWeight.w600,                emoji: '💰',
+
+                  ),                blogId: 'finance_management',
+
+                ),              ),
+
+                const SizedBox(height: 8),              const SizedBox(height: 24),
+
+                ..._externalTips.map((t) => _buildExternalTipCard(context, t)).toList(),              if (_externalTips.isNotEmpty) ...[
+
+              ],                Text(
+
+              const SizedBox(height: 32),                  'More tips from trusted African poultry sources',
+
+            ],                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+
+          ),                    fontWeight: FontWeight.w600,
+
+        ),                  ),
+
+      ),                ),
+
+    );                const SizedBox(height: 8),
+
+  }                ..._externalTips.map((t) => _buildExternalTipCard(context, t)).toList(),
+
+              ],
+
+  Widget _buildBlogCard(              const SizedBox(height: 32),
+
+    BuildContext context, {            ],
+
+    required String title,          ),
+
+    required String summary,        ),
+
+    required String emoji,      ),
+
+    required String blogId,    );
+
+  }) {  }
+
+    return Card(            FutureBuilder<List<NewsArticle>>(
+
+      elevation: 2,              future: RssService().fetchLatestNews(),
+
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),              builder: (context, snapshot) {
+
+      child: InkWell(                if (snapshot.connectionState == ConnectionState.waiting) {
+
+        onTap: () => setState(() => _selectedBlog = blogId),                  return const Center(
+
+        borderRadius: BorderRadius.circular(12),                    child: Padding(
+
+        child: Padding(                      padding: EdgeInsets.all(16.0),
+
+          padding: const EdgeInsets.all(16),                      child: CircularProgressIndicator(),
+
+          child: Column(                    ),
+
+            crossAxisAlignment: CrossAxisAlignment.start,                  );
+
+            children: [                }
+
+              Row(
+
+                children: [                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+
+                  Text(emoji, style: const TextStyle(fontSize: 32)),                  return Center(
+
+                  const SizedBox(width: 12),                    child: Padding(
+
+                  Expanded(                      padding: const EdgeInsets.all(16.0),
+
+                    child: Text(                      child: Text(
+
+                      title,                        'No news articles available',
+
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(                        style: TextStyle(
+
+                        fontWeight: FontWeight.bold,                          color: CustomColors.text.withOpacity(0.7),
+
+                        color: CustomColors.text,                        ),
+
+                      ),                      ),
+
+                    ),                    ),
+
+                  ),                  );
+
+                ],                }
+
+              ),
+
+              const SizedBox(height: 12),                final articles = snapshot.data!.take(5).toList();
+
+              Text(                return Column(
+
+                summary,                  children: articles.map((article) {
+
+                style: TextStyle(                    return Card(
+
+                  color: CustomColors.text.withOpacity(0.8),                      margin: const EdgeInsets.only(bottom: 16),
+
+                  fontSize: 14,                      child: Column(
+
+                  height: 1.4,                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                ),                        children: [
+
+              ),                          if (article.imageUrl != null)
+
+              const SizedBox(height: 16),                            ClipRRect(
+
+              Row(                              borderRadius: const BorderRadius.vertical(
+
+                mainAxisAlignment: MainAxisAlignment.end,                                top: Radius.circular(12),
+
+                children: [                              ),
+
+                  TextButton.icon(                              child: Image.network(
+
+                    onPressed: () => setState(() => _selectedBlog = blogId),                                article.imageUrl!,
+
+                    icon: const Icon(Icons.arrow_forward, size: 16),                                height: 200,
+
+                    label: Text('read_more'.tr()),                                width: double.infinity,
+
+                    style: TextButton.styleFrom(                                fit: BoxFit.cover,
+
+                      foregroundColor: Theme.of(context).colorScheme.primary,                                loadingBuilder: (context, child, loadingProgress) {
+
+                    ),                                  if (loadingProgress == null) return child;
+
+                  ),                                  return Container(
+
+                ],                                    height: 200,
+
+              ),                                    color: Colors.grey[200],
+
+            ],                                    child: const Center(
+
+          ),                                      child: CircularProgressIndicator(),
+
+        ),                                    ),
+
+      ),                                  );
+
+    );                                },
+
+  }                                errorBuilder: (context, error, stackTrace) =>
+
+                                    const SizedBox(),
+
+  Widget _buildBlogDetail(BuildContext context, String blogId) {                              ),
+
+    final blogData = _getBlogData(blogId);                            ),
+
+                          Padding(
+
+    return Scaffold(                            padding: const EdgeInsets.all(16),
+
+      appBar: AppBar(                            child: Column(
+
+        title: Text(blogData['title'] ?? ''),                              crossAxisAlignment: CrossAxisAlignment.start,
+
+        leading: IconButton(                              children: [
+
+          icon: const Icon(Icons.arrow_back),                                Text(
+
+          onPressed: () => setState(() => _selectedBlog = null),                                  article.title,
+
+        ),                                  style: const TextStyle(
+
+      ),                                    fontSize: 18,
+
+      body: SingleChildScrollView(                                    fontWeight: FontWeight.bold,
+
+        padding: const EdgeInsets.all(16),                                  ),
+
+        child: Column(                                ),
+
+          crossAxisAlignment: CrossAxisAlignment.start,                                const SizedBox(height: 8),
+
+          children: [                                Text(
+
+            Row(                                  article.description,
+
+              children: [                                  style: TextStyle(
+
+                Text(                                    color: CustomColors.text.withOpacity(0.7),
+
+                  blogData['emoji'] ?? '',                                    height: 1.5,
+
+                  style: const TextStyle(fontSize: 48),                                  ),
+
+                ),                                ),
+
+                const SizedBox(width: 16),                                const SizedBox(height: 16),
+
+                Expanded(                                Row(
+
+                  child: Text(                                  children: [
+
+                    blogData['title'] ?? '',                                    Expanded(
+
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(                                      child: Text(
+
+                      fontWeight: FontWeight.bold,                                        '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',
+
+                      color: CustomColors.text,                                        style: TextStyle(
+
+                    ),                                          fontSize: 12,
+
+                  ),                                          color: CustomColors.text.withOpacity(0.6),
+
+                ),                                        ),
+
+              ],                                      ),
+
+            ),                                    ),
+
+            const SizedBox(height: 16),                                    TextButton(
+
+            Container(                                      onPressed: () => _showFullArticle(
+
+              width: double.infinity,                                        context,
+
+              padding: const EdgeInsets.all(16),                                        article,
+
+              decoration: BoxDecoration(                                      ),
+
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),                                      child: Text(
+
+                borderRadius: BorderRadius.circular(12),                                        'Read More',
+
+                border: Border.all(                                        style: TextStyle(
+
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),                                          color: CustomColors.primary,
+
+                ),                                          fontWeight: FontWeight.w600,
+
+              ),                                        ),
+
+              child: Text(                                      ),
+
+                blogData['summary'] ?? '',                                    ),
+
+                style: TextStyle(                                  ],
+
+                  color: CustomColors.text,                                ),
+
+                  fontSize: 16,                              ],
+
+                  height: 1.5,                            ),
+
+                  fontWeight: FontWeight.w500,                          ),
+
+                ),                        ],
+
+              ),                      ),
+
+            ),                    );
+
+            const SizedBox(height: 24),                  }).toList(),
+
+            MarkdownBody(                );
+
+              data: blogData['content'] ?? '',              },
+
+              styleSheet: MarkdownStyleSheet(            ),
+
+                p: const TextStyle(fontSize: 15, height: 1.6),                      ),
+
+              ),                    );
+
+              onTapLink: (text, href, title) async {                  }).toList(),
+
+                if (href == null) return;                );
+
+                final uri = Uri.parse(href);              },
+
+                if (await canLaunchUrl(uri)) {            ),
+
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);            const SizedBox(height: 16),
+
+                }            _buildBlogCard(
+
+              },              context,
+
+            ),              title: 'housing_biosecurity_blog_title'.tr(),
+
+            const SizedBox(height: 32),              summary: 'housing_biosecurity_blog_summary'.tr(),
+
+            SizedBox(              emoji: '🏠',
+
+              width: double.infinity,              blogId: 'housing_biosecurity',
+
+              child: ElevatedButton.icon(            ),
+
+                onPressed: () => setState(() => _selectedBlog = null),            const SizedBox(height: 16),
+
+                icon: const Icon(Icons.close),            _buildBlogCard(
+
+                label: Text('close_blog'.tr()),              context,
+
+                style: ElevatedButton.styleFrom(              title: 'chicken_breed_blog_title'.tr(),
+
+                  padding: const EdgeInsets.symmetric(vertical: 16),              summary: 'chicken_breed_blog_summary'.tr(),
+
+                  backgroundColor: Theme.of(context).colorScheme.primary,              emoji: '🐣',
+
+                  foregroundColor: Colors.white,              blogId: 'chicken_breed',
+
+                ),            ),
+
+              ),            const SizedBox(height: 16),
+
+            ),            _buildBlogCard(
+
+          ],              context,
+
+        ),              title: 'climate_smart_blog_title'.tr(),
+
+      ),              summary: 'climate_smart_blog_summary'.tr(),
+
+    );              emoji: '🌾',
+
+  }              blogId: 'climate_smart',
+
+            ),
+
+  Map<String, String> _getBlogData(String blogId) {            const SizedBox(height: 16),
+
+    switch (blogId) {            _buildBlogCard(
+
+      case 'farm_records':              context,
+
+        return {              title: 'finance_management_blog_title'.tr(),
+
+          'title': 'farm_records_blog_title'.tr(),              summary: 'finance_management_blog_summary'.tr(),
+
+          'summary': 'farm_records_blog_summary'.tr(),              emoji: '💰',
+
+          'emoji': '🐔',              blogId: 'finance_management',
+
+          'content': 'farm_records_blog_content'.tr(),            ),
+
+        };            const SizedBox(height: 24),
+
+      case 'disease_management':            Text(
+
+        return {              'More tips from trusted African poultry sources',
+
+          'title': 'disease_management_blog_title'.tr(),              style: Theme.of(
+
+          'summary': 'disease_management_blog_summary'.tr(),                context,
+
+          'emoji': '🧫',              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+
+          'content': 'disease_management_blog_content'.tr(),            ),
+
+        };            const SizedBox(height: 8),
+
+      case 'housing_biosecurity':            ..._externalTips
+
+        return {                .map((t) => _buildExternalTipCard(context, t))
+
+          'title': 'housing_biosecurity_blog_title'.tr(),                .toList(),
+
+          'summary': 'housing_biosecurity_blog_summary'.tr(),            const SizedBox(height: 32),
+
+          'emoji': '🏠',          ],
+
+          'content': 'housing_biosecurity_blog_content'.tr(),        ),
+
+        };      ),
+
+      case 'chicken_breed':    );
+
+        return {  }
+
+          'title': 'chicken_breed_blog_title'.tr(),
+
+          'summary': 'chicken_breed_blog_summary'.tr(),  Widget _buildBlogCard(
+
+          'emoji': '🐣',    BuildContext context, {
+
+          'content': 'chicken_breed_blog_content'.tr(),    required String title,
+
+        };    required String summary,
+
+      case 'climate_smart':    required String emoji,
+
+        return {    required String blogId,
+
+          'title': 'climate_smart_blog_title'.tr(),  }) {
+
+          'summary': 'climate_smart_blog_summary'.tr(),    return Card(
+
+          'emoji': '🌾',      elevation: 2,
+
+          'content': 'climate_smart_blog_content'.tr(),      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+        };      child: InkWell(
+
+      case 'finance_management':        onTap: () => setState(() => _selectedBlog = blogId),
+
+        return {        borderRadius: BorderRadius.circular(12),
+
+          'title': 'finance_management_blog_title'.tr(),        child: Padding(
+
+          'summary': 'finance_management_blog_summary'.tr(),          padding: const EdgeInsets.all(16),
+
+          'emoji': '💰',          child: Column(
+
+          'content': 'finance_management_blog_content'.tr(),            crossAxisAlignment: CrossAxisAlignment.start,
+
+        };            children: [
+
+      default:              Row(
+
+        return {'title': '', 'summary': '', 'emoji': '', 'content': ''};                children: [
+
+    }                  Text(emoji, style: const TextStyle(fontSize: 32)),
+
+  }                  const SizedBox(width: 12),
+
+}                  Expanded(
+
+                    child: Text(
+
+class _ExternalTip {                      title,
+
+  final String title;                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+
+  final String source;                        fontWeight: FontWeight.bold,
+
+  final Uri url;                        color: CustomColors.text,
+
+  _ExternalTip({required this.title, required this.source, required this.url});                      ),
+
+}                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                summary,
+                style: TextStyle(
+                  color: CustomColors.text.withOpacity(0.8),
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => setState(() => _selectedBlog = blogId),
+                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    label: Text('read_more'.tr()),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlogDetail(BuildContext context, String blogId) {
+    final blogData = _getBlogData(blogId);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(blogData['title'] ?? ''),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => setState(() => _selectedBlog = null),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with emoji and title
+            Row(
+              children: [
+                Text(
+                  blogData['emoji'] ?? '',
+                  style: const TextStyle(fontSize: 48),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    blogData['title'] ?? '',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: CustomColors.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Summary
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                ),
+              ),
+              child: Text(
+                blogData['summary'] ?? '',
+                style: TextStyle(
+                  color: CustomColors.text,
+                  fontSize: 16,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Full content (Markdown to support **bold** etc.)
+            MarkdownBody(
+              data: blogData['content'] ?? '',
+              styleSheet: MarkdownStyleSheet(
+                p: const TextStyle(fontSize: 15, height: 1.6),
+              ),
+              onTapLink: (text, href, title) async {
+                if (href == null) return;
+                final uri = Uri.parse(href);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+            const SizedBox(height: 32),
+
+            // Close button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => setState(() => _selectedBlog = null),
+                icon: const Icon(Icons.close),
+                label: Text('close_blog'.tr()),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Map<String, String> _getBlogData(String blogId) {
+    switch (blogId) {
+      case 'farm_records':
+        return {
+          'title': 'farm_records_blog_title'.tr(),
+          'summary': 'farm_records_blog_summary'.tr(),
+          'emoji': '🐔',
+          'content': 'farm_records_blog_content'.tr(),
+        };
+      case 'disease_management':
+        return {
+          'title': 'disease_management_blog_title'.tr(),
+          'summary': 'disease_management_blog_summary'.tr(),
+          'emoji': '🧫',
+          'content': 'disease_management_blog_content'.tr(),
+        };
+      case 'housing_biosecurity':
+        return {
+          'title': 'housing_biosecurity_blog_title'.tr(),
+          'summary': 'housing_biosecurity_blog_summary'.tr(),
+          'emoji': '🏠',
+          'content': 'housing_biosecurity_blog_content'.tr(),
+        };
+      case 'chicken_breed':
+        return {
+          'title': 'chicken_breed_blog_title'.tr(),
+          'summary': 'chicken_breed_blog_summary'.tr(),
+          'emoji': '🐣',
+          'content': 'chicken_breed_blog_content'.tr(),
+        };
+      case 'climate_smart':
+        return {
+          'title': 'climate_smart_blog_title'.tr(),
+          'summary': 'climate_smart_blog_summary'.tr(),
+          'emoji': '🌾',
+          'content': 'climate_smart_blog_content'.tr(),
+        };
+      case 'finance_management':
+        return {
+          'title': 'finance_management_blog_title'.tr(),
+          'summary': 'finance_management_blog_summary'.tr(),
+          'emoji': '💰',
+          'content': 'finance_management_blog_content'.tr(),
+        };
+      default:
+        return {'title': '', 'summary': '', 'emoji': '', 'content': ''};
+    }
+  }
+}
+
+class _ExternalTip {
+  final String title;
+  final String source;
+  final Uri url;
+  _ExternalTip({required this.title, required this.source, required this.url});
+}
+
+Widget _buildExternalTipCard(BuildContext context, _ExternalTip tip) {
+  return Card(
+    margin: const EdgeInsets.symmetric(vertical: 6),
+    child: ListTile(
+      leading: const Icon(Icons.public),
+      title: Text(tip.title),
+      subtitle: Text(tip.source),
+      trailing: const Icon(Icons.open_in_new),
+      onTap: () async {
+        if (await canLaunchUrl(tip.url)) {
+          final launched = await launchUrl(
+            tip.url,
+            mode: LaunchMode.externalApplication,
+          );
+          if (!launched && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open link')),
+            );
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No app found to open link')),
+            );
+          }
+        }
+      },
+    ),
+  );
+}

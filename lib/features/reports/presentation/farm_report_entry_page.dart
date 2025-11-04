@@ -10,6 +10,7 @@ import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
 import 'select_batch_page.dart';
+import 'date_selection_page.dart';
 import 'chicken_reduction_page.dart';
 import 'egg_production_page.dart';
 import 'feeds_page.dart';
@@ -29,17 +30,25 @@ class FarmReportEntryPage extends StatefulWidget {
 class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   // Page indices for the multi-step flow
   static const int _indexSelectBatch = 0;
-  static const int _indexChickenReduction = 1;
-  static const int _indexEggProduction = 2; // only for layers/kienyeji
-  static const int _indexFeeds = 3;
+  static const int _indexSelectDate = 1;
+  static const int _indexChickenReduction = 2;
+  static const int _indexEggProduction = 3; // only for layers/kienyeji
+  static const int _indexFeeds = 4;
 
   // Step tracking
   int step = 0;
   PageController? _pageController;
+  DateTime selectedDate = DateTime.now();
 
   bool _isLayersOrKienyeji() {
     final type = selectedBatch?.birdType.toLowerCase().trim();
     return type == 'layer' || type == 'kienyeji';
+  }
+
+  void _onDateChanged(DateTime date) {
+    setState(() {
+      selectedDate = date;
+    });
   }
 
   Future<void> _animateToStep(int target) async {
@@ -58,11 +67,18 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
   // Data for each step
   List<Batch> batches = [];
+  DateTime reportDate = DateTime.now();
   Batch? selectedBatch;
   String? chickenReduction; // yes/no
-  String? reductionReason; // curled/stolen/death
+  String? reductionReason; // curled/stolen/death/sold
   int? reductionCount;
-  Map<String, int> reductionCounts = {'curled': 0, 'stolen': 0, 'death': 0};
+  Map<String, int> reductionCounts = {
+    'curled': 0,
+    'stolen': 0,
+    'death': 0,
+    'sold': 0,
+  };
+  double? salesAmount; // Amount received from sold chickens
   bool? collectedEggs; // only for layers/kienyeji
   int? eggsCollected;
   bool? gradeEggs;
@@ -727,6 +743,39 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     _cachedPages = null;
   }
 
+  Future<void> _checkExistingReport(DateTime date) async {
+    if (selectedBatch == null) return;
+
+    try {
+      await SupabaseService().supabase
+          .from('farm_reports')
+          .select()
+          .eq('batch_id', selectedBatch!.id)
+          .eq('report_date', DateFormat('yyyy-MM-dd').format(date))
+          .single();
+
+      if (mounted) {
+        // Show warning dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('existing_report_warning'.tr()),
+            content: Text('report_exists_for_date'.tr()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('ok'.tr()),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      // No existing report found, which is what we want
+      // We proceed silently in this case
+    }
+  }
+
   List<Widget> _buildPages() {
     // Return cached pages if available
     if (_cachedPages != null) {
@@ -755,7 +804,20 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         },
         batchesReportedToday: batchesReportedToday, // Pass this to the page
       ),
-      // Page 2: Chicken Reduction (always shown)
+      // Page 2: Select Date
+      DateSelectionPage(
+        selectedDate: reportDate,
+        onDateChanged: (date) {
+          setState(() {
+            reportDate = date;
+            _invalidatePagesCache();
+          });
+          // Check if a report already exists for this date
+          _checkExistingReport(date);
+        },
+        onContinue: _nextStep,
+      ),
+      // Page 3: Chicken Reduction (always shown)
       ChickenReductionPage(
         chickenReduction: chickenReduction,
         onReductionChanged: (v) => setState(() {

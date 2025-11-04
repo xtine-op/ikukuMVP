@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 import 'dart:io';
 
 import '../../batches/data/batch_model.dart';
@@ -21,8 +24,177 @@ class FarmSummaryPage extends StatefulWidget {
 class _FarmSummaryPageState extends State<FarmSummaryPage> {
   DateTimeRange? selectedRange;
   bool loading = true;
+  bool isOffline = false;
   List<Batch> batches = [];
   Map<String, _BatchSummary> summariesByBatchId = {};
+  Map<String, Map<String, dynamic>> inventoryMap = {};
+  Batch? selectedBatch;
+
+  late final StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
+  Future<void> _initConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      setState(() {
+        isOffline = result == ConnectivityResult.none;
+      });
+      if (!isOffline) {
+        _loadData();
+      }
+    } catch (e) {
+      setState(() => isOffline = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    super.dispose();
+  }
+
+  void _showEditOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('edit_farm_summary'.tr()),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit_note),
+                title: Text('edit_report'.tr()),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportEditDialog(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: Text('delete_report'.tr()),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReportEditDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('edit_report'.tr()),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              DropdownButtonFormField<String>(
+                value: null,
+                decoration: InputDecoration(labelText: 'select_batch'.tr()),
+                items: batches
+                    .map(
+                      (batch) => DropdownMenuItem(
+                        value: batch.id,
+                        child: Text(batch.name),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (batchId) {
+                  if (batchId != null) {
+                    Navigator.pop(context);
+                    _editBatchReport(batchId);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('confirm_delete'.tr()),
+        content: Text('delete_report_confirmation'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteReport();
+            },
+            child: Text('delete'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editBatchReport(String batchId) async {
+    // Navigate to farm report entry page with edit mode
+    if (!mounted) return;
+
+    final batch = batches.firstWhere((b) => b.id == batchId);
+    final result = await context.push<bool>(
+      '/farm-report/edit/$batchId',
+      extra: {'batch': batch, 'date': selectedRange?.start ?? DateTime.now()},
+    );
+
+    if (result == true) {
+      await _loadData(); // Refresh the data
+    }
+  }
+
+  Future<void> _deleteReport() async {
+    try {
+      setState(() => loading = true);
+
+      // Delete the report from Supabase
+      await SupabaseService().supabase.from('farm_reports').delete().match({
+        'batch_id': selectedBatch?.id ?? '',
+        'report_date': DateFormat(
+          'yyyy-MM-dd',
+        ).format(selectedRange?.start ?? DateTime.now()),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('report_deleted'.tr())));
+      }
+
+      await _loadData(); // Refresh the data
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('delete_error'.tr())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -33,7 +205,17 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
       start: now.subtract(const Duration(days: 7)),
       end: now.add(const Duration(days: 1)),
     );
-    _loadData();
+    _initConnectivity();
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      result,
+    ) {
+      setState(() {
+        isOffline = result == ConnectivityResult.none;
+      });
+      if (!isOffline) {
+        _loadData();
+      }
+    });
   }
 
   Future<void> _pickDateRange() async {
@@ -53,7 +235,8 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
   }
 
   Future<void> _loadData() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
     if (user == null || selectedRange == null) {
       setState(() => loading = false);
       return;
@@ -81,7 +264,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
 
       // Fetch inventory items to get prices
       final inventoryItems = await SupabaseService().fetchInventory(user.id);
-      final inventoryMap = <String, Map<String, dynamic>>{};
+      inventoryMap.clear();
       for (final item in inventoryItems) {
         inventoryMap[item['name']] = item;
       }
@@ -105,27 +288,36 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
             if (item is Map && item['quantity'] != null) {
               final qty = (item['quantity'] as num).toDouble();
               final name = item['name'] as String?;
-              sum.totalFeedKg += qty;
+              if (name != null) {
+                sum.totalFeedKg += qty;
+                sum.feedsByType[name] = (sum.feedsByType[name] ?? 0.0) + qty;
 
-              // Calculate expenses for feeds
-              if (name != null && inventoryMap.containsKey(name)) {
-                final price =
-                    (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
-                sum.totalExpenses += qty * price;
+                // Calculate expenses for feeds
+                if (inventoryMap.containsKey(name)) {
+                  final price =
+                      (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
+                  sum.totalExpenses += qty * price;
+                }
               }
             }
           }
         }
 
-        // Calculate expenses for vaccines
+        // Calculate expenses for vaccines and track quantities
         if (vaccinesUsed is List) {
-          sum.totalVaccinations += vaccinesUsed.length;
           for (final item in vaccinesUsed) {
             if (item is Map &&
                 item['quantity'] != null &&
                 item['name'] != null) {
               final qty = (item['quantity'] as num).toDouble();
               final name = item['name'] as String;
+
+              // Add or update vaccine quantity in the map
+              sum.vaccineQuantities[name] =
+                  (sum.vaccineQuantities[name] ?? 0.0) + qty;
+              sum.totalVaccinations += 1;
+
+              // Calculate expenses
               if (inventoryMap.containsKey(name)) {
                 final price =
                     (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
@@ -135,7 +327,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
           }
         }
 
-        // Calculate expenses for other materials
+        // Calculate expenses for other materials and track usage
         if (otherMaterialsUsed is List) {
           for (final item in otherMaterialsUsed) {
             if (item is Map &&
@@ -143,17 +335,32 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                 item['name'] != null) {
               final qty = (item['quantity'] as num).toDouble();
               final name = item['name'] as String;
+
+              // Track material usage
+              sum.materialUsage[name] = (sum.materialUsage[name] ?? 0.0) + qty;
+
               if (inventoryMap.containsKey(name)) {
                 final price =
                     (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
                 sum.totalExpenses += qty * price;
+                sum.expensesByCategory['other_materials'] =
+                    (sum.expensesByCategory['other_materials'] ?? 0.0) +
+                    (qty * price);
               }
             }
           }
         }
 
-        // Sum mortality
+        // Sum mortality and track as an expense
         sum.totalMortality += chickensDied;
+        if (chickensDied > 0) {
+          // Estimate the value of lost birds based on current market price or a fixed value
+          final lossPerBird = 500.0; // Example fixed value, adjust as needed
+          final mortalityLoss = chickensDied * lossPerBird;
+          sum.expensesByCategory['mortality'] =
+              (sum.expensesByCategory['mortality'] ?? 0.0) + mortalityLoss;
+          sum.totalExpenses += mortalityLoss;
+        }
       }
 
       setState(() {
@@ -195,19 +402,29 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
               pw.TableHelper.fromTextArray(
                 headers: [
                   'Batch',
-                  'Feeds Used (kg)',
+                  'Feeds Used (kg) & Price/kg',
                   'Mortality',
-                  'Vaccinations',
+                  'Vaccines Used (L) & Price/L',
                   'Total Expenses',
                 ],
                 data: batches.map((b) {
                   final s = summariesByBatchId[b.id] ?? _BatchSummary();
                   return [
                     b.name,
-                    s.totalFeedKg.toStringAsFixed(2),
+                    s.feedsByType.entries
+                        .map(
+                          (f) =>
+                              '${f.key}: ${f.value.toStringAsFixed(2)} kg @ Ksh ${(inventoryMap[f.key]?['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}/kg',
+                        )
+                        .join('\n'),
                     s.totalMortality.toString(),
-                    s.totalVaccinations.toString(),
-                    s.totalExpenses.toStringAsFixed(2),
+                    s.vaccineQuantities.entries
+                        .map(
+                          (v) =>
+                              '${v.key}: ${v.value.toStringAsFixed(2)} L @ Ksh ${(inventoryMap[v.key]?['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}/L',
+                        )
+                        .join('\n'),
+                    'Ksh ${s.totalExpenses.toStringAsFixed(2)}',
                   ];
                 }).toList(),
               ),
@@ -252,14 +469,20 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
+              Navigator.pop(context);
             } else {
-              // Ensure we can always go back to dashboard
-              Navigator.of(context).pushReplacementNamed('/');
+              context.go('/');
             }
           },
         ),
         actions: [
+          if (!isOffline) ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => _showEditOptions(context),
+              tooltip: 'Edit Farm Summary',
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: summariesByBatchId.isEmpty ? null : _exportPdf,
@@ -267,87 +490,913 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
           ),
         ],
       ),
-      body: loading
+      body: isOffline
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.cloud_off, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'You are offline',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: CustomColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please connect to the internet to access your farm summary',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: CustomColors.text.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _initConnectivity,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Try Again'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          selectedRange == null
-                              ? ''
-                              : '${DateFormat.yMMMd().format(selectedRange!.start)} - ${DateFormat.yMMMd().format(selectedRange!.end.subtract(const Duration(days: 1)))}',
-                          style: TextStyle(color: CustomColors.text),
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: _pickDateRange,
-                        icon: const Icon(Icons.date_range),
-                        label: Text('select_dates'.tr()),
+                // Farm Overview Card
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: CustomColors.secondary,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: batches.length,
-                    itemBuilder: (context, index) {
-                      final batch = batches[index];
-                      final sum =
-                          summariesByBatchId[batch.id] ?? _BatchSummary();
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        child: ListTile(
-                          title: Text(batch.name),
-                          subtitle: Text(batch.birdType),
-                          trailing: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 120),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    '${'feeds_used'.tr()}: ${sum.totalFeedKg.toStringAsFixed(2)} kg',
-                                    style: const TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.end,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  'My Farm',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: CustomColors.text,
                                   ),
                                 ),
-                                Flexible(
-                                  child: Text(
-                                    '${'mortality'.tr()}: ${sum.totalMortality}',
-                                    style: const TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.end,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    '${'vaccinations'.tr()}: ${sum.totalVaccinations}',
-                                    style: const TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.end,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    '${'total_expenses'.tr()}: ${sum.totalExpenses.toStringAsFixed(2)}',
-                                    style: const TextStyle(fontSize: 12),
-                                    textAlign: TextAlign.end,
-                                    overflow: TextOverflow.ellipsis,
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${batches.length} Active Batches',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: CustomColors.text,
                                   ),
                                 ),
                               ],
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    color: CustomColors.text,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    selectedRange == null
+                                        ? ''
+                                        : '${DateFormat.MMMd().format(selectedRange!.start)} - ${DateFormat.MMMd().format(selectedRange!.end.subtract(const Duration(days: 1)))}',
+                                    style: const TextStyle(
+                                      color: CustomColors.text,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: _pickDateRange,
+                          icon: const Icon(
+                            Icons.date_range,
+                            color: CustomColors.text,
                           ),
+                          label: Text(
+                            'Change Date Range',
+                            style: const TextStyle(color: CustomColors.text),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: CustomColors.text),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount:
+                        batches.length +
+                        (summariesByBatchId.isNotEmpty ? 1 : 0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemBuilder: (context, index) {
+                      if (index == batches.length) {
+                        // Grand Total at the bottom of the list
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: CustomColors.primary.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Grand Total Expenses',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: CustomColors.text,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalExpenses).toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: CustomColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      final batch = batches[index];
+                      final sum =
+                          summariesByBatchId[batch.id] ?? _BatchSummary();
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          batch.name,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: CustomColors.text,
+                                          ),
+                                        ),
+                                        Text(
+                                          batch.birdType.toUpperCase(),
+                                          style: TextStyle(
+                                            color: CustomColors.text
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: CustomColors.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${batch.totalChickens} Birds',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (sum.feedsByType.isNotEmpty) ...[
+                                    Text(
+                                      'Feeds Used',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: CustomColors.text,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.2),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  const BorderRadius.vertical(
+                                                    top: Radius.circular(11),
+                                                  ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: Text(
+                                                    'Feed Type',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Quantity',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Price/kg',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Total',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          ...sum.feedsByType.entries.map((
+                                            feed,
+                                          ) {
+                                            final price =
+                                                (inventoryMap[feed
+                                                            .key]?['price']
+                                                        as num?)
+                                                    ?.toDouble() ??
+                                                0.0;
+                                            final total = feed.value * price;
+                                            return Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Colors.grey
+                                                        .withOpacity(0.2),
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(feed.key),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      '${feed.value.toStringAsFixed(2)} kg',
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      'Ksh ${price.toStringAsFixed(2)}',
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      'Ksh ${total.toStringAsFixed(2)}',
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                  if (sum.vaccineQuantities.isNotEmpty) ...[
+                                    Text(
+                                      'Vaccines Used',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: CustomColors.text,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.2),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  const BorderRadius.vertical(
+                                                    top: Radius.circular(11),
+                                                  ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: Text(
+                                                    'Vaccine',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Quantity',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Price/L',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Total',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          ...sum.vaccineQuantities.entries.map((
+                                            vaccine,
+                                          ) {
+                                            final price =
+                                                (inventoryMap[vaccine
+                                                            .key]?['price']
+                                                        as num?)
+                                                    ?.toDouble() ??
+                                                0.0;
+                                            final total = vaccine.value * price;
+                                            return Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Colors.grey
+                                                        .withOpacity(0.2),
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    flex: 3,
+                                                    child: Text(vaccine.key),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      '${vaccine.value.toStringAsFixed(2)} L',
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      'Ksh ${price.toStringAsFixed(2)}',
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 2,
+                                                    child: Text(
+                                                      'Ksh ${total.toStringAsFixed(2)}',
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                  // Financial Summary Section
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    'financial_summary'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Sales breakdown
+                                  if (sum.totalSales > 0) ...[
+                                    Text(
+                                      'total_sales'.tr(),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    ...sum.salesByCategory.entries.map((entry) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              entry.key.tr(),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            Text(
+                                              'KES ${entry.value.toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.green[700],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                    const Divider(),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'total_income'.tr(),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'KES ${sum.totalSales.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.green[700],
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  // Expenses breakdown
+                                  Text(
+                                    'expenses'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  ...sum.expensesByCategory.entries.map((
+                                    entry,
+                                  ) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            entry.key.tr(),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            'KES ${entry.value.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.red[700],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                  const Divider(),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'total_expenses'.tr(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'KES ${sum.totalExpenses.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.red[700],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Net Profit/Loss
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'net_profit_loss'.tr(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'KES ${(sum.totalSales - sum.totalExpenses).toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color:
+                                              sum.totalSales >=
+                                                  sum.totalExpenses
+                                              ? Colors.green[700]
+                                              : Colors.red[700],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (sum.totalMortality > 0) ...[
+                                    Text(
+                                      'Mortality',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: CustomColors.text,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.red.withOpacity(0.2),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  const BorderRadius.vertical(
+                                                    top: Radius.circular(11),
+                                                  ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: Text(
+                                                    'Bird Type',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Quantity',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Price/Bird',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Total Loss',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                top: BorderSide(
+                                                  color: Colors.red.withOpacity(
+                                                    0.2,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: Text(
+                                                    batch.birdType,
+                                                    style: TextStyle(
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    '${sum.totalMortality} birds',
+                                                    style: const TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Ksh ${batch.pricePerBird.toStringAsFixed(2)}',
+                                                    style: TextStyle(
+                                                      color: CustomColors.text
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    'Ksh ${(batch.pricePerBird * sum.totalMortality).toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                      color: Colors.red,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: CustomColors.primary.withOpacity(
+                                        0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: CustomColors.primary.withOpacity(
+                                          0.2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Total Expenses',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Ksh ${sum.totalExpenses.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: CustomColors.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -356,7 +1405,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                 // Download button at bottom
                 if (summariesByBatchId.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -376,8 +1425,101 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
 }
 
 class _BatchSummary {
-  double totalFeedKg = 0.0;
+  int totalChickens = 0;
+  int reductions = 0;
+  Map<String, int> reductionCounts = {};
+  Map<String, double> materialUsage = {};
+  int totalEggs = 0;
+  double feedsUsed = 0;
+  double totalSales = 0;
+  double totalExpenses = 0;
+  Map<String, double> salesByCategory = {};
+  Map<String, double> expensesByCategory = {};
+  List<String> notes = [];
   int totalMortality = 0;
   int totalVaccinations = 0;
-  double totalExpenses = 0.0;
+  Map<String, double> feedsByType = {};
+  Map<String, double> vaccineQuantities = {};
+  double totalFeedKg = 0.0;
+
+  void addFromReport(Map<String, dynamic> report) {
+    if (report['chickens'] != null) {
+      totalChickens = (report['chickens'] as num).toInt();
+    }
+    if (report['reductions'] != null) {
+      reductions += (report['reductions'] as num).toInt();
+
+      if (report['reductionReasons'] != null) {
+        final reasons = report['reductionReasons'] as Map<String, dynamic>;
+        reasons.forEach((reason, count) {
+          reductionCounts[reason] =
+              (reductionCounts[reason] ?? 0) + (count as num).toInt();
+          if (reason == 'mortality') {
+            totalMortality += (count as num).toInt();
+          }
+        });
+      }
+    }
+
+    if (report['materialUsage'] != null) {
+      final materials = report['materialUsage'] as Map<String, dynamic>;
+      materials.forEach((material, amount) {
+        materialUsage[material] =
+            (materialUsage[material] ?? 0) + (amount as num).toDouble();
+      });
+    }
+
+    if (report['eggsCollected'] != null) {
+      totalEggs += (report['eggsCollected'] as num).toInt();
+    }
+
+    if (report['feedsUsed'] != null) {
+      feedsUsed += (report['feedsUsed'] as num).toDouble();
+      totalFeedKg += (report['feedsUsed'] as num).toDouble();
+
+      if (report['feedType'] != null) {
+        final type = report['feedType'] as String;
+        feedsByType[type] =
+            (feedsByType[type] ?? 0) + (report['feedsUsed'] as num).toDouble();
+      }
+    }
+
+    if (report['vaccinations'] != null) {
+      totalVaccinations += (report['vaccinations'] as num).toInt();
+
+      if (report['vaccineQuantities'] != null) {
+        final quantities = report['vaccineQuantities'] as Map<String, dynamic>;
+        quantities.forEach((vaccine, amount) {
+          vaccineQuantities[vaccine] =
+              (vaccineQuantities[vaccine] ?? 0) + (amount as num).toDouble();
+        });
+      }
+    }
+
+    if (report['sales'] != null) {
+      final sales = report['sales'] as num;
+      totalSales += sales.toDouble();
+
+      if (report['salesCategory'] != null) {
+        final category = report['salesCategory'] as String;
+        salesByCategory[category] =
+            (salesByCategory[category] ?? 0) + sales.toDouble();
+      }
+    }
+
+    if (report['expenses'] != null) {
+      final expenses = report['expenses'] as num;
+      totalExpenses += expenses.toDouble();
+
+      if (report['expenseCategory'] != null) {
+        final category = report['expenseCategory'] as String;
+        expensesByCategory[category] =
+            (expensesByCategory[category] ?? 0) + expenses.toDouble();
+      }
+    }
+
+    if (report['notes'] != null && report['notes'].isNotEmpty) {
+      notes.add(report['notes'] as String);
+    }
+  }
 }
