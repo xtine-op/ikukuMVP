@@ -6,6 +6,7 @@ import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../data/inventory_item_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../shared/widgets/custom_dialog.dart';
 
 class InventoryPage extends StatefulWidget {
   final String category;
@@ -194,12 +195,33 @@ class _InventoryPageState extends State<InventoryPage> {
                               addedOn: DateTime.now(),
                               price: price,
                             );
-                            await SupabaseService().addInventoryItem(
-                              item.toJson(),
-                            );
-                            if (mounted) {
-                              Navigator.pop(context);
-                              fetchItems();
+                            try {
+                              await SupabaseService().addInventoryItem(
+                                item.toJson(),
+                              );
+                              if (mounted) {
+                                Navigator.pop(context);
+                                fetchItems();
+                                showCustomDialog(
+                                  context: context,
+                                  title: tr('success'),
+                                  message: tr('item_added_successfully'),
+                                  isSuccess: true,
+                                  onOkPressed: () => Navigator.pop(context),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                showCustomDialog(
+                                  context: context,
+                                  title: tr('error'),
+                                  message:
+                                      'Something went wrong, please wait and try again.',
+                                  isSuccess: false,
+                                  onOkPressed: () => Navigator.pop(context),
+                                );
+                              }
                             }
                           }
                         },
@@ -382,31 +404,33 @@ class _InventoryPageState extends State<InventoryPage> {
                               unit: unit,
                               price: price,
                             );
-                            await SupabaseService().updateInventoryItem(
-                              updatedItem.toJson(),
-                            );
-                            if (mounted) {
-                              Navigator.pop(context);
-                              fetchItems();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    tr(
-                                      'item_updated_success',
-                                      namedArgs: {
-                                        'oldName': item.name,
-                                        'newName': name,
-                                        'oldPrice': item.price.toStringAsFixed(
-                                          2,
-                                        ),
-                                        'newPrice': price.toStringAsFixed(2),
-                                      },
-                                    ),
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 3),
-                                ),
+                            try {
+                              await SupabaseService().updateInventoryItem(
+                                updatedItem.toJson(),
                               );
+                              if (mounted) {
+                                Navigator.pop(context);
+                                fetchItems();
+                                showCustomDialog(
+                                  context: context,
+                                  title: tr('success'),
+                                  message: tr('item_edited_successfully'),
+                                  isSuccess: true,
+                                  onOkPressed: () => Navigator.pop(context),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                showCustomDialog(
+                                  context: context,
+                                  title: tr('error'),
+                                  message:
+                                      'Something went wrong, please wait and try again.',
+                                  isSuccess: false,
+                                  onOkPressed: () => Navigator.pop(context),
+                                );
+                              }
                             }
                           }
                         },
@@ -774,7 +798,19 @@ class _InventoryPageState extends State<InventoryPage> {
                                                     .updateInventoryItem(
                                                       updatedItem.toJson(),
                                                     );
-                                                if (mounted) fetchItems();
+                                                if (mounted) {
+                                                  fetchItems();
+                                                  showCustomDialog(
+                                                    context: context,
+                                                    title: tr('success'),
+                                                    message: tr(
+                                                      'item_amount_added_successfully',
+                                                    ),
+                                                    isSuccess: true,
+                                                    onOkPressed: () =>
+                                                        Navigator.pop(context),
+                                                  );
+                                                }
                                               }
                                             },
                                           ),

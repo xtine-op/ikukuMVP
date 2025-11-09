@@ -181,7 +181,42 @@ class _ProfilePageState extends State<ProfilePage> {
                     _ProfileOption(
                       icon: Icons.logout,
                       label: 'logout'.tr(),
-                      onTap: _logout,
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            backgroundColor: const Color(0xFFF7F8FA),
+                            title: Text('logout_confirmation_title'.tr()),
+                            content: Text('logout_confirmation_message'.tr()),
+                            actions: [
+                              OutlinedButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: CustomColors.primary,
+                                  side: BorderSide(color: CustomColors.primary),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Text('no'.tr()),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context, true);
+                                  _logout();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: CustomColors.primary,
+                                ),
+                                child: Text('yes'.tr()),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     _ProfileOption(
                       icon: Icons.delete_outline,

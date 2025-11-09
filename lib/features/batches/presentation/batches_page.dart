@@ -10,6 +10,7 @@ import '../../../shared/providers/offline_data_provider.dart';
 import '../../../shared/services/connectivity_manager.dart';
 import '../data/batch_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../shared/widgets/custom_dialog.dart';
 
 class BatchesPage extends StatefulWidget {
   final bool fromReportsPage;
@@ -301,20 +302,43 @@ class _BatchesPageState extends State<BatchesPage> {
                           pricePerBird: pricePerBird,
                           createdAt: DateTime.now(),
                         );
-                        await OfflineDataProvider.instance.addBatch(
-                          batch.toJson(),
-                        );
-                        if (mounted) {
-                          Navigator.pop(context);
-                          fetchBatches();
-                          // Show popup asking if user wants to add a report
-                          // Only if they came from the reports page and haven't shown dialog yet
-                          if (widget.fromReportsPage &&
-                              !_hasShownAddReportDialog) {
-                            setState(() {
-                              _hasShownAddReportDialog = true;
-                            });
-                            _showAddReportDialog();
+                        try {
+                          await OfflineDataProvider.instance.addBatch(
+                            batch.toJson(),
+                          );
+                          if (mounted) {
+                            Navigator.pop(context);
+                            fetchBatches();
+                            showCustomDialog(
+                              context: context,
+                              title: tr('success'),
+                              message: tr('batch_added_successfully'),
+                              isSuccess: true,
+                              onOkPressed: () {
+                                Navigator.pop(context);
+                                // Show popup asking if user wants to add a report
+                                // Only if they came from the reports page and haven't shown dialog yet
+                                if (widget.fromReportsPage &&
+                                    !_hasShownAddReportDialog) {
+                                  setState(() {
+                                    _hasShownAddReportDialog = true;
+                                  });
+                                  _showAddReportDialog();
+                                }
+                              },
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            showCustomDialog(
+                              context: context,
+                              title: tr('error'),
+                              message:
+                                  'Something went wrong, please wait and try again.',
+                              isSuccess: false,
+                              onOkPressed: () => Navigator.pop(context),
+                            );
                           }
                         }
                       }
@@ -507,10 +531,31 @@ class _BatchesPageState extends State<BatchesPage> {
                   totalChickens: totalChickens,
                   pricePerBird: pricePerBird,
                 );
-                await SupabaseService().updateBatch(updatedBatch.toJson());
-                if (mounted) {
-                  Navigator.pop(context);
-                  fetchBatches();
+                try {
+                  await SupabaseService().updateBatch(updatedBatch.toJson());
+                  if (mounted) {
+                    Navigator.pop(context);
+                    fetchBatches();
+                    showCustomDialog(
+                      context: context,
+                      title: tr('success'),
+                      message: tr('batch_edited_successfully'),
+                      isSuccess: true,
+                      onOkPressed: () => Navigator.pop(context),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    Navigator.pop(context);
+                    showCustomDialog(
+                      context: context,
+                      title: tr('error'),
+                      message:
+                          'Something went wrong, please wait and try again.',
+                      isSuccess: false,
+                      onOkPressed: () => Navigator.pop(context),
+                    );
+                  }
                 }
               }
             },
@@ -740,6 +785,15 @@ class _BatchesPageState extends State<BatchesPage> {
                           if (confirm == true) {
                             await SupabaseService().deleteBatch(batch.id);
                             fetchBatches();
+                            if (mounted) {
+                              showCustomDialog(
+                                context: context,
+                                title: tr('success'),
+                                message: tr('batch_deleted_successfully'),
+                                isSuccess: true,
+                                onOkPressed: () => Navigator.pop(context),
+                              );
+                            }
                           }
                         },
                       ),

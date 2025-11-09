@@ -283,5 +283,15 @@
   "sync_now": "Sync Now",
   "offline_mode": "Offline Mode",
   "coming_soon": "Coming Soon!",
-  "reported_today": "Reported Today"
+  "reported_today": "Reported Today",
+  "batch_added_successfully": "Batch added successfully.",
+  "batch_edited_successfully": "Batch edited successfully.",
+  "batch_deleted_successfully": "Batch deleted successfully.",
+  "item_added_successfully": "Item added successfully.",
+  "item_edited_successfully": "Item edited successfully.",
+  "item_amount_added_successfully": "Item amount added successfully.",
+  "generic_error_message": "Something went wrong, please wait and try again.",
+  "layer": "Layer",
+  "logout_confirmation_title": "Confirm Logout",
+  "logout_confirmation_message": "Are you sure you want to log out?"
 }

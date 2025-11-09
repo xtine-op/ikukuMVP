@@ -282,5 +282,14 @@
   "report_saved_offline_message": "Ripoti yako imehifadhiwa nje ya mtandao na itasawazishwa kiotomatiki utakapokuwa mtandaoni.",
   "sync_pending": "Kusawazisha Kunasubiri",
   "sync_now": "Sawazisha Sasa",
-  "offline_mode": "Nje ya Mtandao"
+  "offline_mode": "Nje ya Mtandao",
+  "batch_added_successfully": "Kundi limeongezwa kwa mafanikio.",
+  "batch_edited_successfully": "Kundi limehaririwa kwa mafanikio.",
+  "batch_deleted_successfully": "Kundi limefutwa kwa mafanikio.",
+  "item_added_successfully": "Kipengele kimeongezwa kwa mafanikio.",
+  "item_edited_successfully": "Kipengele kimehaririwa kwa mafanikio.",
+  "item_amount_added_successfully": "Kiasi cha kipengele kimeongezwa kwa mafanikio.",
+  "generic_error_message": "Kuna tatizo limetokea, tafadhali subiri na ujaribu tena.",
+  "logout_confirmation_title": "Thibitisha Kutoka",
+  "logout_confirmation_message": "Una uhakika unataka kutoka?"
 }
