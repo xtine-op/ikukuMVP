@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../../../shared/services/offline_service.dart';
+import '../../../shared/services/offline_data_service.dart';
 import '../../../shared/services/connectivity_manager.dart';
 import '../../../shared/providers/offline_data_provider.dart';
 import '../../batches/data/batch_model.dart';
@@ -919,6 +920,28 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         otherMaterialsUsed: otherMaterialsUsed,
         notes: notes,
         onSave: _saveReport,
+        onEditChickenReduction: () {
+          _animateToStep(_indexChickenReduction);
+        },
+        onEditEggProduction: () {
+          _animateToStep(_indexEggProduction);
+        },
+        onEditFeeds: () {
+          _animateToStep(_indexFeeds);
+        },
+        onEditVaccines: () {
+          _animateToStep(_indexFeeds + 1); // Vaccines page is after Feeds
+        },
+        onEditOtherMaterials: () {
+          _animateToStep(
+            _indexFeeds + 2,
+          ); // Other Materials page is after Vaccines
+        },
+        onEditAdditionalNotes: () {
+          _animateToStep(
+            _indexFeeds + 3,
+          ); // Additional Notes page is after Other Materials
+        },
         selectedFeeds: selectedFeeds,
         selectedVaccines: selectedVaccines,
         selectedOtherMaterials: selectedOtherMaterials,
@@ -1160,6 +1183,33 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       if (isOnline) {
         // Online mode - save directly to server
         await _saveReportOnline(reportData);
+
+        // Update dashboard data after successful online save
+        double totalFeedUsed = 0;
+        if (reportData['selected_feeds'] is List) {
+          for (final feed in reportData['selected_feeds']) {
+            totalFeedUsed += (feed['quantity'] as num).toDouble();
+          }
+        }
+
+        final currentDashboardData =
+            OfflineDataProvider.instance.dashboardData ?? {};
+        final updatedDashboardData = {
+          ...currentDashboardData,
+          'totalEggs':
+              (currentDashboardData['totalEggs'] ?? 0) +
+              (reportData['eggs_collected'] as int? ?? 0),
+          'totalFeeds':
+              (currentDashboardData['totalFeeds'] ?? 0) + totalFeedUsed,
+        };
+
+        await OfflineDataService.instance.cacheUserDashboard(
+          Supabase.instance.client.auth.currentUser!.id,
+          updatedDashboardData,
+        );
+        await OfflineDataProvider.instance.loadDashboardData(
+          forceRefresh: true,
+        );
       } else {
         // Offline mode - save locally
         print(
@@ -1170,6 +1220,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
       setState(() => loading = false);
       if (!mounted) return;
+
+      // Navigate to dashboard to show updated summaries
+      context.go('/dashboard');
 
       // Add a small delay to ensure the widget is stable before showing dialog
       await Future.delayed(const Duration(milliseconds: 100));
@@ -1400,7 +1453,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     // Create daily record (notes go to batch record, not daily record)
     final dailyRecordData = {
       'user_id': reportData['user_id'],
-      'record_date': reportData['record_date'],
+      'record_date':
+          reportData['record_date'] ?? DateTime.now().toIso8601String(),
     };
     final dailyRecordId = await SupabaseService().addDailyRecord(
       dailyRecordData,

@@ -269,18 +269,40 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
         inventoryMap[item['name']] = item;
       }
 
-      // Aggregate per batch
+      // Initialize summaries
       final Map<String, _BatchSummary> tmp = {};
       for (final br in batchRecords) {
         final batchId = br['batch_id'] as String?;
         if (batchId == null) continue;
         final feedsUsed = br['feeds_used'];
         final chickensDied = (br['chickens_died'] as int?) ?? 0;
+        final chickensSold = (br['chickens_sold'] as int?) ?? 0;
+        final chickensSoldPrice =
+            (br['chickens_sold_price'] as num?)?.toDouble() ?? 0.0;
+        final eggsSold = (br['eggs_sold'] as int?) ?? 0;
+        final eggsPricePerUnit =
+            (br['eggs_price_per_unit'] as num?)?.toDouble() ?? 0.0;
         final vaccinesUsed = br['vaccines_used'];
         final otherMaterialsUsed = br['other_materials_used'];
 
         tmp.putIfAbsent(batchId, () => _BatchSummary());
         final sum = tmp[batchId]!;
+
+        // Get the batch info for bird costs
+        final batch = parsedBatches.firstWhere((b) => b.id == batchId);
+        final initialBirdCost = batch.totalChickens * batch.pricePerBird;
+        sum.expensesByCategory['bird_cost'] =
+            (sum.expensesByCategory['bird_cost'] ?? 0.0) + initialBirdCost;
+        sum.totalExpenses += initialBirdCost;
+
+        // Calculate sales from eggs and chickens
+        final eggSales = (eggsSold * eggsPricePerUnit);
+        final chickenSales = (chickensSold * chickensSoldPrice);
+        sum.salesByCategory['eggs'] =
+            (sum.salesByCategory['eggs'] ?? 0.0) + eggSales;
+        sum.salesByCategory['chickens'] =
+            (sum.salesByCategory['chickens'] ?? 0.0) + chickenSales;
+        sum.totalSales = eggSales + chickenSales;
 
         // Sum feeds_used list quantities and calculate expenses
         if (feedsUsed is List) {
@@ -296,7 +318,10 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                 if (inventoryMap.containsKey(name)) {
                   final price =
                       (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
-                  sum.totalExpenses += qty * price;
+                  final feedExpense = qty * price;
+                  sum.totalExpenses += feedExpense;
+                  sum.expensesByCategory['feeds'] =
+                      (sum.expensesByCategory['feeds'] ?? 0.0) + feedExpense;
                 }
               }
             }
@@ -321,7 +346,11 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
               if (inventoryMap.containsKey(name)) {
                 final price =
                     (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
-                sum.totalExpenses += qty * price;
+                final vaccineExpense = qty * price;
+                sum.totalExpenses += vaccineExpense;
+                sum.expensesByCategory['vaccines'] =
+                    (sum.expensesByCategory['vaccines'] ?? 0.0) +
+                    vaccineExpense;
               }
             }
           }
@@ -342,21 +371,25 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
               if (inventoryMap.containsKey(name)) {
                 final price =
                     (inventoryMap[name]!['price'] as num?)?.toDouble() ?? 0.0;
-                sum.totalExpenses += qty * price;
+                final materialExpense = qty * price;
+                sum.totalExpenses += materialExpense;
                 sum.expensesByCategory['other_materials'] =
                     (sum.expensesByCategory['other_materials'] ?? 0.0) +
-                    (qty * price);
+                    materialExpense;
               }
             }
           }
         }
 
-        // Sum mortality and track as an expense
+        // Calculate final profit
+        sum.totalProfit = sum.totalSales - sum.totalExpenses;
+
+        // Calculate mortality expenses
         sum.totalMortality += chickensDied;
         if (chickensDied > 0) {
-          // Estimate the value of lost birds based on current market price or a fixed value
-          final lossPerBird = 500.0; // Example fixed value, adjust as needed
-          final mortalityLoss = chickensDied * lossPerBird;
+          // Use batch's price per bird for mortality loss calculation
+          final batch = parsedBatches.firstWhere((b) => b.id == batchId);
+          final mortalityLoss = chickensDied * batch.pricePerBird;
           sum.expensesByCategory['mortality'] =
               (sum.expensesByCategory['mortality'] ?? 0.0) + mortalityLoss;
           sum.totalExpenses += mortalityLoss;
@@ -659,21 +692,77 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Grand Total Expenses',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: CustomColors.text,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalExpenses).toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: CustomColors.primary,
-                                    ),
+                                  Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Total Sales',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: CustomColors.text,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalSales).toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Total Expenses',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: CustomColors.text,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalExpenses).toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Divider(height: 24),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Net Profit',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: CustomColors.text,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalProfit).toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: CustomColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -1433,8 +1522,15 @@ class _BatchSummary {
   double feedsUsed = 0;
   double totalSales = 0;
   double totalExpenses = 0;
-  Map<String, double> salesByCategory = {};
-  Map<String, double> expensesByCategory = {};
+  double totalProfit = 0.0;
+  Map<String, double> salesByCategory = {'eggs': 0.0, 'chickens': 0.0};
+  Map<String, double> expensesByCategory = {
+    'feeds': 0.0,
+    'vaccines': 0.0,
+    'other_materials': 0.0,
+    'mortality': 0.0,
+    'bird_cost': 0.0,
+  };
   List<String> notes = [];
   int totalMortality = 0;
   int totalVaccinations = 0;

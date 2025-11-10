@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
+import '../../../shared/services/offline_data_service.dart';
+import '../../../shared/providers/offline_data_provider.dart';
 import '../data/inventory_item_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../shared/widgets/custom_dialog.dart';
@@ -195,33 +197,33 @@ class _InventoryPageState extends State<InventoryPage> {
                               addedOn: DateTime.now(),
                               price: price,
                             );
-                            try {
-                              await SupabaseService().addInventoryItem(
-                                item.toJson(),
-                              );
-                              if (mounted) {
-                                Navigator.pop(context);
-                                fetchItems();
-                                showCustomDialog(
-                                  context: context,
-                                  title: tr('success'),
-                                  message: tr('item_added_successfully'),
-                                  isSuccess: true,
-                                  onOkPressed: () => Navigator.pop(context),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                Navigator.pop(context);
-                                showCustomDialog(
-                                  context: context,
-                                  title: tr('error'),
-                                  message:
-                                      'Something went wrong, please wait and try again.',
-                                  isSuccess: false,
-                                  onOkPressed: () => Navigator.pop(context),
-                                );
-                              }
+                            await SupabaseService().addInventoryItem(
+                              item.toJson(),
+                            );
+
+                            // Update dashboard for new feed items
+                            if (category == 'feed') {
+                              final currentDashboardData =
+                                  OfflineDataProvider.instance.dashboardData ??
+                                  {};
+                              final updatedDashboardData = {
+                                ...currentDashboardData,
+                                'totalFeeds':
+                                    (currentDashboardData['totalFeeds'] ?? 0) +
+                                    quantity,
+                              };
+                              await OfflineDataService.instance
+                                  .cacheUserDashboard(
+                                    user.id,
+                                    updatedDashboardData,
+                                  );
+                              await OfflineDataProvider.instance
+                                  .loadDashboardData(forceRefresh: true);
+                            }
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              fetchItems();
                             }
                           }
                         },
@@ -404,33 +406,60 @@ class _InventoryPageState extends State<InventoryPage> {
                               unit: unit,
                               price: price,
                             );
-                            try {
-                              await SupabaseService().updateInventoryItem(
-                                updatedItem.toJson(),
+                            await SupabaseService().updateInventoryItem(
+                              updatedItem.toJson(),
+                            );
+
+                            // Update dashboard for feed items
+                            if (category == 'feed') {
+                              final user =
+                                  Supabase.instance.client.auth.currentUser;
+                              if (user != null) {
+                                final currentDashboardData =
+                                    OfflineDataProvider
+                                        .instance
+                                        .dashboardData ??
+                                    {};
+                                final quantityChange = quantity - item.quantity;
+                                final updatedDashboardData = {
+                                  ...currentDashboardData,
+                                  'totalFeeds':
+                                      (currentDashboardData['totalFeeds'] ??
+                                          0) +
+                                      quantityChange,
+                                };
+                                await OfflineDataService.instance
+                                    .cacheUserDashboard(
+                                      user.id,
+                                      updatedDashboardData,
+                                    );
+                                await OfflineDataProvider.instance
+                                    .loadDashboardData(forceRefresh: true);
+                              }
+                            }
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              fetchItems();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    tr(
+                                      'item_updated_success',
+                                      namedArgs: {
+                                        'oldName': item.name,
+                                        'newName': name,
+                                        'oldPrice': item.price.toStringAsFixed(
+                                          2,
+                                        ),
+                                        'newPrice': price.toStringAsFixed(2),
+                                      },
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 3),
+                                ),
                               );
-                              if (mounted) {
-                                Navigator.pop(context);
-                                fetchItems();
-                                showCustomDialog(
-                                  context: context,
-                                  title: tr('success'),
-                                  message: tr('item_edited_successfully'),
-                                  isSuccess: true,
-                                  onOkPressed: () => Navigator.pop(context),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                Navigator.pop(context);
-                                showCustomDialog(
-                                  context: context,
-                                  title: tr('error'),
-                                  message:
-                                      'Something went wrong, please wait and try again.',
-                                  isSuccess: false,
-                                  onOkPressed: () => Navigator.pop(context),
-                                );
-                              }
                             }
                           }
                         },
@@ -528,9 +557,41 @@ class _InventoryPageState extends State<InventoryPage> {
                           await SupabaseService().updateInventoryItem(
                             updatedItem.toJson(),
                           );
+
+                          // Update dashboard for feed items
+                          if (item.category == 'feed') {
+                            final user =
+                                Supabase.instance.client.auth.currentUser;
+                            if (user != null) {
+                              final currentDashboardData =
+                                  OfflineDataProvider.instance.dashboardData ??
+                                  {};
+                              final updatedDashboardData = {
+                                ...currentDashboardData,
+                                'totalFeeds':
+                                    (currentDashboardData['totalFeeds'] ?? 0) +
+                                    addAmount,
+                              };
+                              await OfflineDataService.instance
+                                  .cacheUserDashboard(
+                                    user.id,
+                                    updatedDashboardData,
+                                  );
+                              await OfflineDataProvider.instance
+                                  .loadDashboardData(forceRefresh: true);
+                            }
+                          }
+
                           if (mounted) {
                             Navigator.pop(context);
                             fetchItems();
+                            showCustomDialog(
+                              context: context,
+                              title: tr('success'),
+                              message: tr('quantity_updated'),
+                              isSuccess: true,
+                              onOkPressed: () => Navigator.pop(context),
+                            );
                           }
                         }
                       },
@@ -798,19 +859,42 @@ class _InventoryPageState extends State<InventoryPage> {
                                                     .updateInventoryItem(
                                                       updatedItem.toJson(),
                                                     );
-                                                if (mounted) {
-                                                  fetchItems();
-                                                  showCustomDialog(
-                                                    context: context,
-                                                    title: tr('success'),
-                                                    message: tr(
-                                                      'item_amount_added_successfully',
-                                                    ),
-                                                    isSuccess: true,
-                                                    onOkPressed: () =>
-                                                        Navigator.pop(context),
-                                                  );
+
+                                                // Update dashboard for feed items
+                                                if (item.category == 'feed') {
+                                                  final user = Supabase
+                                                      .instance
+                                                      .client
+                                                      .auth
+                                                      .currentUser;
+                                                  if (user != null) {
+                                                    final currentDashboardData =
+                                                        OfflineDataProvider
+                                                            .instance
+                                                            .dashboardData ??
+                                                        {};
+                                                    final updatedDashboardData = {
+                                                      ...currentDashboardData,
+                                                      'totalFeeds':
+                                                          (currentDashboardData['totalFeeds'] ??
+                                                              0) +
+                                                          addAmount,
+                                                    };
+                                                    await OfflineDataService
+                                                        .instance
+                                                        .cacheUserDashboard(
+                                                          user.id,
+                                                          updatedDashboardData,
+                                                        );
+                                                    await OfflineDataProvider
+                                                        .instance
+                                                        .loadDashboardData(
+                                                          forceRefresh: true,
+                                                        );
+                                                  }
                                                 }
+
+                                                if (mounted) fetchItems();
                                               }
                                             },
                                           ),

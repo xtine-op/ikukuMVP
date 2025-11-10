@@ -8,7 +8,7 @@
   "fetching_answer": "Fetching answer...",
   "fetch_error": "Sorry, I could not fetch the answer. Please try again.",
   "no_answer_found": "Sorry, I could not find a specific answer. Please try rephrasing your question.",
-  "how_many_reason": "How many {reason}?",
+  "how_many_reason": "How many chicken are {reason}?",
   "select_batch_title": "Select Batch",
   "batch_age_days": "Batch Age: {days} days",
   "select_batch_error": "Please select a batch",
@@ -98,6 +98,7 @@
   "vaccines": "Vaccines",
   "sawdust": "Sawdust",
   "other_materials": "Other Materials",
+  "bird_cost": "Bird Cost",
   "additional_notes": "Additional Notes",
   "enter_count": "Enter count",
   "sales_amount": "Sales Amount",
@@ -133,7 +134,7 @@
   "report_details": "Report Details",
   "page_not_found": "Page Not Found",
   "cannot_use_more_than": "Cannot use more than {quantity} {unit} of {item}",
-  "enter_quantity": "Enter quantity",
+  "enter_quantity": "Enter thquantity",
   "stock": "Stock"
   ,
   "create_your_farm": "Create your farm",
@@ -282,16 +283,5 @@
   "sync_pending": "Sync Pending",
   "sync_now": "Sync Now",
   "offline_mode": "Offline Mode",
-  "coming_soon": "Coming Soon!",
-  "reported_today": "Reported Today",
-  "batch_added_successfully": "Batch added successfully.",
-  "batch_edited_successfully": "Batch edited successfully.",
-  "batch_deleted_successfully": "Batch deleted successfully.",
-  "item_added_successfully": "Item added successfully.",
-  "item_edited_successfully": "Item edited successfully.",
-  "item_amount_added_successfully": "Item amount added successfully.",
-  "generic_error_message": "Something went wrong, please wait and try again.",
-  "layer": "Layer",
-  "logout_confirmation_title": "Confirm Logout",
-  "logout_confirmation_message": "Are you sure you want to log out?"
+  "reported_today": "Reported Today"
 }

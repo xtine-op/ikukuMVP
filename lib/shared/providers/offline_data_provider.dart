@@ -200,12 +200,40 @@ class OfflineDataProvider extends ChangeNotifier {
       await SupabaseService().addBatch(batchData);
       // Refresh local data
       await loadBatches(forceRefresh: true);
+
+      // Update dashboard data to reflect new batch
+      final batch = Batch.fromJson(batchData);
+      final currentDashboardData = _dashboardData ?? {};
+      final updatedDashboardData = {
+        ...currentDashboardData,
+        'totalBirds':
+            (currentDashboardData['totalBirds'] ?? 0) + batch.totalChickens,
+      };
+
+      await OfflineDataService.instance.cacheUserDashboard(
+        user.id,
+        updatedDashboardData,
+      );
+      await loadDashboardData(forceRefresh: true);
     } else {
       // Add offline
       await OfflineDataService.instance.addBatchOffline(user.id, batchData);
       // Update local list immediately for UI
       final newBatch = Batch.fromJson(batchData);
       _batches.add(newBatch);
+
+      // Update dashboard data
+      final currentDashboardData = _dashboardData ?? {};
+      final updatedDashboardData = {
+        ...currentDashboardData,
+        'totalBirds':
+            (currentDashboardData['totalBirds'] ?? 0) + newBatch.totalChickens,
+      };
+      await OfflineDataService.instance.cacheUserDashboard(
+        user.id,
+        updatedDashboardData,
+      );
+      _dashboardData = updatedDashboardData;
       notifyListeners();
     }
   }
@@ -222,6 +250,23 @@ class OfflineDataProvider extends ChangeNotifier {
       await SupabaseService().addInventoryItem(itemData);
       // Refresh local data
       await loadInventory(forceRefresh: true);
+
+      // Update dashboard data for feeds
+      if (itemData['category'] == 'feed') {
+        final currentDashboardData = _dashboardData ?? {};
+        final updatedDashboardData = {
+          ...currentDashboardData,
+          'totalFeeds':
+              (currentDashboardData['totalFeeds'] ?? 0) +
+              (itemData['quantity'] as num).toDouble(),
+        };
+
+        await OfflineDataService.instance.cacheUserDashboard(
+          user.id,
+          updatedDashboardData,
+        );
+        await loadDashboardData(forceRefresh: true);
+      }
     } else {
       // Add offline
       await OfflineDataService.instance.addInventoryItemOffline(
@@ -231,6 +276,21 @@ class OfflineDataProvider extends ChangeNotifier {
       // Update local list immediately for UI
       final newItem = InventoryItem.fromJson(itemData);
       _inventory.add(newItem);
+
+      // Update dashboard data for feeds
+      if (newItem.category == 'feed') {
+        final currentDashboardData = _dashboardData ?? {};
+        final updatedDashboardData = {
+          ...currentDashboardData,
+          'totalFeeds':
+              (currentDashboardData['totalFeeds'] ?? 0) + newItem.quantity,
+        };
+        await OfflineDataService.instance.cacheUserDashboard(
+          user.id,
+          updatedDashboardData,
+        );
+        _dashboardData = updatedDashboardData;
+      }
       notifyListeners();
     }
   }

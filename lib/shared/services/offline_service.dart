@@ -189,7 +189,8 @@ class OfflineService {
     // Create daily record first (notes go to batch record, not daily record)
     final dailyRecordData = {
       'user_id': reportData['user_id'],
-      'record_date': reportData['record_date'],
+      'record_date':
+          reportData['record_date'] ?? DateTime.now().toIso8601String(),
     };
 
     final dailyRecordId = await SupabaseService().addDailyRecord(

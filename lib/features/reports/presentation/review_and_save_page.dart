@@ -24,6 +24,12 @@ class ReviewAndSavePage extends StatelessWidget {
   final List<Map<String, dynamic>> selectedFeeds;
   final List<Map<String, dynamic>> selectedVaccines;
   final List<Map<String, dynamic>> selectedOtherMaterials;
+  final VoidCallback onEditChickenReduction;
+  final VoidCallback onEditEggProduction;
+  final VoidCallback onEditFeeds;
+  final VoidCallback onEditVaccines;
+  final VoidCallback onEditOtherMaterials;
+  final VoidCallback onEditAdditionalNotes;
 
   const ReviewAndSavePage({
     super.key,
@@ -43,6 +49,12 @@ class ReviewAndSavePage extends StatelessWidget {
     required this.otherMaterialsUsed,
     required this.notes,
     required this.onSave,
+    required this.onEditChickenReduction,
+    required this.onEditEggProduction,
+    required this.onEditFeeds,
+    required this.onEditVaccines,
+    required this.onEditOtherMaterials,
+    required this.onEditAdditionalNotes,
     required this.selectedFeeds,
     required this.selectedVaccines,
     required this.selectedOtherMaterials,
@@ -126,9 +138,12 @@ class ReviewAndSavePage extends StatelessWidget {
                 'birds'.tr() +
                 '- ' +
                 (selectedBatch?.birdType.toUpperCase() ?? ''),
-            onEdit: () {},
+            onEdit: onEditChickenReduction,
             items: [
-              _SectionItem(label: 'sold'.tr(), value: '0'),
+              _SectionItem(
+                label: 'sold'.tr(),
+                value: (reductionCounts['sold'] ?? 0).toString(),
+              ),
               _SectionItem(
                 label: 'died'.tr(),
                 value: (reductionCounts['death'] ?? 0).toString(),
@@ -147,7 +162,7 @@ class ReviewAndSavePage extends StatelessWidget {
           if (!isBroiler)
             _SectionCard(
               title: 'eggs'.tr(),
-              onEdit: () {},
+              onEdit: onEditEggProduction,
               items: [
                 _SectionItem(
                   label: 'collected'.tr(),
@@ -170,7 +185,7 @@ class ReviewAndSavePage extends StatelessWidget {
           // Feeds Section (show all selected feeds)
           _SectionCard(
             title: 'feeds_used'.tr(),
-            onEdit: () {},
+            onEdit: onEditFeeds,
             items: [
               ...selectedFeeds.map(
                 (f) => _SectionItem(
@@ -183,7 +198,7 @@ class ReviewAndSavePage extends StatelessWidget {
           // Vaccines Section (show all selected vaccines)
           _SectionCard(
             title: 'vaccines'.tr(),
-            onEdit: () {},
+            onEdit: onEditVaccines,
             items: [
               ...selectedVaccines.map(
                 (v) => _SectionItem(
@@ -196,7 +211,7 @@ class ReviewAndSavePage extends StatelessWidget {
           // Other Materials Section (show all selected other materials)
           _SectionCard(
             title: 'other_materials'.tr(),
-            onEdit: () {},
+            onEdit: onEditOtherMaterials,
             items: [
               ...selectedOtherMaterials.map(
                 (m) => _SectionItem(
@@ -210,7 +225,7 @@ class ReviewAndSavePage extends StatelessWidget {
           if (notes != null && notes!.trim().isNotEmpty)
             _SectionCard(
               title: 'additional_notes'.tr(),
-              onEdit: () {},
+              onEdit: onEditAdditionalNotes,
               items: [_SectionItem(label: '', value: notes!)],
             ),
           const SizedBox(height: 16),

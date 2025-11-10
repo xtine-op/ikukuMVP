@@ -161,13 +161,9 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // Fetch aggregated reports for a user (example: monthly summary)
+  // Fetch aggregated reports for a user using RPC function
   Future<List<Map<String, dynamic>>> fetchReports(String userId) async {
-    // This is a placeholder. In a real app, you might use a Supabase function or view for aggregation.
-    final response = await supabase.rpc(
-      'get_monthly_farm_summary',
-      params: {'user_id': userId},
-    );
+    final response = await supabase.rpc('get_farm_data').select();
     return List<Map<String, dynamic>>.from(response);
   }
 
@@ -350,7 +346,11 @@ class SupabaseService {
     return result;
   }
 
-  // Add similar methods for records, etc.
+  // Fetch batch profits using RPC function
+  Future<List<Map<String, dynamic>>> fetchBatchProfits() async {
+    final response = await supabase.rpc('get_batch_profits').select();
+    return List<Map<String, dynamic>>.from(response);
+  }
 
   // Fetch the total eggs collected by a user
   Future<int> fetchTotalEggsCollected(String userId) async {
