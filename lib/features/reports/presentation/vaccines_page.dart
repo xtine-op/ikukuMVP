@@ -165,6 +165,12 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
         const SizedBox(height: 16),
         ..._selectedVaccines.map((v) {
           final vaccineName = v['name'] as String;
+          // Find the vaccine to get its unit
+          final vaccine = widget.vaccines.firstWhere(
+            (vaccine) => vaccine.name == vaccineName,
+          );
+          final unit = vaccine.unit;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -182,7 +188,8 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'enter_quantity_litres'.tr(),
+                  labelText:
+                      'How much $vaccineName did you use in ${unit.tr()}?',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -192,7 +199,7 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  suffixText: 'lit'.tr(),
+                  suffixText: unit.tr(),
                 ),
                 onChanged: (val) => _updateQuantity(vaccineName, val),
               ),

@@ -125,25 +125,6 @@ class _InventoryPageState extends State<InventoryPage> {
                     onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
                   ),
                   const SizedBox(height: 18),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: tr('price_per_unit'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.green, width: 1.2),
-                      ),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (v) => v == null || double.tryParse(v) == null
-                        ? 'Enter a number'
-                        : null,
-                    onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
-                  ),
-                  const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     value: unit,
                     items: units
@@ -162,6 +143,25 @@ class _InventoryPageState extends State<InventoryPage> {
                         borderSide: BorderSide(color: Colors.green, width: 1.2),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: tr('price_per_unit'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.green, width: 1.2),
+                      ),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => v == null || double.tryParse(v) == null
+                        ? 'Enter a number'
+                        : null,
+                    onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -338,8 +338,17 @@ class _InventoryPageState extends State<InventoryPage> {
                     onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
                   ),
                   const SizedBox(height: 18),
-                  TextFormField(
-                    initialValue: unit,
+                  DropdownButtonFormField<String>(
+                    value: ['kg', 'g', 'litres', 'pcs'].contains(unit)
+                        ? unit
+                        : 'kg',
+                    items: ['kg', 'g', 'litres', 'pcs']
+                        .map(
+                          (u) =>
+                              DropdownMenuItem(value: u, child: Text(u.tr())),
+                        )
+                        .toList(),
+                    onChanged: (v) => unit = v ?? 'kg',
                     decoration: InputDecoration(
                       labelText: tr('unit'),
                       filled: true,
@@ -349,9 +358,6 @@ class _InventoryPageState extends State<InventoryPage> {
                         borderSide: BorderSide(color: Colors.green, width: 1.2),
                       ),
                     ),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Required' : null,
-                    onSaved: (v) => unit = v ?? 'kg',
                   ),
                   const SizedBox(height: 18),
                   TextFormField(

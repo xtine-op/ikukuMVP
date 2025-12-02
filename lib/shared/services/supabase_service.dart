@@ -378,4 +378,65 @@ class SupabaseService {
     }
     return totalEggs;
   }
+
+  // Create an expense record
+  Future<void> createExpense({
+    required String userId,
+    String? batchId,
+    required String expenseType,
+    String? expenseCategory,
+    required double amount,
+    int quantity = 0,
+    double unitPrice = 0.0,
+    String? description,
+    DateTime? expenseDate,
+  }) async {
+    final expenseData = {
+      'user_id': userId,
+      'batch_id': batchId,
+      'expense_type': expenseType,
+      'expense_category': expenseCategory,
+      'amount': amount,
+      'quantity': quantity,
+      'unit_price': unitPrice,
+      'description': description,
+      'expense_date': (expenseDate ?? DateTime.now()).toIso8601String(),
+    };
+
+    // Remove null values
+    expenseData.removeWhere((key, value) => value == null);
+
+    await supabase.from('expenses').insert(expenseData);
+  }
+
+  // Get expenses for a user
+  Future<List<Map<String, dynamic>>> fetchExpenses(
+    String userId, {
+    String? batchId,
+    String? expenseType,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    var query = supabase.from('expenses').select().eq('user_id', userId);
+
+    if (batchId != null) {
+      query = query.eq('batch_id', batchId);
+    }
+
+    if (expenseType != null) {
+      query = query.eq('expense_type', expenseType);
+    }
+
+    if (startDate != null) {
+      query = query.gte('expense_date', startDate.toIso8601String());
+    }
+
+    if (endDate != null) {
+      query = query.lte('expense_date', endDate.toIso8601String());
+    }
+
+    return List<Map<String, dynamic>>.from(
+      await query.order('expense_date', ascending: false),
+    );
+  }
 }

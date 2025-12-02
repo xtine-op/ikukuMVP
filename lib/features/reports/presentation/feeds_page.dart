@@ -159,6 +159,10 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
         const SizedBox(height: 16),
         ..._selectedFeeds.map((f) {
           final feedName = f['name'] as String;
+          // Find the feed to get its unit
+          final feed = widget.feeds.firstWhere((feed) => feed.name == feedName);
+          final unit = feed.unit;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -176,7 +180,8 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'enter_quantity_kg'.tr(),
+                  labelText:
+                      'How much ${feedName.tr()} did you use in ${unit.tr()}?',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -186,7 +191,7 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  suffixText: 'kg'.tr(),
+                  suffixText: unit.tr(),
                 ),
                 onChanged: (v) => _updateQuantity(feedName, v),
               ),

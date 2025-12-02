@@ -35,8 +35,8 @@ class _DashboardPageState extends State<DashboardPage> {
         setState(() => loading = false);
         return;
       }
-      // Load dashboard data with offline fallback
-      await OfflineDataProvider.instance.loadDashboardData();
+      // Load dashboard data with offline fallback - force refresh to get latest user name
+      await OfflineDataProvider.instance.loadDashboardData(forceRefresh: true);
 
       final dashboardData = OfflineDataProvider.instance.dashboardData;
 
@@ -98,9 +98,9 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  radius: 30, // Slightly reduced circle
+                  radius: 35, // Bigger circle
                   backgroundColor: CustomColors.secondary,
-                  child: SizedBox(width: 30, height: 30, child: icon),
+                  child: SizedBox(width: 45, height: 45, child: icon),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -286,9 +286,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             context,
                             'farm_report'.tr(),
                             SvgPicture.asset(
-                              'assets/icons/farm-report.svg',
-                              width: 36,
-                              height: 36,
+                              'assets/icons/reportv3.svg',
+                              width: 40,
+                              height: 40,
                             ),
                             '/reports',
                           ),
@@ -296,9 +296,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             context,
                             'farm_store'.tr(),
                             SvgPicture.asset(
-                              'assets/icons/farm-store.svg',
-                              width: 36,
-                              height: 36,
+                              'assets/icons/storev2.svg',
+                              width: 40,
+                              height: 40,
                             ),
                             '/inventory',
                           ),
@@ -308,18 +308,18 @@ class _DashboardPageState extends State<DashboardPage> {
                             'add_chick_batch'.tr(),
                             SvgPicture.asset(
                               'assets/icons/add-batch.svg',
-                              width: 36,
-                              height: 36,
+                              width: 40,
+                              height: 40,
                             ),
                             '/batches',
                           ),
                           quickAction(
                             context,
-                            'request_farm_summary'.tr(),
+                            'financial_summary'.tr(),
                             SvgPicture.asset(
-                              'assets/icons/Request-farm-summary.svg',
-                              width: 36,
-                              height: 36,
+                              'assets/icons/money.svg',
+                              width: 35,
+                              height: 35,
                             ),
                             '/farm-summary',
                           ),
@@ -327,9 +327,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             context,
                             'extension_service'.tr(),
                             SvgPicture.asset(
-                              'assets/icons/extension-farmers.svg',
-                              width: 36,
-                              height: 36,
+                              'assets/icons/extensionv2.svg',
+                              width: 35,
+                              height: 35,
                             ),
                             '/#',
                             isComingSoon: true,

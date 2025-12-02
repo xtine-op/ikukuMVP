@@ -74,7 +74,7 @@ class ChickenReductionPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${selectedBatch!.birdType.toUpperCase()} • ${selectedBatch!.totalChickens} ${'birds'.tr()} • ${selectedBatch!.ageInDays} ${'days_old'.tr()}',
+                      '${selectedBatch!.birdType.toUpperCase()} • ${selectedBatch!.totalChickens} ${'birds'.tr()} • ${selectedBatch!.currentAgeInDays} ${'days_old'.tr()}',
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],

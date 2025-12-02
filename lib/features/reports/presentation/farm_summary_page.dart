@@ -271,38 +271,60 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
 
       // Initialize summaries
       final Map<String, _BatchSummary> tmp = {};
+      final Set<String> batchCostsAdded =
+          {}; // Track which batches have had their initial costs added
+
       for (final br in batchRecords) {
         final batchId = br['batch_id'] as String?;
         if (batchId == null) continue;
         final feedsUsed = br['feeds_used'];
         final chickensDied = (br['chickens_died'] as int?) ?? 0;
-        final chickensSold = (br['chickens_sold'] as int?) ?? 0;
-        final chickensSoldPrice =
-            (br['chickens_sold_price'] as num?)?.toDouble() ?? 0.0;
-        final eggsSold = (br['eggs_sold'] as int?) ?? 0;
-        final eggsPricePerUnit =
-            (br['eggs_price_per_unit'] as num?)?.toDouble() ?? 0.0;
+        final salesAmount = (br['sales_amount'] as num?)?.toDouble() ?? 0.0;
+        final lossesAmount = (br['losses_amount'] as num?)?.toDouble() ?? 0.0;
+        final lossesBreakdown =
+            br['losses_breakdown'] as Map<String, dynamic>? ?? {};
+        // Note: eggs_sold and eggs_price_per_unit fields don't exist in batch_records table
+        // Egg sales logic needs to be implemented properly in the future
         final vaccinesUsed = br['vaccines_used'];
         final otherMaterialsUsed = br['other_materials_used'];
 
         tmp.putIfAbsent(batchId, () => _BatchSummary());
         final sum = tmp[batchId]!;
 
-        // Get the batch info for bird costs
-        final batch = parsedBatches.firstWhere((b) => b.id == batchId);
-        final initialBirdCost = batch.totalChickens * batch.pricePerBird;
-        sum.expensesByCategory['bird_cost'] =
-            (sum.expensesByCategory['bird_cost'] ?? 0.0) + initialBirdCost;
-        sum.totalExpenses += initialBirdCost;
+        // Add initial bird cost only once per batch
+        if (!batchCostsAdded.contains(batchId)) {
+          final batch = parsedBatches.firstWhere((b) => b.id == batchId);
+          final initialBirdCost = batch.totalChickens * batch.pricePerBird;
+          sum.expensesByCategory['bird_cost'] =
+              (sum.expensesByCategory['bird_cost'] ?? 0.0) + initialBirdCost;
+          sum.totalExpenses += initialBirdCost;
+          batchCostsAdded.add(batchId);
+        }
 
-        // Calculate sales from eggs and chickens
-        final eggSales = (eggsSold * eggsPricePerUnit);
-        final chickenSales = (chickensSold * chickensSoldPrice);
-        sum.salesByCategory['eggs'] =
-            (sum.salesByCategory['eggs'] ?? 0.0) + eggSales;
+        // Calculate sales from chickens (eggs sales to be implemented later)
+        final chickenSales = salesAmount; // Use the total sales amount directly
+
+        // Add chicken sales to the summary
         sum.salesByCategory['chickens'] =
             (sum.salesByCategory['chickens'] ?? 0.0) + chickenSales;
-        sum.totalSales = eggSales + chickenSales;
+        sum.totalSales += chickenSales; // Only chicken sales for now
+
+        // Add losses from chicken reductions (deaths, stolen, curled)
+        if (lossesAmount > 0) {
+          sum.totalExpenses += lossesAmount;
+          sum.expensesByCategory['livestock_losses'] =
+              (sum.expensesByCategory['livestock_losses'] ?? 0.0) +
+              lossesAmount;
+
+          // Track detailed losses breakdown
+          if (lossesBreakdown.isNotEmpty) {
+            lossesBreakdown.forEach((type, amount) {
+              final lossAmount = (amount as num).toDouble();
+              sum.expensesByCategory['losses_$type'] =
+                  (sum.expensesByCategory['losses_$type'] ?? 0.0) + lossAmount;
+            });
+          }
+        }
 
         // Sum feeds_used list quantities and calculate expenses
         if (feedsUsed is List) {
@@ -384,16 +406,8 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
         // Calculate final profit
         sum.totalProfit = sum.totalSales - sum.totalExpenses;
 
-        // Calculate mortality expenses
+        // Track mortality count for display purposes
         sum.totalMortality += chickensDied;
-        if (chickensDied > 0) {
-          // Use batch's price per bird for mortality loss calculation
-          final batch = parsedBatches.firstWhere((b) => b.id == batchId);
-          final mortalityLoss = chickensDied * batch.pricePerBird;
-          sum.expensesByCategory['mortality'] =
-              (sum.expensesByCategory['mortality'] ?? 0.0) + mortalityLoss;
-          sum.totalExpenses += mortalityLoss;
-        }
       }
 
       setState(() {
@@ -734,7 +748,16 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.red,
+                                              color:
+                                                  summariesByBatchId.values.fold(
+                                                        0.0,
+                                                        (sum, batch) =>
+                                                            sum +
+                                                            batch.totalExpenses,
+                                                      ) ==
+                                                      0.0
+                                                  ? Colors.black
+                                                  : Colors.red,
                                             ),
                                           ),
                                         ],
@@ -819,24 +842,23 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                                 .withOpacity(0.6),
                                           ),
                                         ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Ksh ${batch.pricePerBird.toStringAsFixed(2)} per bird',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: CustomColors.text
+                                                .withOpacity(0.5),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: CustomColors.primary,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '${batch.totalChickens} Birds',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                  Text(
+                                    '${batch.totalChickens} Birds',
+                                    style: TextStyle(
+                                      color: CustomColors.text,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
@@ -1152,64 +1174,63 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                   ),
                                   const SizedBox(height: 16),
                                   // Sales breakdown
-                                  if (sum.totalSales > 0) ...[
-                                    Text(
-                                      'total_sales'.tr(),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  // Always show sales section even if 0
+                                  Text(
+                                    'total_sales'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    ...sum.salesByCategory.entries.map((entry) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
+                                  ),
+                                  ...sum.salesByCategory.entries.map((entry) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
                                               entry.key.tr(),
                                               style: const TextStyle(
-                                                fontSize: 14,
+                                                fontSize: 16,
                                               ),
                                             ),
-                                            Text(
-                                              'KES ${entry.value.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.green[700],
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                          ),
+                                          Text(
+                                            'KES ${entry.value.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.green[700],
+                                              fontWeight: FontWeight.w500,
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                                    const Divider(),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                  const Divider(),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
                                           'total_income'.tr(),
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        Text(
-                                          'KES ${sum.totalSales.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.green[700],
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      ),
+                                      Text(
+                                        'KES ${sum.totalSales.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                   const SizedBox(height: 16),
                                   // Expenses breakdown
                                   Text(
@@ -1227,20 +1248,22 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                         vertical: 4,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            entry.key.tr(),
-                                            style: const TextStyle(
-                                              fontSize: 14,
+                                          Expanded(
+                                            child: Text(
+                                              entry.key.tr(),
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                              ),
                                             ),
                                           ),
                                           Text(
                                             'KES ${entry.value.toStringAsFixed(2)}',
                                             style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.red[700],
+                                              fontSize: 16,
+                                              color: entry.value == 0.0
+                                                  ? Colors.black
+                                                  : Colors.red[700],
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -1250,21 +1273,23 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                   }),
                                   const Divider(),
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'total_expenses'.tr(),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Text(
+                                          'total_expenses'.tr(),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                       Text(
                                         'KES ${sum.totalExpenses.toStringAsFixed(2)}',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Colors.red[700],
+                                          color: sum.totalExpenses == 0.0
+                                              ? Colors.black
+                                              : Colors.red[700],
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1273,25 +1298,21 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                   const SizedBox(height: 16),
                                   // Net Profit/Loss
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'net_profit_loss'.tr(),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Text(
+                                          'net_profit_loss'.tr(),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                       Text(
                                         'KES ${(sum.totalSales - sum.totalExpenses).toStringAsFixed(2)}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 16,
-                                          color:
-                                              sum.totalSales >=
-                                                  sum.totalExpenses
-                                              ? Colors.green[700]
-                                              : Colors.red[700],
+                                          color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1413,8 +1434,11 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                                   flex: 2,
                                                   child: Text(
                                                     '${sum.totalMortality} birds',
-                                                    style: const TextStyle(
-                                                      color: Colors.red,
+                                                    style: TextStyle(
+                                                      color:
+                                                          sum.totalMortality > 0
+                                                          ? Colors.red
+                                                          : CustomColors.text,
                                                     ),
                                                   ),
                                                 ),
@@ -1432,8 +1456,11 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                                   flex: 2,
                                                   child: Text(
                                                     'Ksh ${(batch.pricePerBird * sum.totalMortality).toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      color: Colors.red,
+                                                    style: TextStyle(
+                                                      color:
+                                                          sum.totalMortality > 0
+                                                          ? Colors.red
+                                                          : CustomColors.text,
                                                       fontWeight:
                                                           FontWeight.w600,
                                                     ),
@@ -1447,41 +1474,6 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                     ),
                                     const SizedBox(height: 24),
                                   ],
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: CustomColors.primary.withOpacity(
-                                        0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: CustomColors.primary.withOpacity(
-                                          0.2,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          'Total Expenses',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Ksh ${sum.totalExpenses.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: CustomColors.primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
@@ -1530,6 +1522,10 @@ class _BatchSummary {
     'other_materials': 0.0,
     'mortality': 0.0,
     'bird_cost': 0.0,
+    'livestock_losses': 0.0,
+    'losses_died': 0.0,
+    'losses_stolen': 0.0,
+    'losses_curled': 0.0,
   };
   List<String> notes = [];
   int totalMortality = 0;
@@ -1548,10 +1544,10 @@ class _BatchSummary {
       if (report['reductionReasons'] != null) {
         final reasons = report['reductionReasons'] as Map<String, dynamic>;
         reasons.forEach((reason, count) {
-          reductionCounts[reason] =
-              (reductionCounts[reason] ?? 0) + (count as num).toInt();
+          final countValue = (count as num).toInt();
+          reductionCounts[reason] = (reductionCounts[reason] ?? 0) + countValue;
           if (reason == 'mortality') {
-            totalMortality += (count as num).toInt();
+            totalMortality += countValue;
           }
         });
       }

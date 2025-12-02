@@ -54,6 +54,13 @@ class Batch {
     createdAt: DateTime.now(),
   );
 
+  /// Calculate the current age of the birds in days based on creation date
+  int get currentAgeInDays {
+    final now = DateTime.now();
+    final daysSinceCreation = now.difference(createdAt).inDays;
+    return ageInDays + daysSinceCreation;
+  }
+
   Batch copyWith({
     String? name,
     String? birdType,

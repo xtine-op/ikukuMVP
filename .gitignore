@@ -24,6 +24,7 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
+.metadata
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -43,3 +44,30 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables and secrets
+.env
+.env.*
+*.env
+*.key
+*.p12
+*.pem
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Local development
+backend/
+*.local
+
+# Documentation assets (optional)
+Farm Store pages/
+Farm report pages/
+Onboarding Screens/
+Main dashboard*.png

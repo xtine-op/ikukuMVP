@@ -32,7 +32,7 @@ class SelectBatchPage extends StatelessWidget {
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Expanded(
             child: ListView(
               children: batches
@@ -132,7 +132,7 @@ class SelectBatchPage extends StatelessWidget {
                               child: Text(
                                 'batch_age_days'.tr(
                                   namedArgs: {
-                                    'days': batch.ageInDays.toString(),
+                                    'days': batch.currentAgeInDays.toString(),
                                   },
                                 ),
                                 style: const TextStyle(

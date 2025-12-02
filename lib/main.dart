@@ -8,10 +8,21 @@ import 'shared/services/connectivity_manager.dart';
 import 'shared/services/offline_service.dart';
 import 'shared/services/offline_data_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+
+  // Initialize SharedPreferences early to check language preference
+  final prefs = await SharedPreferences.getInstance();
+  final savedLanguage = prefs.getString('app_language');
+
+  // Set English as default if no language is saved
+  if (savedLanguage == null) {
+    await prefs.setString('app_language', 'en');
+  }
+
   await Hive.initFlutter();
   await Hive.openBox<String>('offline_reports');
   await Hive.openBox<String>('sync_status');
@@ -37,11 +48,15 @@ void main() async {
     print('Failed to initialize offline services: $e');
   }
 
+  // Determine the start locale based on saved preference
+  final startLocale = Locale(savedLanguage ?? 'en');
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('sw')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
+      startLocale: startLocale,
       child: const MyApp(),
     ),
   );

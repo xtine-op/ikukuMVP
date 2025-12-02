@@ -11,7 +11,7 @@ import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
 import 'select_batch_page.dart';
-import 'date_selection_page.dart';
+import 'select_date_page.dart';
 import 'chicken_reduction_page.dart';
 import 'egg_production_page.dart';
 import 'feeds_page.dart';
@@ -29,12 +29,7 @@ class FarmReportEntryPage extends StatefulWidget {
 }
 
 class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
-  // Page indices for the multi-step flow
-  static const int _indexSelectBatch = 0;
-  static const int _indexSelectDate = 1;
-  static const int _indexChickenReduction = 2;
-  static const int _indexEggProduction = 3; // only for layers/kienyeji
-  static const int _indexFeeds = 4;
+  // Multi-step flow: Batch -> Date -> ChickenReduction -> EggProduction (layers/kienyeji) -> Feeds -> Vaccines -> Other -> Notes -> Review
 
   // Step tracking
   int step = 0;
@@ -46,11 +41,17 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     return type == 'layer' || type == 'kienyeji';
   }
 
-  void _onDateChanged(DateTime date) {
-    setState(() {
-      selectedDate = date;
-    });
-  }
+  // Helper methods to get dynamic page indices based on batch type
+  int get _chickenReductionPageIndex =>
+      2; // Always page 2 (after date and batch)
+  int get _eggProductionPageIndex =>
+      3; // Always page 3 (only shown for layers/kienyeji)
+  int get _feedsPageIndex => _isLayersOrKienyeji()
+      ? 4
+      : 3; // After egg production or directly after chicken reduction
+  int get _vaccinesPageIndex => _feedsPageIndex + 1;
+  int get _otherMaterialsPageIndex => _feedsPageIndex + 2;
+  int get _additionalNotesPageIndex => _feedsPageIndex + 3;
 
   Future<void> _animateToStep(int target) async {
     if (_pageController == null) return;
@@ -647,8 +648,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           onPressed: () async {
             if (step > 0 && _pageController != null) {
               // If on Feeds page and batch type is not layers/kienyeji, skip Egg Production
-              if (step == _indexFeeds && !_isLayersOrKienyeji()) {
-                await _animateToStep(_indexChickenReduction);
+              if (step == _feedsPageIndex && !_isLayersOrKienyeji()) {
+                await _animateToStep(_chickenReductionPageIndex);
               } else {
                 await _animateToStep(step - 1);
               }
@@ -703,8 +704,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       body: WillPopScope(
         onWillPop: () async {
           if (step > 0 && _pageController != null) {
-            if (step == _indexFeeds && !_isLayersOrKienyeji()) {
-              await _animateToStep(_indexChickenReduction);
+            if (step == _feedsPageIndex && !_isLayersOrKienyeji()) {
+              await _animateToStep(_chickenReductionPageIndex);
             } else {
               await _animateToStep(step - 1);
             }
@@ -805,19 +806,25 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         },
         batchesReportedToday: batchesReportedToday, // Pass this to the page
       ),
+
       // Page 2: Select Date
-      DateSelectionPage(
-        selectedDate: reportDate,
-        onDateChanged: (date) {
+      SelectDatePage(
+        selectedDate: selectedDate,
+        onDateSelected: (date) {
           setState(() {
+            selectedDate = date;
             reportDate = date;
             _invalidatePagesCache();
           });
           // Check if a report already exists for this date
           _checkExistingReport(date);
         },
-        onContinue: _nextStep,
+        onContinue: () {
+          print('[FarmReportEntryPage] SelectDatePage onContinue called');
+          _nextStep();
+        },
       ),
+
       // Page 3: Chicken Reduction (always shown)
       ChickenReductionPage(
         chickenReduction: chickenReduction,
@@ -832,8 +839,13 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         }),
         onContinue: _nextStep,
         selectedBatch: selectedBatch,
+        salesAmount: salesAmount,
+        onSalesAmountChanged: (amount) => setState(() {
+          salesAmount = amount;
+          _invalidatePagesCache();
+        }),
       ),
-      // Page 3: Egg Production (only for layers/kienyeji)
+      // Page 4: Egg Production (only for layers/kienyeji)
       if (selectedBatch != null &&
           (selectedBatch!.birdType.toLowerCase().contains('layer') ||
               selectedBatch!.birdType.toLowerCase().contains('kienyeji')))
@@ -921,26 +933,22 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         notes: notes,
         onSave: _saveReport,
         onEditChickenReduction: () {
-          _animateToStep(_indexChickenReduction);
+          _animateToStep(_chickenReductionPageIndex);
         },
         onEditEggProduction: () {
-          _animateToStep(_indexEggProduction);
+          _animateToStep(_eggProductionPageIndex);
         },
         onEditFeeds: () {
-          _animateToStep(_indexFeeds);
+          _animateToStep(_feedsPageIndex);
         },
         onEditVaccines: () {
-          _animateToStep(_indexFeeds + 1); // Vaccines page is after Feeds
+          _animateToStep(_vaccinesPageIndex);
         },
         onEditOtherMaterials: () {
-          _animateToStep(
-            _indexFeeds + 2,
-          ); // Other Materials page is after Vaccines
+          _animateToStep(_otherMaterialsPageIndex);
         },
         onEditAdditionalNotes: () {
-          _animateToStep(
-            _indexFeeds + 3,
-          ); // Additional Notes page is after Other Materials
+          _animateToStep(_additionalNotesPageIndex);
         },
         selectedFeeds: selectedFeeds,
         selectedVaccines: selectedVaccines,
@@ -1163,10 +1171,11 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         'notes': notes,
         'batch_id': selectedBatch!.id,
         'chicken_reduction': chickenReduction == 'yes',
-        'chickens_sold': 0, // Not currently tracked in the UI
+        'chickens_sold': reductionCounts['sold'] ?? 0,
         'chickens_died': reductionCounts['death'] ?? 0,
         'chickens_curled': reductionCounts['curled'] ?? 0,
         'chickens_stolen': reductionCounts['stolen'] ?? 0,
+        'sales_amount': salesAmount ?? 0.0,
         'eggs_collected': (collectedEggs == true && eggsCollected != null)
             ? eggsCollected
             : 0,
@@ -1221,9 +1230,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       setState(() => loading = false);
       if (!mounted) return;
 
-      // Navigate to dashboard to show updated summaries
-      context.go('/dashboard');
-
+      // Show success dialog first, then handle navigation
       // Add a small delay to ensure the widget is stable before showing dialog
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted || _showingDialog) return;
@@ -1271,21 +1278,11 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                   // Close the dialog first
                   _showingDialog = false;
                   Navigator.of(ctx).pop();
-                  // Use a small delay to ensure the dialog is fully closed
-                  Future.delayed(const Duration(milliseconds: 200), () {
-                    if (mounted) {
-                      try {
-                        // Navigate directly to reports page
-                        context.go('/reports');
-                      } catch (e) {
-                        print('Navigation error: $e');
-                        // Fallback: try to pop and then navigate
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      }
-                    }
-                  });
+
+                  // Navigate directly without delay
+                  if (mounted) {
+                    context.go('/all-reports');
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -1311,6 +1308,30 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
                     ),
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  // Close the dialog and go to dashboard
+                  _showingDialog = false;
+                  Navigator.of(ctx).pop();
+
+                  if (mounted) {
+                    context.go('/dashboard');
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: CustomColors.primary,
+                  side: BorderSide(color: CustomColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text('dashboard'.tr()),
               ),
             ),
           ],
@@ -1372,10 +1393,17 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
   /// Save report online (when connected)
   Future<void> _saveReportOnline(Map<String, dynamic> reportData) async {
-    // Update batch chicken count if deaths reported
-    final totalDeaths = (reportData['chickens_died'] as int? ?? 0);
-    if (totalDeaths > 0) {
-      final newCount = (selectedBatch!.totalChickens - totalDeaths).clamp(
+    // Calculate total reductions and update batch chicken count
+    final chickensSold = (reportData['chickens_sold'] as int? ?? 0);
+    final chickensDied = (reportData['chickens_died'] as int? ?? 0);
+    final chickensCurled = (reportData['chickens_curled'] as int? ?? 0);
+    final chickensStolen = (reportData['chickens_stolen'] as int? ?? 0);
+
+    final totalReductions =
+        chickensSold + chickensDied + chickensCurled + chickensStolen;
+
+    if (totalReductions > 0) {
+      final newCount = (selectedBatch!.totalChickens - totalReductions).clamp(
         0,
         selectedBatch!.totalChickens,
       );
@@ -1384,6 +1412,41 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         'total_chickens': newCount,
       });
     }
+
+    // Calculate financial impact
+    final pricePerBird = selectedBatch!.pricePerBird;
+
+    // Calculate losses (died, stolen, curled)
+    final lossesBreakdown = <String, double>{};
+    double totalLosses = 0;
+
+    if (chickensDied > 0) {
+      final deathLoss = chickensDied * pricePerBird;
+      lossesBreakdown['died'] = deathLoss;
+      totalLosses += deathLoss;
+    }
+
+    if (chickensStolen > 0) {
+      final stolenLoss = chickensStolen * pricePerBird;
+      lossesBreakdown['stolen'] = stolenLoss;
+      totalLosses += stolenLoss;
+    }
+
+    if (chickensCurled > 0) {
+      final curledLoss = chickensCurled * pricePerBird;
+      lossesBreakdown['curled'] = curledLoss;
+      totalLosses += curledLoss;
+    }
+
+    // Calculate gains (sold chickens)
+    final salesAmount = (reportData['sales_amount'] as double? ?? 0.0);
+    double totalGains =
+        salesAmount; // This is the actual sale amount, not price_per_bird * quantity
+
+    // Add financial data to report
+    reportData['losses_amount'] = totalLosses;
+    reportData['losses_breakdown'] = lossesBreakdown;
+    reportData['gains_amount'] = totalGains;
 
     // Update inventory for selected feeds
     final selectedFeeds = reportData['selected_feeds'] as List<dynamic>? ?? [];

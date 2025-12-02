@@ -153,15 +153,32 @@ class OfflineDataProvider extends ChangeNotifier {
           }
         }
 
+        // Fetch user's full name from users table
+        String userName = 'User';
+        try {
+          final userResponse = await Supabase.instance.client
+              .from('users')
+              .select('full_name')
+              .eq('id', user.id)
+              .maybeSingle();
+
+          final fullName = userResponse?['full_name'] as String?;
+          if (fullName != null && fullName.trim().isNotEmpty) {
+            userName = fullName.split(' ').first;
+          } else {
+            // Fallback to email part if no full name
+            userName = user.email?.split('@').first ?? 'User';
+          }
+        } catch (e) {
+          // If fetching from users table fails, fallback to email
+          userName = user.email?.split('@').first ?? 'User';
+        }
+
         _dashboardData = {
           'totalBirds': totalBirds,
           'totalFeeds': totalFeeds,
           'totalEggs': totalEggs,
-          'userName':
-              (user.userMetadata?['full_name'] != null &&
-                  (user.userMetadata?['full_name'] as String).trim().isNotEmpty)
-              ? (user.userMetadata?['full_name'] as String).split(' ').first
-              : (user.email?.split('@').first ?? 'User'),
+          'userName': userName,
         };
 
         await OfflineDataService.instance.cacheUserDashboard(
@@ -198,11 +215,34 @@ class OfflineDataProvider extends ChangeNotifier {
     if (isOnline) {
       // Add to server immediately
       await SupabaseService().addBatch(batchData);
+
+      // Create expense record for bird cost
+      final batch = Batch.fromJson(batchData);
+      final birdCost = batch.pricePerBird * batch.totalChickens;
+
+      if (birdCost > 0) {
+        try {
+          await SupabaseService().createExpense(
+            userId: user.id,
+            batchId: batch.id,
+            expenseType: 'bird_cost',
+            expenseCategory: 'livestock',
+            amount: birdCost,
+            quantity: batch.totalChickens,
+            unitPrice: batch.pricePerBird,
+            description: 'Initial purchase cost for batch: ${batch.name}',
+            expenseDate: batch.createdAt,
+          );
+        } catch (e) {
+          print('[OfflineDataProvider] Error creating expense record: $e');
+          // Don't fail the batch creation if expense tracking fails
+        }
+      }
+
       // Refresh local data
       await loadBatches(forceRefresh: true);
 
       // Update dashboard data to reflect new batch
-      final batch = Batch.fromJson(batchData);
       final currentDashboardData = _dashboardData ?? {};
       final updatedDashboardData = {
         ...currentDashboardData,
@@ -221,6 +261,9 @@ class OfflineDataProvider extends ChangeNotifier {
       // Update local list immediately for UI
       final newBatch = Batch.fromJson(batchData);
       _batches.add(newBatch);
+
+      // For offline mode, we'll queue the expense creation for later sync
+      // This could be implemented as part of the offline sync mechanism
 
       // Update dashboard data
       final currentDashboardData = _dashboardData ?? {};

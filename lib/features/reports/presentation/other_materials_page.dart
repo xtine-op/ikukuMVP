@@ -165,6 +165,12 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
         const SizedBox(height: 16),
         ..._selectedOtherMaterials.map((m) {
           final name = m['name'];
+          // Find the material to get its unit
+          final material = widget.otherMaterials.firstWhere(
+            (material) => material.name == name,
+          );
+          final unit = material.unit;
+
           _controllers[name] ??= TextEditingController(
             text: m['quantity']?.toString() ?? '',
           );
@@ -178,13 +184,14 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'qty_hint'.tr(),
+                  labelText: 'How much $name did you use in ${unit.tr()}?',
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   filled: false,
+                  suffixText: unit.tr(),
                 ),
                 onChanged: (val) => _updateQuantity(name, val),
                 controller: _controllers[name],

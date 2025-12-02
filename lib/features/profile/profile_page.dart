@@ -201,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: Text('no'.tr()),
+                                child: Text('cancel'.tr()),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: CustomColors.primary,
                                 ),
-                                child: Text('yes'.tr()),
+                                child: Text('logout'.tr()),
                               ),
                             ],
                           ),

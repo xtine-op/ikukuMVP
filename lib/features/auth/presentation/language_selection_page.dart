@@ -22,9 +22,22 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
 
   Future<void> _loadLanguage() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedLanguage = prefs.getString('app_language') ?? 'en';
-    });
+    final savedLanguage = prefs.getString('app_language');
+
+    if (savedLanguage == null) {
+      // Set English as default on first time
+      await prefs.setString('app_language', 'en');
+      if (mounted) {
+        context.setLocale(const Locale('en'));
+      }
+      setState(() {
+        _selectedLanguage = 'en';
+      });
+    } else {
+      setState(() {
+        _selectedLanguage = savedLanguage;
+      });
+    }
   }
 
   Future<void> _setLanguage(String lang) async {

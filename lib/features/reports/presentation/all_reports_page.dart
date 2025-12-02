@@ -78,7 +78,7 @@ class _AllReportsPageState extends State<AllReportsPage> {
             'daily_record_id': dailyRecord['id'],
             'batch_name': batch.name,
             'batch_type': batch.birdType,
-            'batch_age': batch.ageInDays,
+            'batch_age': batch.currentAgeInDays,
             'batch_total_chickens': batch.totalChickens,
           };
           reports.add(report);

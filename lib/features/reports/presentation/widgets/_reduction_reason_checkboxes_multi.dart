@@ -94,6 +94,21 @@ class _ReductionReasonCheckboxesMultiState
   }
 
   Widget _buildCountField(String reason) {
+    String getQuantityLabel(String reason) {
+      switch (reason) {
+        case 'curled':
+          return 'How many chickens curled?';
+        case 'stolen':
+          return 'How many chickens stolen?';
+        case 'death':
+          return 'How many chickens died?';
+        case 'sold':
+          return 'How many chickens sold?';
+        default:
+          return 'How many chickens ${reason}?';
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 40.0, top: 8.0),
       child: Row(
@@ -103,7 +118,7 @@ class _ReductionReasonCheckboxesMultiState
               controller: _controllers[reason],
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: '${'enter_count'.tr()} (${reason.tr()})',
+                labelText: getQuantityLabel(reason),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -159,7 +174,7 @@ class _ReductionReasonCheckboxesMultiState
             controller: _salesAmountController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'sales_amount'.tr(),
+              labelText: 'How much did you sell the chickens? (total)',
               border: const OutlineInputBorder(),
             ),
           ),

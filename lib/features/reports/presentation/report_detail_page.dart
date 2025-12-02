@@ -5,8 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 class ReportDetailPage extends StatelessWidget {
   final Map<String, dynamic> report;
   final Map<String, dynamic>? batch;
-  const ReportDetailPage({Key? key, required this.report, this.batch})
-    : super(key: key);
+  const ReportDetailPage({super.key, required this.report, this.batch});
 
   @override
   Widget build(BuildContext context) {
@@ -218,14 +217,7 @@ class ReportDetailPage extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final List<_SectionItem> items;
-  final bool showEdit;
-  final VoidCallback? onEdit;
-  const _SectionCard({
-    required this.title,
-    required this.items,
-    this.showEdit = false,
-    this.onEdit,
-  });
+  const _SectionCard({required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -253,18 +245,6 @@ class _SectionCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              if (showEdit && onEdit != null)
-                GestureDetector(
-                  onTap: onEdit,
-                  child: Text(
-                    'EDIT ITEMS',
-                    style: TextStyle(
-                      color: CustomColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 8),
