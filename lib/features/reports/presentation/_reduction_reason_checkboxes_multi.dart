@@ -7,7 +7,7 @@ class ReductionReasonCheckboxesMulti extends StatefulWidget {
   final ValueChanged<double>? onSalesAmountChanged;
   final double? salesAmount;
 
-  ReductionReasonCheckboxesMulti({
+  const ReductionReasonCheckboxesMulti({super.key, 
     required this.reductionCounts,
     required this.onCountsChanged,
     this.onSalesAmountChanged,

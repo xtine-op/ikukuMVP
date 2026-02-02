@@ -1010,7 +1010,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                                 ],
                                               ),
                                             );
-                                          }).toList(),
+                                          }),
                                         ],
                                       ),
                                     ),
@@ -1157,7 +1157,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                                 ],
                                               ),
                                             );
-                                          }).toList(),
+                                          }),
                                         ],
                                       ),
                                     ),

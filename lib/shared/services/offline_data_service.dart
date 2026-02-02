@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../../features/batches/data/batch_model.dart';
 import '../../features/inventory/data/inventory_item_model.dart';

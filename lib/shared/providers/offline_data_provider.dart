@@ -20,7 +20,7 @@ class OfflineDataProvider extends ChangeNotifier {
 
   bool _batchesLoading = false;
   bool _inventoryLoading = false;
-  bool _reportsLoading = false;
+  final bool _reportsLoading = false;
   bool _dashboardLoading = false;
 
   // Getters

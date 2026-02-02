@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 import 'package:easy_localization/easy_localization.dart';

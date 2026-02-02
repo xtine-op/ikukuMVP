@@ -5,7 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  const BottomNavBar({Key? key, required this.currentIndex}) : super(key: key);
+  const BottomNavBar({super.key, required this.currentIndex});
 
   @override
   Widget build(BuildContext context) {

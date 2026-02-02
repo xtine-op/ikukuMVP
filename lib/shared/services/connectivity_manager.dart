@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'offline_service.dart';
 import 'offline_data_service.dart';
-import 'supabase_service.dart';
 
 class ConnectivityManager {
   static ConnectivityManager? _instance;

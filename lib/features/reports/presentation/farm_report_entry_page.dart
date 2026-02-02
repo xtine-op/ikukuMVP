@@ -102,7 +102,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   bool loading = true;
   String? error;
   bool _hasNoInventory = false; // Track if there are no inventory items
-  bool _hasShownAddReportDialog =
+  final bool _hasShownAddReportDialog =
       false; // Track if dialog was shown in this session
   bool _showingDialog = false; // Track if a dialog is currently being shown
 
@@ -251,9 +251,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     List<Map<String, dynamic>> inventoryRaw,
     List<Map<String, dynamic>> dailyRecords,
   ) async {
-    print('[FarmReportEntryPage] batchListRaw = ' + batchListRaw.toString());
-    print('[FarmReportEntryPage] inventoryRaw = ' + inventoryRaw.toString());
-    print('[FarmReportEntryPage] dailyRecords = ' + dailyRecords.toString());
+    print('[FarmReportEntryPage] batchListRaw = $batchListRaw');
+    print('[FarmReportEntryPage] inventoryRaw = $inventoryRaw');
+    print('[FarmReportEntryPage] dailyRecords = $dailyRecords');
 
     final reportedBatchIds = <String>[];
     for (final record in dailyRecords) {
@@ -531,8 +531,9 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       _pageController = PageController(initialPage: step);
     }
 
-    if (loading)
+    if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (error != null) {
       if (_hasNoInventory) {
         return Scaffold(
@@ -1096,7 +1097,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
               ),
             ],
           );
-        }).toList(),
+        }),
         SizedBox(height: 16),
       ],
     );

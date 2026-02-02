@@ -319,10 +319,7 @@ class SupabaseService {
         .gte('record_date', startOfDay.toIso8601String())
         .lt('record_date', endOfDay.toIso8601String());
     print(
-      '[SupabaseService] fetchDailyRecordsForDate: dailyRecords = '
-              ' [33m' +
-          dailyRecords.toString() +
-          '\u001b[0m',
+      '[SupabaseService] fetchDailyRecordsForDate: dailyRecords =  [33m$dailyRecords\u001b[0m',
     );
     if (dailyRecords.isEmpty) return [];
     final dailyRecordIds = dailyRecords.map((r) => r['id'] as String).toList();
@@ -333,10 +330,7 @@ class SupabaseService {
         .select('batch_id')
         .inFilter('daily_record_id', dailyRecordIds);
     print(
-      '[SupabaseService] fetchDailyRecordsForDate: batchRecords = '
-              '\u001b[36m' +
-          batchRecords.toString() +
-          '\u001b[0m',
+      '[SupabaseService] fetchDailyRecordsForDate: batchRecords = \u001b[36m$batchRecords\u001b[0m',
     );
     // Ensure every record is a map with a batch_id key
     if (batchRecords.isEmpty) return [];

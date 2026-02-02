@@ -413,7 +413,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     return ListTile(
                       title: Text(batch['name'] ?? 'Unknown Batch'),
                       subtitle: Text(
-                        '${formattedDate} • ${batch['bird_type'] ?? 'Unknown Type'}',
+                        '$formattedDate • ${batch['bird_type'] ?? 'Unknown Type'}',
                       ),
                       onTap: () {
                         Navigator.of(context).push(

@@ -135,9 +135,7 @@ class ReviewAndSavePage extends StatelessWidget {
           // Birds Section
           _SectionCard(
             title:
-                'birds'.tr() +
-                '- ' +
-                (selectedBatch?.birdType.toUpperCase() ?? ''),
+                '${'birds'.tr()}- ${selectedBatch?.birdType.toUpperCase() ?? ''}',
             onEdit: onEditChickenReduction,
             items: [
               _SectionItem(
@@ -231,10 +229,7 @@ class ReviewAndSavePage extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: Text(
-              'this_report_prepared_on'.tr() +
-                  '\n' +
-                  ' ${date.day}/${date.month}/${date.year} ' +
-                  'at ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+              '${'this_report_prepared_on'.tr()}\n ${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
               style: const TextStyle(color: Colors.black54, fontSize: 13),
               textAlign: TextAlign.center,
             ),

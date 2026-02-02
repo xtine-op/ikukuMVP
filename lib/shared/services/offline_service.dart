@@ -170,8 +170,7 @@ class OfflineService {
     }
 
     final message =
-        'Synced $successCount reports successfully' +
-        (failureCount > 0 ? ', $failureCount failed' : '');
+        'Synced $successCount reports successfully${failureCount > 0 ? ', $failureCount failed' : ''}';
 
     return SyncResult(
       success: failureCount == 0,

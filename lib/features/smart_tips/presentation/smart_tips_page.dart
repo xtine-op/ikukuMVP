@@ -6,7 +6,7 @@ import '../../../app_theme.dart';
 import '../../../services/rss_service.dart';
 
 class SmartTipsPage extends StatefulWidget {
-  const SmartTipsPage({Key? key}) : super(key: key);
+  const SmartTipsPage({super.key});
 
   @override
   State<SmartTipsPage> createState() => _SmartTipsPageState();
@@ -266,7 +266,7 @@ class _SmartTipsPageState extends State<SmartTipsPage> {
             const SizedBox(height: 8),
             ..._externalTips
                 .map((t) => _buildExternalTipCard(context, t))
-                .toList(),
+                ,
             const SizedBox(height: 32),
           ],
         ),

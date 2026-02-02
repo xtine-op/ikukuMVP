@@ -234,7 +234,7 @@
   "unable_to_connect": "Unable to connect to server. Please check your internet connection.",
   "sign_up_failed": "Sign up failed. Please try again.",
   "sign_in_failed": "Sign in failed.",
-  "no_internet_connection": "No internet connection. Please check your network and try again.",
+  "no_internet_connection": "Seems you are offline, please connect to the internet to continue.",
   "invalid_email_or_password": "Invalid email or password. Please try again.",
   "email_not_confirmed": "Please check your email and confirm your account before signing in.",
   "user_already_registered": "An account with this email already exists. Please sign in instead.",

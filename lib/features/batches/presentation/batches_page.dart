@@ -668,16 +668,13 @@ class _BatchesPageState extends State<BatchesPage> {
                 return ListTile(
                   title: Text(batch.name),
                   subtitle: Text(
-                    '${'bird_type'.tr()}: ' +
-                        (batch.birdType == 'broiler'
+                    '${'bird_type'.tr()}: ${batch.birdType == 'broiler'
                             ? 'broiler'.tr()
                             : batch.birdType == 'layer'
                             ? 'layer'.tr()
                             : batch.birdType == 'kienyeji'
                             ? 'kienyeji'.tr()
-                            : 'unknown_type'.tr()) +
-                        ', ${'chickens'.tr()}: ${batch.totalChickens}' +
-                        ', Age: ${batch.currentAgeInDays} days',
+                            : 'unknown_type'.tr()}, ${'chickens'.tr()}: ${batch.totalChickens}, Age: ${batch.currentAgeInDays} days',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,

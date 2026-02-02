@@ -140,7 +140,7 @@ class ChickenReductionPage extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ).copyWith(
-                          backgroundColor: MaterialStateProperty.all(null),
+                          backgroundColor: WidgetStateProperty.all(null),
                         ),
                     child: Ink(
                       decoration: BoxDecoration(

@@ -18,11 +18,6 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLanguage = prefs.getString('app_language');
 
-  // Set English as default if no language is saved
-  if (savedLanguage == null) {
-    await prefs.setString('app_language', 'en');
-  }
-
   await Hive.initFlutter();
   await Hive.openBox<String>('offline_reports');
   await Hive.openBox<String>('sync_status');
@@ -48,7 +43,8 @@ void main() async {
     print('Failed to initialize offline services: $e');
   }
 
-  // Determine the start locale based on saved preference
+  // Determine the start locale based on saved preference (default to English in-memory
+  // but do NOT write it to preferences so the language selection screen can still show)
   final startLocale = Locale(savedLanguage ?? 'en');
 
   runApp(

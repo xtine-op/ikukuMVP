@@ -105,7 +105,7 @@ class _ReductionReasonCheckboxesMultiState
         case 'sold':
           return 'How many chickens sold?';
         default:
-          return 'How many chickens ${reason}?';
+          return 'How many chickens $reason?';
       }
     }
 

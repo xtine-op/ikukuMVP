@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../smart_tips/presentation/smart_tips_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+
+import '../../smart_tips/presentation/smart_tips_page.dart';
 import '../../../app_theme.dart';
 import '../../../shared/providers/offline_data_provider.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
@@ -16,11 +19,24 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  static const String _dashboardTutorialSeenKey = 'dashboard_tutorial_seen_v1';
   int totalBirds = 0;
   int totalFeeds = 0;
   int totalEggs = 0;
   bool loading = true;
   String? userName;
+  bool _tutorialChecked = false;
+
+  // Tutorial keys for dashboard quick actions
+  final GlobalKey _batchesKey = GlobalKey();
+  final GlobalKey _reportsKey = GlobalKey();
+  final GlobalKey _storeKey = GlobalKey();
+  final GlobalKey _tipsKey = GlobalKey();
+  final GlobalKey _summaryKey = GlobalKey();
+  final GlobalKey _extensionKey = GlobalKey();
+
+  TutorialCoachMark? _tutorialCoachMark;
+  final List<TargetFocus> _targets = [];
 
   @override
   void initState() {
@@ -47,6 +63,13 @@ class _DashboardPageState extends State<DashboardPage> {
         userName = dashboardData?['userName'] ?? 'type_here'.tr();
         loading = false;
       });
+
+      if (!_tutorialChecked) {
+        _tutorialChecked = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _maybeShowTutorial();
+        });
+      }
     } catch (e) {
       setState(() {
         loading = false;
@@ -62,6 +85,178 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> _maybeShowTutorial() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenTutorial =
+          prefs.getBool(_dashboardTutorialSeenKey) ?? false;
+      // Debug log so we can see in console whether tutorial should run
+      // ignore: avoid_print
+      print(
+        '[DashboardPage] Tutorial seen: $hasSeenTutorial (key: $_dashboardTutorialSeenKey)',
+      );
+      if (hasSeenTutorial) return;
+
+      _showTutorial();
+      await prefs.setBool(_dashboardTutorialSeenKey, true);
+    } catch (_) {
+      // If anything goes wrong, just skip the tutorial to avoid blocking UX
+    }
+  }
+
+  void _showTutorial() {
+    _targets.clear();
+
+    // Build targets only for widgets that are actually laid out
+    final candidateConfigs = [
+      (
+        id: 'batches',
+        key: _batchesKey,
+        align: ContentAlign.bottom,
+        title: 'Chicken Batches',
+        message:
+            'Click here to add a new batch of birds or manage your existing ones. Think of it as your digital coop!',
+      ),
+      (
+        id: 'reports',
+        key: _reportsKey,
+        align: ContentAlign.bottom,
+        title: 'Farm Reports',
+        message:
+            'Log daily updates on growth and health here so you never miss a beat in your flock\'s performance.',
+      ),
+      (
+        id: 'store',
+        key: _storeKey,
+        align: ContentAlign.bottom,
+        title: 'Farm Store',
+        message:
+            'Keep track of your feeds, vaccines, and supplies to ensure you never run out of the essentials.',
+      ),
+      (
+        id: 'tips',
+        key: _tipsKey,
+        align: ContentAlign.top,
+        title: 'Smart Tips',
+        message:
+            'Browse short videos and articles packed with expert advice on better farm management and bird care.',
+      ),
+      (
+        id: 'summary',
+        key: _summaryKey,
+        align: ContentAlign.top,
+        title: 'Farm Summary',
+        message:
+            'Check this section for a clear view of your finances and a bird\'s-eye view of your overall progress.',
+      ),
+      (
+        id: 'extension',
+        key: _extensionKey,
+        align: ContentAlign.top,
+        title: 'Extension Service',
+        message:
+            'Find and contact local experts and extension officers nearby whenever you need an extra hand or professional advice.',
+      ),
+    ];
+
+    for (final config in candidateConfigs) {
+      if (config.key.currentContext == null) {
+        // ignore: avoid_print
+        print(
+          '[DashboardPage] Tutorial target "${config.id}" has no context yet, skipping.',
+        );
+        continue;
+      }
+
+      _targets.add(
+        TargetFocus(
+          identify: config.id,
+          keyTarget: config.key,
+          contents: [
+            TargetContent(
+              align: config.align,
+              child: _buildTutorialCard(
+                title: config.title,
+                message: config.message,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_targets.isEmpty) {
+      // ignore: avoid_print
+      print('[DashboardPage] No tutorial targets available, not showing tour.');
+      return;
+    }
+
+    _tutorialCoachMark = TutorialCoachMark(
+      targets: _targets,
+      colorShadow: Colors.black.withOpacity(0.7),
+      textSkip: 'Skip',
+      paddingFocus: 8,
+      opacityShadow: 0.8,
+    );
+
+    // Small delay to be extra sure layout is complete
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      _tutorialCoachMark?.show(context: context);
+    });
+  }
+
+  Widget _buildTutorialCard({
+    required String title,
+    required String message,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: CustomColors.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 14,
+              color: CustomColors.text.withOpacity(0.85),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tap anywhere to continue or use Skip.',
+            style: TextStyle(
+              fontSize: 12,
+              color: CustomColors.text.withOpacity(0.6),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget quickAction(
@@ -70,8 +265,10 @@ class _DashboardPageState extends State<DashboardPage> {
       Widget icon,
       String route, {
       bool isComingSoon = false,
+      GlobalKey? targetKey,
     }) {
       return Material(
+        key: targetKey,
         color: Colors.transparent, // Remove yellow background
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
@@ -284,6 +481,17 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           quickAction(
                             context,
+                            'add_chick_batch'.tr(),
+                            SvgPicture.asset(
+                              'assets/icons/add-batch.svg',
+                              width: 40,
+                              height: 40,
+                            ),
+                            '/batches',
+                            targetKey: _batchesKey,
+                          ),
+                          quickAction(
+                            context,
                             'farm_report'.tr(),
                             SvgPicture.asset(
                               'assets/icons/reportv3.svg',
@@ -291,6 +499,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               height: 40,
                             ),
                             '/reports',
+                            targetKey: _reportsKey,
                           ),
                           quickAction(
                             context,
@@ -301,17 +510,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               height: 40,
                             ),
                             '/inventory',
-                          ),
-
-                          quickAction(
-                            context,
-                            'add_chick_batch'.tr(),
-                            SvgPicture.asset(
-                              'assets/icons/add-batch.svg',
-                              width: 40,
-                              height: 40,
-                            ),
-                            '/batches',
+                            targetKey: _storeKey,
                           ),
                           quickAction(
                             context,
@@ -322,6 +521,18 @@ class _DashboardPageState extends State<DashboardPage> {
                               height: 35,
                             ),
                             '/farm-summary',
+                            targetKey: _summaryKey,
+                          ),
+                          quickAction(
+                            context,
+                            'smart_tips'.tr(),
+                            Icon(
+                              Icons.lightbulb,
+                              color: CustomColors.text,
+                              size: 36,
+                            ),
+                            '/smart-tips',
+                            targetKey: _tipsKey,
                           ),
                           quickAction(
                             context,
@@ -333,16 +544,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             '/#',
                             isComingSoon: true,
-                          ),
-                          quickAction(
-                            context,
-                            'smart_tips'.tr(),
-                            Icon(
-                              Icons.lightbulb,
-                              color: CustomColors.text,
-                              size: 36,
-                            ),
-                            '/smart-tips',
+                            targetKey: _extensionKey,
                           ),
                         ],
                       ),

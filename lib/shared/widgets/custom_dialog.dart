@@ -8,12 +8,12 @@ class CustomDialog extends StatelessWidget {
   final VoidCallback onOkPressed;
 
   const CustomDialog({
-    Key? key,
+    super.key,
     required this.title,
     required this.message,
     required this.isSuccess,
     required this.onOkPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
