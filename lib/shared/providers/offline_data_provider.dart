@@ -262,8 +262,29 @@ class OfflineDataProvider extends ChangeNotifier {
       final newBatch = Batch.fromJson(batchData);
       _batches.add(newBatch);
 
-      // For offline mode, we'll queue the expense creation for later sync
-      // This could be implemented as part of the offline sync mechanism
+      // For offline mode, create expense record for bird cost
+      final birdCost = newBatch.pricePerBird * newBatch.totalChickens;
+
+      if (birdCost > 0) {
+        try {
+          await SupabaseService().createExpense(
+            userId: user.id,
+            batchId: newBatch.id,
+            expenseType: 'bird_cost',
+            expenseCategory: 'livestock',
+            amount: birdCost,
+            quantity: newBatch.totalChickens,
+            unitPrice: newBatch.pricePerBird,
+            description: 'Initial purchase cost for batch: ${newBatch.name}',
+            expenseDate: newBatch.createdAt,
+          );
+        } catch (e) {
+          print(
+            '[OfflineDataProvider] Error creating expense record (offline mode): $e',
+          );
+          // Don't fail the batch creation if expense tracking fails
+        }
+      }
 
       // Update dashboard data
       final currentDashboardData = _dashboardData ?? {};

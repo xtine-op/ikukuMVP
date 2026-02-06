@@ -120,4 +120,8 @@ flutter:
     - assets/icons/storev2.svg
     - assets/icons/money.svg
     - assets/icons/reportv3.svg
+    - assets/icons/success_checkmark.svg
+    - assets/icons/error_warning.svg
+    - assets/icons/large_success_tick.svg
+    - assets/icons/large_error_cross.svg
 

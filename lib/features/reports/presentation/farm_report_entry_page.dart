@@ -10,6 +10,8 @@ import '../../../shared/providers/offline_data_provider.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
+import '../../../shared/widgets/status_feedback_widget.dart';
+import '../../../shared/screens/status_feedback_screens.dart';
 import 'select_batch_page.dart';
 import 'select_date_page.dart';
 import 'chicken_reduction_page.dart';
@@ -1108,6 +1110,8 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     setState(() => loading = true);
+    // Capture the page context for use in dialogs after closing other dialogs
+    final pageContext = context;
 
     try {
       // Check if device is online
@@ -1231,162 +1235,48 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       setState(() => loading = false);
       if (!mounted) return;
 
-      // Show success dialog first, then handle navigation
+      // Show success screen via the new dialog-friendly popup
       // Add a small delay to ensure the widget is stable before showing dialog
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted || _showingDialog) return;
 
       _showingDialog = true;
       showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+        context: pageContext,
+        barrierDismissible: false,
+        builder: (ctx) => Dialog(
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          child: ReportSuccessScreen(
+            onDone: () {
+              Navigator.pop(ctx);
+              _showingDialog = false;
+              if (mounted) {
+                context.go('/');
+              }
+            },
           ),
-          backgroundColor: const Color(0xFFF7F8FA),
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isOnline ? 'success'.tr() : 'saved_offline'.tr(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.check_circle, color: Colors.green, size: 24),
-              ],
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              isOnline
-                  ? 'report_saved_message'.tr(
-                      namedArgs: {'batch': selectedBatch?.name ?? ''},
-                    )
-                  : 'report_saved_offline_message'.tr(),
-            ),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Close the dialog first
-                  _showingDialog = false;
-                  Navigator.of(ctx).pop();
-
-                  // Navigate directly without delay
-                  if (mounted) {
-                    context.go('/all-reports');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: CustomColors.text,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
-                child: Ink(
-                  decoration: BoxDecoration(
-                    gradient: CustomColors.buttonGradient,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
-                    constraints: const BoxConstraints(minHeight: 48),
-                    child: Text(
-                      'see_reports'.tr(),
-                      style: const TextStyle(color: CustomColors.text),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  // Close the dialog and go to dashboard
-                  _showingDialog = false;
-                  Navigator.of(ctx).pop();
-
-                  if (mounted) {
-                    context.go('/dashboard');
-                  }
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: CustomColors.primary,
-                  side: BorderSide(color: CustomColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text('dashboard'.tr()),
-              ),
-            ),
-          ],
         ),
       );
     } catch (e) {
       setState(() => loading = false);
       if (!mounted) return;
 
-      // Add a small delay to ensure the widget is stable before showing dialog
-      await Future.delayed(const Duration(milliseconds: 100));
-      if (!mounted || _showingDialog) return;
-
-      // Handle specific constraint violation error
-      String errorMessage = 'Failed to save report: $e';
-      if (e.toString().contains('unique_user_date')) {
-        errorMessage =
-            'A report for this batch has already been submitted today. Please try again tomorrow.';
-      } else if (e.toString().contains('duplicate key')) {
-        errorMessage =
-            'This report has already been submitted. Please check your reports.';
-      } else if (e.toString().contains('multiple (or no) rows returned')) {
-        errorMessage =
-            'There was an issue checking the report status. Please try again.';
-      }
-
       _showingDialog = true;
+      // Show error screen via showDialog using the page context
       showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+        context: pageContext,
+        barrierDismissible: false,
+        builder: (ctx) => Dialog(
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          child: ReportErrorScreen(
+            onTryAgain: () {
+              Navigator.pop(ctx);
+              _showingDialog = false;
+              // Allow user to retry
+            },
           ),
-          backgroundColor: const Color(0xFFF7F8FA),
-          title: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(
-              'error'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Text(errorMessage),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _showingDialog = false;
-                Navigator.of(ctx).pop();
-              },
-              child: Text('ok'.tr()),
-            ),
-          ],
         ),
       );
     }

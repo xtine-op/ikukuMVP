@@ -88,8 +88,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _maybeShowTutorial() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final hasSeenTutorial =
-          prefs.getBool(_dashboardTutorialSeenKey) ?? false;
+      final hasSeenTutorial = prefs.getBool(_dashboardTutorialSeenKey) ?? false;
       // Debug log so we can see in console whether tutorial should run
       // ignore: avoid_print
       print(
@@ -206,10 +205,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  Widget _buildTutorialCard({
-    required String title,
-    required String message,
-  }) {
+  Widget _buildTutorialCard({required String title, required String message}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -243,13 +239,38 @@ class _DashboardPageState extends State<DashboardPage> {
               color: CustomColors.text.withOpacity(0.85),
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Tap anywhere to continue or use Skip.',
-            style: TextStyle(
-              fontSize: 12,
-              color: CustomColors.text.withOpacity(0.6),
-              fontStyle: FontStyle.italic,
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () {
+                _tutorialCoachMark?.next();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: CustomColors.primary,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'continue'.tr(),
+                        style: TextStyle(
+                          color: CustomColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4.0),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: CustomColors.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

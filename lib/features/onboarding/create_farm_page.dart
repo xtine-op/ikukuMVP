@@ -113,7 +113,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
                 ),
                 SizedBox(height: 32),
                 Text(
-                  'first_name'.tr(),
+                  'enter_full_name'.tr(),
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 SizedBox(height: 8),

@@ -9,6 +9,9 @@ import '../../../shared/providers/offline_data_provider.dart';
 import '../data/inventory_item_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../shared/widgets/custom_dialog.dart';
+import '../../../shared/widgets/status_feedback_widget.dart';
+import '../../../shared/screens/status_feedback_screens.dart';
+import '../../../shared/widgets/loading_button.dart';
 
 class InventoryPage extends StatefulWidget {
   final String category;
@@ -185,48 +188,89 @@ class _InventoryPageState extends State<InventoryPage> {
                           style: const TextStyle(color: CustomColors.primary),
                         ),
                       ),
-                      ElevatedButton(
+                      LoadingButton(
                         onPressed: () async {
                           if (formKey.currentState?.validate() ?? false) {
                             formKey.currentState?.save();
-                            final item = InventoryItem.empty(user.id).copyWith(
-                              name: name,
-                              category: category,
-                              quantity: quantity,
-                              unit: unit,
-                              addedOn: DateTime.now(),
-                              price: price,
-                            );
-                            await SupabaseService().addInventoryItem(
-                              item.toJson(),
-                            );
-
-                            // Update dashboard for new feed items
-                            if (category == 'feed') {
-                              final currentDashboardData =
-                                  OfflineDataProvider.instance.dashboardData ??
-                                  {};
-                              final updatedDashboardData = {
-                                ...currentDashboardData,
-                                'totalFeeds':
-                                    (currentDashboardData['totalFeeds'] ?? 0) +
-                                    quantity,
-                              };
-                              await OfflineDataService.instance
-                                  .cacheUserDashboard(
-                                    user.id,
-                                    updatedDashboardData,
+                            try {
+                              final item = InventoryItem.empty(user.id)
+                                  .copyWith(
+                                    name: name,
+                                    category: category,
+                                    quantity: quantity,
+                                    unit: unit,
+                                    addedOn: DateTime.now(),
+                                    price: price,
                                   );
-                              await OfflineDataProvider.instance
-                                  .loadDashboardData(forceRefresh: true);
-                            }
+                              await SupabaseService().addInventoryItem(
+                                item.toJson(),
+                              );
 
-                            if (mounted) {
-                              Navigator.pop(context);
-                              fetchItems();
+                              // Update dashboard for new feed items
+                              if (category == 'feed') {
+                                final currentDashboardData =
+                                    OfflineDataProvider
+                                        .instance
+                                        .dashboardData ??
+                                    {};
+                                final updatedDashboardData = {
+                                  ...currentDashboardData,
+                                  'totalFeeds':
+                                      (currentDashboardData['totalFeeds'] ??
+                                          0) +
+                                      quantity,
+                                };
+                                await OfflineDataService.instance
+                                    .cacheUserDashboard(
+                                      user.id,
+                                      updatedDashboardData,
+                                    );
+                                await OfflineDataProvider.instance
+                                    .loadDashboardData(forceRefresh: true);
+                              }
+
+                              if (mounted) {
+                                // Close dialog first
+                                Navigator.pop(context);
+                                // Show success screen via showDialog
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (ctx) => Dialog(
+                                    insetPadding: EdgeInsets.zero,
+                                    backgroundColor: Colors.transparent,
+                                    child: StoreSuccessScreen(
+                                      onViewStore: () {
+                                        Navigator.pop(ctx);
+                                        fetchItems();
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                // Show error screen via showDialog
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (ctx) => Dialog(
+                                    insetPadding: EdgeInsets.zero,
+                                    backgroundColor: Colors.transparent,
+                                    child: StoreErrorScreen(
+                                      onTryAgain: () {
+                                        Navigator.pop(ctx);
+                                        _showAddItemDialog();
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           }
                         },
+                        type: LoadingButtonType.elevated,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: CustomColors.primary,
                           foregroundColor: Colors.white,
@@ -252,6 +296,10 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   void _showEditItemDialog(InventoryItem item) async {
+    // Capture the page context to avoid using the dialog's inner context
+    // (using the inner dialog context after popping can prevent new dialogs
+    // from showing). Use `pageContext` when presenting the status dialogs.
+    final pageContext = context;
     final formKey = GlobalKey<FormState>();
     String name = item.name;
     String category = item.category;
@@ -405,67 +453,88 @@ class _InventoryPageState extends State<InventoryPage> {
                         onPressed: () async {
                           if (formKey.currentState?.validate() ?? false) {
                             formKey.currentState?.save();
-                            final updatedItem = item.copyWith(
-                              name: name,
-                              category: category,
-                              quantity: quantity,
-                              unit: unit,
-                              price: price,
-                            );
-                            await SupabaseService().updateInventoryItem(
-                              updatedItem.toJson(),
-                            );
+                            try {
+                              final updatedItem = item.copyWith(
+                                name: name,
+                                category: category,
+                                quantity: quantity,
+                                unit: unit,
+                                price: price,
+                              );
+                              await SupabaseService().updateInventoryItem(
+                                updatedItem.toJson(),
+                              );
 
-                            // Update dashboard for feed items
-                            if (category == 'feed') {
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-                              if (user != null) {
-                                final currentDashboardData =
-                                    OfflineDataProvider
-                                        .instance
-                                        .dashboardData ??
-                                    {};
-                                final quantityChange = quantity - item.quantity;
-                                final updatedDashboardData = {
-                                  ...currentDashboardData,
-                                  'totalFeeds':
-                                      (currentDashboardData['totalFeeds'] ??
-                                          0) +
-                                      quantityChange,
-                                };
-                                await OfflineDataService.instance
-                                    .cacheUserDashboard(
-                                      user.id,
-                                      updatedDashboardData,
-                                    );
-                                await OfflineDataProvider.instance
-                                    .loadDashboardData(forceRefresh: true);
+                              // Update dashboard for feed items
+                              if (category == 'feed') {
+                                final user =
+                                    Supabase.instance.client.auth.currentUser;
+                                if (user != null) {
+                                  final currentDashboardData =
+                                      OfflineDataProvider
+                                          .instance
+                                          .dashboardData ??
+                                      {};
+                                  final quantityChange =
+                                      quantity - item.quantity;
+                                  final updatedDashboardData = {
+                                    ...currentDashboardData,
+                                    'totalFeeds':
+                                        (currentDashboardData['totalFeeds'] ??
+                                            0) +
+                                        quantityChange,
+                                  };
+                                  await OfflineDataService.instance
+                                      .cacheUserDashboard(
+                                        user.id,
+                                        updatedDashboardData,
+                                      );
+                                  await OfflineDataProvider.instance
+                                      .loadDashboardData(forceRefresh: true);
+                                }
                               }
-                            }
 
-                            if (mounted) {
-                              Navigator.pop(context);
-                              fetchItems();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    tr(
-                                      'item_updated_success',
-                                      namedArgs: {
-                                        'oldName': item.name,
-                                        'newName': name,
-                                        'oldPrice': item.price.toStringAsFixed(
-                                          2,
-                                        ),
-                                        'newPrice': price.toStringAsFixed(2),
+                              if (mounted) {
+                                // Close dialog first
+                                Navigator.pop(context);
+                                // Show success screen via showDialog using the
+                                // outer page context so the new dialog is shown
+                                // on the page navigator (not the popped dialog
+                                // context).
+                                showDialog(
+                                  context: pageContext,
+                                  barrierDismissible: false,
+                                  builder: (ctx) => Dialog(
+                                    insetPadding: EdgeInsets.zero,
+                                    backgroundColor: Colors.transparent,
+                                    child: StoreSuccessScreen(
+                                      onViewStore: () {
+                                        Navigator.pop(ctx);
+                                        fetchItems();
                                       },
                                     ),
                                   ),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                // Show error screen using the page context
+                                showDialog(
+                                  context: pageContext,
+                                  barrierDismissible: false,
+                                  builder: (ctx) => Dialog(
+                                    insetPadding: EdgeInsets.zero,
+                                    backgroundColor: Colors.transparent,
+                                    child: StoreErrorScreen(
+                                      onTryAgain: () {
+                                        Navigator.pop(ctx);
+                                        // Reopen the edit dialog
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           }
                         },
@@ -493,6 +562,9 @@ class _InventoryPageState extends State<InventoryPage> {
   }
 
   void _showAddAmountDialog(InventoryItem item) async {
+    // Use parent page context for showing status dialogs after closing
+    // this add-amount dialog.
+    final pageContext = context;
     final formKey = GlobalKey<FormState>();
     int addAmount = 0;
     await showDialog(
@@ -553,7 +625,7 @@ class _InventoryPageState extends State<InventoryPage> {
                         style: const TextStyle(color: Colors.green),
                       ),
                     ),
-                    ElevatedButton(
+                    LoadingButton(
                       onPressed: () async {
                         if (formKey.currentState?.validate() ?? false) {
                           formKey.currentState?.save();
@@ -592,15 +664,16 @@ class _InventoryPageState extends State<InventoryPage> {
                             Navigator.pop(context);
                             fetchItems();
                             showCustomDialog(
-                              context: context,
+                              context: pageContext,
                               title: tr('success'),
                               message: tr('quantity_updated'),
                               isSuccess: true,
-                              onOkPressed: () => Navigator.pop(context),
+                              onOkPressed: () => Navigator.pop(pageContext),
                             );
                           }
                         }
                       },
+                      type: LoadingButtonType.elevated,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         shape: RoundedRectangleBorder(
@@ -925,7 +998,7 @@ class _InventoryPageState extends State<InventoryPage> {
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            child: Text(tr('update_price')),
+                                            child: Text(tr('edit')),
                                           ),
                                         ],
                                       ),

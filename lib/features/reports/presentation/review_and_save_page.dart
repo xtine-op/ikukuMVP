@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../../../shared/widgets/loading_button.dart';
 import '../../batches/data/batch_model.dart';
 import '../../inventory/data/inventory_item_model.dart';
 import '../../../app_theme.dart';
@@ -20,7 +21,7 @@ class ReviewAndSavePage extends StatelessWidget {
   final double? vaccineAmount;
   final Map<InventoryItem, double> otherMaterialsUsed;
   final String? notes;
-  final VoidCallback onSave;
+  final Future<void> Function()? onSave;
   final List<Map<String, dynamic>> selectedFeeds;
   final List<Map<String, dynamic>> selectedVaccines;
   final List<Map<String, dynamic>> selectedOtherMaterials;
@@ -237,8 +238,9 @@ class ReviewAndSavePage extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: LoadingButton(
               onPressed: onSave,
+              type: LoadingButtonType.elevated,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,

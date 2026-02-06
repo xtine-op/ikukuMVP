@@ -9,6 +9,9 @@ class CustomColors {
   static const Color lightYellow = Color(0xFFFEF8E2);
   static const Color text = Color(0xFF243B25);
   static const Color textDisabled = Color(0xFFABABAB);
+  static const Color successColor = Color(0xFF00A152); // Green for success
+  static const Color errorColor = Color(0xFFE53935); // Red for error
+  static const Color textColorSecondary = Color(0xFF666666); // Secondary text
 
   static const LinearGradient buttonGradient = LinearGradient(
     colors: [Color(0xFF98B130), Color(0xFFF7C02D), Color(0xFFF9B420)],

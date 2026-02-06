@@ -410,6 +410,18 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
         sum.totalMortality += chickensDied;
       }
 
+      // Ensure every batch has its initial bird cost included, even if no records exist for it
+      for (final batch in parsedBatches) {
+        final sum = tmp.putIfAbsent(batch.id, () => _BatchSummary());
+        if ((sum.expensesByCategory['bird_cost'] ?? 0.0) == 0.0 &&
+            batch.totalChickens > 0 &&
+            batch.pricePerBird > 0) {
+          final initialBirdCost = batch.totalChickens * batch.pricePerBird;
+          sum.expensesByCategory['bird_cost'] = initialBirdCost;
+          sum.totalExpenses += initialBirdCost;
+        }
+      }
+
       setState(() {
         batches = parsedBatches;
         summariesByBatchId = tmp;
@@ -587,7 +599,8 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                   width: double.infinity,
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: CustomColors.secondary,
+                    // Use the app's secondary light color for the My Farm card
+                    color: CustomColors.lightYellow,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -676,19 +689,89 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                             ),
                           ),
                         ),
+                        // Batch selector dropdown if multiple batches
+                        if (batches.length > 1) ...[
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String?>(
+                            value: selectedBatch?.id,
+                            decoration: InputDecoration(
+                              labelText: 'Select Batch (Optional)',
+                              labelStyle: const TextStyle(
+                                color: CustomColors.text,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: CustomColors.text,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: CustomColors.text.withOpacity(0.5),
+                                ),
+                              ),
+                            ),
+                            items: [
+                              DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(
+                                  'All Batches (Farm Overview)',
+                                  style: TextStyle(color: CustomColors.text),
+                                ),
+                              ),
+                              ...batches.map(
+                                (batch) => DropdownMenuItem<String?>(
+                                  value: batch.id,
+                                  child: Text(
+                                    '${batch.name} (${batch.birdType.toUpperCase()})',
+                                    style: TextStyle(color: CustomColors.text),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (batchId) {
+                              setState(() {
+                                if (batchId == null) {
+                                  selectedBatch = null;
+                                } else {
+                                  selectedBatch = batches.firstWhere(
+                                    (b) => b.id == batchId,
+                                  );
+                                }
+                              });
+                            },
+                            isExpanded: true,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount:
-                        batches.length +
-                        (summariesByBatchId.isNotEmpty ? 1 : 0),
+                    itemCount: _getDisplayedBatchCount(),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemBuilder: (context, index) {
-                      if (index == batches.length) {
-                        // Grand Total at the bottom of the list
+                      // Get the list of batches to display
+                      final displayedBatches = _getDisplayedBatches();
+
+                      // Show grand total if viewing all batches and there are multiple batches
+                      if (index == displayedBatches.length &&
+                          selectedBatch == null &&
+                          batches.length > 1) {
+                        // Calculate totals from displayed batches only
+                        double totalSales = 0;
+                        double totalExpenses = 0;
+                        double totalProfit = 0;
+                        for (final batch in displayedBatches) {
+                          final sum =
+                              summariesByBatchId[batch.id] ?? _BatchSummary();
+                          totalSales += sum.totalSales;
+                          totalExpenses += sum.totalExpenses;
+                          totalProfit += sum.totalProfit;
+                        }
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(16),
@@ -721,7 +804,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                             ),
                                           ),
                                           Text(
-                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalSales).toStringAsFixed(2)}',
+                                            'Ksh ${totalSales.toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -744,18 +827,11 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                             ),
                                           ),
                                           Text(
-                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalExpenses).toStringAsFixed(2)}',
+                                            'Ksh ${totalExpenses.toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              color:
-                                                  summariesByBatchId.values.fold(
-                                                        0.0,
-                                                        (sum, batch) =>
-                                                            sum +
-                                                            batch.totalExpenses,
-                                                      ) ==
-                                                      0.0
+                                              color: totalExpenses == 0.0
                                                   ? Colors.black
                                                   : Colors.red,
                                             ),
@@ -776,7 +852,7 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                                             ),
                                           ),
                                           Text(
-                                            'Ksh ${summariesByBatchId.values.fold(0.0, (sum, batch) => sum + batch.totalProfit).toStringAsFixed(2)}',
+                                            'Ksh ${totalProfit.toStringAsFixed(2)}',
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
@@ -793,7 +869,8 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
                           ),
                         );
                       }
-                      final batch = batches[index];
+
+                      final batch = displayedBatches[index];
                       final sum =
                           summariesByBatchId[batch.id] ?? _BatchSummary();
                       return Container(
@@ -1502,6 +1579,24 @@ class _FarmSummaryPageState extends State<FarmSummaryPage> {
               ],
             ),
     );
+  }
+
+  /// Get list of batches to display based on selected batch
+  List<Batch> _getDisplayedBatches() {
+    if (selectedBatch != null) {
+      return [selectedBatch!];
+    }
+    return batches;
+  }
+
+  /// Get count of items to display in list (batches + optional grand total)
+  int _getDisplayedBatchCount() {
+    final displayedBatches = _getDisplayedBatches();
+    // Add 1 for grand total if viewing all batches and there are multiple batches
+    if (selectedBatch == null && batches.length > 1) {
+      return displayedBatches.length + 1;
+    }
+    return displayedBatches.length;
   }
 }
 

@@ -7,9 +7,11 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../app_theme.dart';
 import '../../../shared/services/supabase_service.dart';
 import '../../../shared/providers/offline_data_provider.dart';
+import '../../../shared/widgets/loading_button.dart';
 
 import '../data/batch_model.dart';
 import '../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../shared/screens/status_feedback_screens.dart';
 
 class BatchesPage extends StatefulWidget {
   final bool fromReportsPage;
@@ -87,11 +89,12 @@ class _BatchesPageState extends State<BatchesPage> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
+                child: LoadingButton(
+                  onPressed: () async {
                     Navigator.pop(context);
                     context.go('/report-entry');
                   },
+                  type: LoadingButtonType.elevated,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
@@ -123,6 +126,9 @@ class _BatchesPageState extends State<BatchesPage> {
   }
 
   void _showAddBatchDialog() async {
+    // Capture page context so dialogs shown after this dialog use the
+    // page navigator (not the inner dialog context) and render visibly.
+    final pageContext = context;
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     final formKey = GlobalKey<FormState>();
@@ -289,7 +295,7 @@ class _BatchesPageState extends State<BatchesPage> {
               Expanded(
                 child: SizedBox(
                   height: 48,
-                  child: ElevatedButton(
+                  child: LoadingButton(
                     onPressed: () async {
                       if (formKey.currentState?.validate() ?? false) {
                         formKey.currentState?.save();
@@ -306,7 +312,26 @@ class _BatchesPageState extends State<BatchesPage> {
                         );
                         if (mounted) {
                           Navigator.pop(context);
+                          // Refresh local list
                           fetchBatches();
+
+                          // Show a success popup using the outer page context
+                          showDialog(
+                            context: pageContext,
+                            barrierDismissible: false,
+                            builder: (ctx) => Dialog(
+                              insetPadding: EdgeInsets.zero,
+                              backgroundColor: Colors.transparent,
+                              child: BatchSuccessScreen(
+                                onViewBatch: () {
+                                  Navigator.pop(ctx);
+                                  // Refresh again to ensure UI reflects latest
+                                  fetchBatches();
+                                },
+                              ),
+                            ),
+                          );
+
                           // Show popup asking if user wants to add a report
                           // Only if they came from the reports page and haven't shown dialog yet
                           if (widget.fromReportsPage &&
@@ -319,6 +344,7 @@ class _BatchesPageState extends State<BatchesPage> {
                         }
                       }
                     },
+                    type: LoadingButtonType.elevated,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: CustomColors.primary,
                       shadowColor: Colors.transparent,
@@ -460,7 +486,7 @@ class _BatchesPageState extends State<BatchesPage> {
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: ElevatedButton(
+            child: LoadingButton(
               onPressed: () async {
                 if (formKey.currentState?.validate() ?? false) {
                   formKey.currentState?.save();
@@ -475,6 +501,7 @@ class _BatchesPageState extends State<BatchesPage> {
                   }
                 }
               },
+              type: LoadingButtonType.elevated,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
@@ -669,12 +696,12 @@ class _BatchesPageState extends State<BatchesPage> {
                   title: Text(batch.name),
                   subtitle: Text(
                     '${'bird_type'.tr()}: ${batch.birdType == 'broiler'
-                            ? 'broiler'.tr()
-                            : batch.birdType == 'layer'
-                            ? 'layer'.tr()
-                            : batch.birdType == 'kienyeji'
-                            ? 'kienyeji'.tr()
-                            : 'unknown_type'.tr()}, ${'chickens'.tr()}: ${batch.totalChickens}, Age: ${batch.currentAgeInDays} days',
+                        ? 'broiler'.tr()
+                        : batch.birdType == 'layer'
+                        ? 'layer'.tr()
+                        : batch.birdType == 'kienyeji'
+                        ? 'kienyeji'.tr()
+                        : 'unknown_type'.tr()}, ${'chickens'.tr()}: ${batch.totalChickens}, Age: ${batch.currentAgeInDays} days',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
