@@ -144,7 +144,7 @@ class _BatchesPageState extends State<BatchesPage> {
         backgroundColor: Color(0xFFF7F8FA),
         title: Text(tr('add_batch')),
         content: SizedBox(
-          width: 500, // Increase dialog width for better UI
+          width: 510, // Increase dialog width for better UI
           child: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -166,7 +166,7 @@ class _BatchesPageState extends State<BatchesPage> {
                       ),
                     ),
                     validator: (v) =>
-                        v == null || v.isEmpty ? 'Required' : null,
+                        v == null || v.isEmpty ? tr('enter_batch_name') : null,
                     onSaved: (v) => name = v ?? '',
                   ),
                   SizedBox(height: 18),
@@ -216,7 +216,7 @@ class _BatchesPageState extends State<BatchesPage> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) => v == null || int.tryParse(v) == null
-                        ? 'Enter a number'
+                        ? tr('enter_batch_age')
                         : null,
                     onSaved: (v) => ageInDays = int.tryParse(v ?? '0') ?? 0,
                   ),
@@ -236,7 +236,7 @@ class _BatchesPageState extends State<BatchesPage> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) => v == null || int.tryParse(v) == null
-                        ? 'Enter a number'
+                        ? tr('enter_total_chickens')
                         : null,
                     onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
                   ),
@@ -258,7 +258,7 @@ class _BatchesPageState extends State<BatchesPage> {
                       decimal: true,
                     ),
                     validator: (v) => v == null || double.tryParse(v) == null
-                        ? 'Enter a valid price'
+                        ? tr('enter_price_per_bird')
                         : null,
                     onSaved: (v) =>
                         pricePerBird = double.tryParse(v ?? '0') ?? 0,
@@ -653,9 +653,8 @@ class _BatchesPageState extends State<BatchesPage> {
                                 gradient: CustomColors.buttonGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: ElevatedButton.icon(
-                                icon: Icon(Icons.add, color: CustomColors.text),
-                                label: Text(
+                              child: ElevatedButton(
+                                child: Text(
                                   'CREATE A BATCH',
                                   style: TextStyle(
                                     color: CustomColors.text,

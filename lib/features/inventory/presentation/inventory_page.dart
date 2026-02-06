@@ -107,7 +107,7 @@ class _InventoryPageState extends State<InventoryPage> {
                       ),
                     ),
                     validator: (v) =>
-                        v == null || v.isEmpty ? 'Required' : null,
+                        v == null || v.isEmpty ? tr('enter_item_name') : null,
                     onSaved: (v) => name = v ?? '',
                   ),
                   const SizedBox(height: 18),
@@ -123,7 +123,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (v) => v == null || int.tryParse(v) == null
-                        ? 'Enter a number'
+                        ? tr('enter_item_quantity')
                         : null,
                     onSaved: (v) => quantity = int.tryParse(v ?? '0') ?? 0,
                   ),
@@ -162,7 +162,7 @@ class _InventoryPageState extends State<InventoryPage> {
                       decimal: true,
                     ),
                     validator: (v) => v == null || double.tryParse(v) == null
-                        ? 'Enter a number'
+                        ? tr('enter_item_price')
                         : null,
                     onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
                   ),

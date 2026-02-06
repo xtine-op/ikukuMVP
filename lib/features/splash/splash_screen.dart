@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CustomColors.primary,
+      backgroundColor: CustomColors.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'powered by chickwise solutions',
                 style: TextStyle(
                   fontSize: 16,
-                  color: CustomColors.background,
+                  color: CustomColors.text,
                   fontWeight: FontWeight.w400,
                 ),
                 textAlign: TextAlign.center,

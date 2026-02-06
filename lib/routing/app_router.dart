@@ -16,6 +16,8 @@ import '../features/reports/presentation/farm_summary_page.dart';
 import '../features/onboarding/onboarding_page.dart';
 import '../features/profile/profile_page.dart';
 import '../features/auth/presentation/language_selection_page.dart';
+import '../features/auth/presentation/reset_password_page.dart';
+import '../features/onboarding/recovery_setup_page.dart';
 import '../features/onboarding/create_farm_page.dart';
 import '../features/splash/splash_screen.dart';
 
@@ -42,6 +44,10 @@ class AppRouter {
       GoRoute(
         path: '/sign-in',
         builder: (context, state) => const SignInPage(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordPage(),
       ),
       GoRoute(
         path: '/language',
@@ -123,10 +129,15 @@ class AppRouter {
           phone: (state.extra as Map?)?['phone'] ?? '',
         ),
       ),
+      GoRoute(
+        path: '/recovery-setup',
+        builder: (context, state) => const RecoverySetupPage(),
+      ),
     ],
     redirect: (context, state) async {
       final user = Supabase.instance.client.auth.currentUser;
       final loggingIn = state.matchedLocation == '/sign-in';
+      final resettingPassword = state.matchedLocation == '/reset-password';
       final onboarding = state.matchedLocation == '/onboarding';
       final language = state.matchedLocation == '/language';
       final splash = state.matchedLocation == '/splash';
@@ -139,7 +150,11 @@ class AppRouter {
 
       if (!langSet && !language) return '/language';
       if (!onboardingComplete && !onboarding && langSet) return '/onboarding';
-      if (user == null && !loggingIn && langSet && onboardingComplete) {
+      if (user == null &&
+          !loggingIn &&
+          !resettingPassword &&
+          langSet &&
+          onboardingComplete) {
         return '/sign-in';
       }
       if (user != null && loggingIn) return '/';

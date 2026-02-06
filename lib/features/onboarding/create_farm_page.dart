@@ -50,6 +50,14 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
       });
       return;
     }
+
+    if (_phoneController.text.trim().length < 10) {
+      setState(() {
+        _error = 'enter_valid_phone_number'.tr();
+        _isLoading = false;
+      });
+      return;
+    }
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       setState(() {
@@ -73,7 +81,7 @@ class _CreateFarmPageState extends State<CreateFarmPage> {
         'farm_location': _farmLocationController.text.trim(),
       });
 
-      context.go('/');
+      context.go('/recovery-setup');
     } catch (e) {
       setState(() {
         _error = 'failed_to_create_farm'.tr(args: [e.toString()]);
