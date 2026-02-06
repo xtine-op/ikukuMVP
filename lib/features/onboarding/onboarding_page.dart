@@ -54,24 +54,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Background image fills the whole page
-            PageView.builder(
-              controller: _controller,
-              itemCount: _screens.length,
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
-              },
-              itemBuilder: (context, index) {
-                final data = _screens[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(data.image),
-                      fit: BoxFit.cover,
+            // Background image fills the whole page with tap to advance
+            GestureDetector(
+              onTap: _onNext,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: _screens.length,
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index);
+                },
+                itemBuilder: (context, index) {
+                  final data = _screens[index];
+                  return Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage(data.image),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
             // Overlay container with blurry top edge at the bottom
             Align(
@@ -128,25 +131,44 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Dots at the top
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_screens.length, (index) {
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: _currentPage == index ? 24 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: _currentPage == index
+                        // Progress bar and step counter are hidden for the first 3 onboarding pages
+                        if (_currentPage >= 3) ...[
+                          // Progress bar showing current step
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (_currentPage + 1) / _screens.length,
+                              minHeight: 6,
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _currentPage == 0
+                                    ? CustomColors.primary
+                                    : _currentPage == 1
                                     ? CustomColors.secondary
-                                    : Colors.white.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(4),
+                                    : _currentPage == 2
+                                    ? CustomColors.lightGreen
+                                    : _currentPage == 3
+                                    ? CustomColors.primary
+                                    : _currentPage == 4
+                                    ? CustomColors.secondary
+                                    : CustomColors.lightGreen,
                               ),
-                            );
-                          }),
-                        ),
-                        const Spacer(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Step counter
+                          Text(
+                            'Step ${_currentPage + 1} of ${_screens.length}',
+                            style: TextStyle(
+                              color: _currentPage == 0 || _currentPage == 1
+                                  ? CustomColors.text
+                                  : CustomColors.lightYellow,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         // Title and description at the bottom
                         Text(
                           context.tr(_screens[_currentPage].title),
@@ -158,7 +180,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     ? CustomColors.text
                                     : _currentPage == 2
                                     ? CustomColors.lightYellow
-                                    : Colors.white,
+                                    : _currentPage == 3 || _currentPage == 4
+                                    ? CustomColors.text
+                                    : CustomColors.lightYellow,
                                 fontSize: 32,
                                 fontWeight: FontWeight.normal,
                               ),
@@ -175,7 +199,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     ? CustomColors.text
                                     : _currentPage == 2
                                     ? CustomColors.lightYellow
-                                    : Colors.white,
+                                    : _currentPage == 3 || _currentPage == 4
+                                    ? CustomColors.text
+                                    : CustomColors.lightYellow,
                               ),
                           textAlign: TextAlign.center,
                         ),
@@ -183,7 +209,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            if (_currentPage != 2) ...[
+                            // Skip button on left
+                            if (_currentPage != _screens.length - 1) ...[
                               TextButton(
                                 onPressed: () async {
                                   final prefs =
@@ -199,16 +226,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   style: TextStyle(color: CustomColors.text),
                                 ),
                               ),
+                            ] else ...[
+                              const SizedBox(width: 48),
+                            ],
+                            // Continue button on right
+                            if (_currentPage != _screens.length - 1) ...[
                               CircleAvatar(
                                 backgroundColor:
-                                    (_currentPage == 0 || _currentPage == 1)
+                                    (_currentPage == 0 ||
+                                        _currentPage == 1 ||
+                                        _currentPage == 3 ||
+                                        _currentPage == 4)
                                     ? CustomColors.primary
                                     : Colors.white.withOpacity(0.18),
                                 child: IconButton(
                                   icon: Icon(
                                     Icons.arrow_forward,
                                     color:
-                                        (_currentPage == 0 || _currentPage == 1)
+                                        (_currentPage == 0 ||
+                                            _currentPage == 1 ||
+                                            _currentPage == 3 ||
+                                            _currentPage == 4)
                                         ? Colors.white
                                         : CustomColors.text,
                                   ),
@@ -216,6 +254,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 ),
                               ),
                             ] else ...[
+                              // Finish button on last step (full width)
                               Expanded(
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(

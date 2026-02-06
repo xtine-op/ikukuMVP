@@ -57,9 +57,32 @@ class _PoultryNewsPageState extends State<PoultryNewsPage> {
   }
 
   Future<void> _openArticle(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.inAppWebView);
+    if (url.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invalid article URL')));
+      }
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Cannot open URL: $url')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening article: $e')));
+      }
     }
   }
 
@@ -76,82 +99,87 @@ class _PoultryNewsPageState extends State<PoultryNewsPage> {
                 itemCount: _articles.length,
                 itemBuilder: (context, index) {
                   final article = _articles[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (article.imageUrl != null)
+                  return GestureDetector(
+                    onTap: () => _openArticle(article.link),
+                    child: Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           if (article.imageUrl != null)
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(12),
-                              ),
-                              child: Image.network(
-                                article.imageUrl!,
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        height: 200,
-                                        color: Colors.grey[200],
-                                        child: const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      );
-                                    },
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox(),
-                              ),
-                            ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                article.title,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                            if (article.imageUrl != null)
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: Image.network(
+                                  article.imageUrl!,
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          height: 200,
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const SizedBox(),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                article.description,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: CustomColors.text.withOpacity(0.8),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  article.title,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${article.source} • ${_dateFormat.format(article.publishDate)}',
-                                      style: TextStyle(
-                                        color: CustomColors.text.withOpacity(
-                                          0.6,
+                                const SizedBox(height: 8),
+                                Text(
+                                  article.description,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: CustomColors.text.withOpacity(0.8),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${article.source} • ${_dateFormat.format(article.publishDate)}',
+                                        style: TextStyle(
+                                          color: CustomColors.text.withOpacity(
+                                            0.6,
+                                          ),
+                                          fontSize: 12,
                                         ),
-                                        fontSize: 12,
                                       ),
                                     ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => _openArticle(article.link),
-                                    child: const Text('Read More'),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    TextButton(
+                                      onPressed: () =>
+                                          _openArticle(article.link),
+                                      child: const Text('Read More'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },

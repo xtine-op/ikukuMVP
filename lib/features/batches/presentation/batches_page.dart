@@ -269,104 +269,103 @@ class _BatchesPageState extends State<BatchesPage> {
           ),
         ),
         actions: [
-          Row(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: CustomColors.primary,
-                      side: BorderSide(color: CustomColors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: LoadingButton(
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      formKey.currentState?.save();
+                      final batch = Batch.empty(user.id).copyWith(
+                        name: name,
+                        birdType: birdType,
+                        ageInDays: ageInDays,
+                        totalChickens: totalChickens,
+                        pricePerBird: pricePerBird,
+                        createdAt: DateTime.now(),
+                      );
+                      await OfflineDataProvider.instance.addBatch(
+                        batch.toJson(),
+                      );
+                      if (mounted) {
+                        Navigator.pop(context);
+                        // Refresh local list
+                        fetchBatches();
+
+                        // Show a success popup using the outer page context
+                        showDialog(
+                          context: pageContext,
+                          barrierDismissible: false,
+                          builder: (ctx) => Dialog(
+                            insetPadding: EdgeInsets.zero,
+                            backgroundColor: Colors.transparent,
+                            child: BatchSuccessScreen(
+                              onViewBatch: () {
+                                Navigator.pop(ctx);
+                                // Refresh again to ensure UI reflects latest
+                                fetchBatches();
+                              },
+                            ),
+                          ),
+                        );
+
+                        // Show popup asking if user wants to add a report
+                        // Only if they came from the reports page and haven't shown dialog yet
+                        if (widget.fromReportsPage &&
+                            !_hasShownAddReportDialog) {
+                          setState(() {
+                            _hasShownAddReportDialog = true;
+                          });
+                          _showAddReportDialog();
+                        }
+                      }
+                    }
+                  },
+                  type: LoadingButtonType.elevated,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: CustomColors.primary,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(tr('cancel')),
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    tr('add_batch'),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: LoadingButton(
-                    onPressed: () async {
-                      if (formKey.currentState?.validate() ?? false) {
-                        formKey.currentState?.save();
-                        final batch = Batch.empty(user.id).copyWith(
-                          name: name,
-                          birdType: birdType,
-                          ageInDays: ageInDays,
-                          totalChickens: totalChickens,
-                          pricePerBird: pricePerBird,
-                          createdAt: DateTime.now(),
-                        );
-                        await OfflineDataProvider.instance.addBatch(
-                          batch.toJson(),
-                        );
-                        if (mounted) {
-                          Navigator.pop(context);
-                          // Refresh local list
-                          fetchBatches();
-
-                          // Show a success popup using the outer page context
-                          showDialog(
-                            context: pageContext,
-                            barrierDismissible: false,
-                            builder: (ctx) => Dialog(
-                              insetPadding: EdgeInsets.zero,
-                              backgroundColor: Colors.transparent,
-                              child: BatchSuccessScreen(
-                                onViewBatch: () {
-                                  Navigator.pop(ctx);
-                                  // Refresh again to ensure UI reflects latest
-                                  fetchBatches();
-                                },
-                              ),
-                            ),
-                          );
-
-                          // Show popup asking if user wants to add a report
-                          // Only if they came from the reports page and haven't shown dialog yet
-                          if (widget.fromReportsPage &&
-                              !_hasShownAddReportDialog) {
-                            setState(() {
-                              _hasShownAddReportDialog = true;
-                            });
-                            _showAddReportDialog();
-                          }
-                        }
-                      }
-                    },
-                    type: LoadingButtonType.elevated,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: CustomColors.primary,
-                      shadowColor: Colors.transparent,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      foregroundColor: Colors.white,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: CustomColors.primary,
+                    side: BorderSide(color: CustomColors.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      tr('add_batch'),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
                     ),
                   ),
+                  child: Text(tr('cancel')),
                 ),
               ),
             ],

@@ -19,6 +19,13 @@ class _SignInPageState extends State<SignInPage> {
   String? _error;
   bool _isSignUp = false;
 
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email);
+  }
+
   void _onSubmit() async {
     setState(() {
       _isLoading = true;
@@ -35,10 +42,24 @@ class _SignInPageState extends State<SignInPage> {
         _isLoading = false;
       });
       return;
+      if (!_isValidEmail(email)) {
+        setState(() {
+          _error = 'please_enter_valid_email'.tr();
+          _isLoading = false;
+        });
+        return;
+      }
     }
     if (_isSignUp && password != repeatPassword) {
       setState(() {
         _error = 'passwords_do_not_match'.tr();
+        _isLoading = false;
+      });
+      return;
+    }
+    if (_isSignUp && password.length < 7) {
+      setState(() {
+        _error = 'enter_password_more_than_7_characters'.tr();
         _isLoading = false;
       });
       return;

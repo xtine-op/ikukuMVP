@@ -4,6 +4,7 @@ import '../../shared/widgets/bottom_nav_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../app_theme.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -158,10 +159,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Coming soon.')),
-                          );
+                        onPressed: () async {
+                          final result =
+                              await Navigator.push<Map<String, dynamic>>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfilePage(
+                                    initialName: name,
+                                    initialLocation: farmLocation,
+                                    initialPhone: phone,
+                                  ),
+                                ),
+                              );
+
+                          if (result != null) {
+                            setState(() {
+                              name = result['name'] as String?;
+                              farmLocation = result['location'] as String?;
+                              location = farmLocation;
+                              phone = result['phone'] as String?;
+                            });
+                          }
                         },
                         child: Text('edit_profile'.tr()),
                       ),
@@ -204,9 +222,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: Text('cancel'.tr()),
                               ),
                               ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context, true);
-                                  _logout();
+                                onPressed: () async {
+                                  // Close dialog first, then sign out and navigate to sign-in
+                                  Navigator.pop(context);
+                                  await _logout();
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: CustomColors.primary,

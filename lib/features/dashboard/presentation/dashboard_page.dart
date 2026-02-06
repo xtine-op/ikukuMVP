@@ -127,7 +127,7 @@ class _DashboardPageState extends State<DashboardPage> {
       (
         id: 'store',
         key: _storeKey,
-        align: ContentAlign.bottom,
+        align: ContentAlign.top,
         title: 'Farm Store',
         message:
             'Keep track of your feeds, vaccines, and supplies to ensure you never run out of the essentials.',
@@ -158,6 +158,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     ];
 
+    int stepIndex = 0;
     for (final config in candidateConfigs) {
       if (config.key.currentContext == null) {
         // ignore: avoid_print
@@ -166,6 +167,9 @@ class _DashboardPageState extends State<DashboardPage> {
         );
         continue;
       }
+
+      final currentStep = stepIndex + 1;
+      final totalSteps = candidateConfigs.length;
 
       _targets.add(
         TargetFocus(
@@ -177,11 +181,17 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _buildTutorialCard(
                 title: config.title,
                 message: config.message,
+                currentStep: currentStep,
+                totalSteps: totalSteps,
+                onSkip: () {
+                  _tutorialCoachMark?.finish();
+                },
               ),
             ),
           ],
         ),
       );
+      stepIndex++;
     }
 
     if (_targets.isEmpty) {
@@ -196,6 +206,10 @@ class _DashboardPageState extends State<DashboardPage> {
       textSkip: 'Skip',
       paddingFocus: 8,
       opacityShadow: 0.8,
+      onClickTargetWithTapPosition: (target, tapDetails) {
+        // Allow skipping by tapping outside the card
+        _tutorialCoachMark?.next();
+      },
     );
 
     // Small delay to be extra sure layout is complete
@@ -205,7 +219,13 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  Widget _buildTutorialCard({required String title, required String message}) {
+  Widget _buildTutorialCard({
+    required String title,
+    required String message,
+    required int currentStep,
+    required int totalSteps,
+    required VoidCallback onSkip,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -223,6 +243,38 @@ class _DashboardPageState extends State<DashboardPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Progress bar
+          Row(
+            children: List.generate(totalSteps, (index) {
+              final isCompleted = index < currentStep;
+              final isCurrent = index == currentStep - 1;
+              return Expanded(
+                child: Container(
+                  height: 4,
+                  margin: EdgeInsets.only(
+                    right: index < totalSteps - 1 ? 6 : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: isCompleted || isCurrent
+                        ? CustomColors.primary
+                        : Colors.grey[300],
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          // Step counter
+          Text(
+            'Step $currentStep of $totalSteps',
+            style: TextStyle(
+              fontSize: 12,
+              color: CustomColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             title,
             style: const TextStyle(
@@ -240,38 +292,54 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () {
-                _tutorialCoachMark?.next();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: CustomColors.primary,
+          // Buttons: Skip (left, grey text) and Continue (right, primary with arrow) as text buttons
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: onSkip,
+                  style: TextButton.styleFrom(
+                    foregroundColor: CustomColors.textDisabled,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'skip'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: Text(
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextButton(
+                  onPressed: () => _tutorialCoachMark?.next(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: CustomColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
                         'continue'.tr(),
-                        style: TextStyle(
-                          color: CustomColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 18,
+                        color: CustomColors.primary,
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4.0),
-                    child: Icon(
-                      Icons.arrow_forward,
-                      color: CustomColors.primary,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

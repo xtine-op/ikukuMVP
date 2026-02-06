@@ -23,9 +23,30 @@ class _SmartTipsPageState extends State<SmartTipsPage> {
   }
 
   Future<void> _openArticle(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.inAppWebView);
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid article URL')));
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Cannot open URL: $url')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening article: $e')));
+      }
     }
   }
 
@@ -147,77 +168,81 @@ class _SmartTipsPageState extends State<SmartTipsPage> {
 
                 return Column(
                   children: snapshot.data!.map((article) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (article.imageUrl != null)
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(12),
+                    return GestureDetector(
+                      onTap: () => _openArticle(article.link),
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (article.imageUrl != null)
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: Image.network(
+                                  article.imageUrl!,
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Container(
+                                          height: 200,
+                                          color: Colors.grey[200],
+                                          child: const Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const SizedBox(),
+                                ),
                               ),
-                              child: Image.network(
-                                article.imageUrl!,
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        height: 200,
-                                        color: Colors.grey[200],
-                                        child: const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      );
-                                    },
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox(),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    article.title,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: CustomColors.text.withOpacity(0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    article.description,
+                                    style: TextStyle(
+                                      color: CustomColors.text.withOpacity(0.8),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () => _openArticle(article.link),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: CustomColors.primary,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Read Full Article'),
+                                  ),
+                                ],
                               ),
                             ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  article.title,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${article.source} • ${DateFormat.yMMMd().format(article.publishDate)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: CustomColors.text.withOpacity(0.6),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  article.description,
-                                  style: TextStyle(
-                                    color: CustomColors.text.withOpacity(0.8),
-                                    height: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: () => _openArticle(article.link),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: CustomColors.primary,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Read Full Article'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
@@ -264,9 +289,7 @@ class _SmartTipsPageState extends State<SmartTipsPage> {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            ..._externalTips
-                .map((t) => _buildExternalTipCard(context, t))
-                ,
+            ..._externalTips.map((t) => _buildExternalTipCard(context, t)),
             const SizedBox(height: 32),
           ],
         ),

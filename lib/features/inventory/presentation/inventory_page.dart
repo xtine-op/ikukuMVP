@@ -167,122 +167,129 @@ class _InventoryPageState extends State<InventoryPage> {
                     onSaved: (v) => price = double.tryParse(v ?? '0') ?? 0.0,
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: CustomColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          backgroundColor: Colors.white,
-                        ),
-                        child: Text(
-                          tr('cancel'),
-                          style: const TextStyle(color: CustomColors.primary),
-                        ),
-                      ),
-                      LoadingButton(
-                        onPressed: () async {
-                          if (formKey.currentState?.validate() ?? false) {
-                            formKey.currentState?.save();
-                            try {
-                              final item = InventoryItem.empty(user.id)
-                                  .copyWith(
-                                    name: name,
-                                    category: category,
-                                    quantity: quantity,
-                                    unit: unit,
-                                    addedOn: DateTime.now(),
-                                    price: price,
-                                  );
-                              await SupabaseService().addInventoryItem(
-                                item.toJson(),
-                              );
-
-                              // Update dashboard for new feed items
-                              if (category == 'feed') {
-                                final currentDashboardData =
-                                    OfflineDataProvider
-                                        .instance
-                                        .dashboardData ??
-                                    {};
-                                final updatedDashboardData = {
-                                  ...currentDashboardData,
-                                  'totalFeeds':
-                                      (currentDashboardData['totalFeeds'] ??
-                                          0) +
-                                      quantity,
-                                };
-                                await OfflineDataService.instance
-                                    .cacheUserDashboard(
-                                      user.id,
-                                      updatedDashboardData,
+                      SizedBox(
+                        width: double.infinity,
+                        child: LoadingButton(
+                          onPressed: () async {
+                            if (formKey.currentState?.validate() ?? false) {
+                              formKey.currentState?.save();
+                              try {
+                                final item = InventoryItem.empty(user.id)
+                                    .copyWith(
+                                      name: name,
+                                      category: category,
+                                      quantity: quantity,
+                                      unit: unit,
+                                      addedOn: DateTime.now(),
+                                      price: price,
                                     );
-                                await OfflineDataProvider.instance
-                                    .loadDashboardData(forceRefresh: true);
-                              }
+                                await SupabaseService().addInventoryItem(
+                                  item.toJson(),
+                                );
 
-                              if (mounted) {
-                                // Close dialog first
-                                Navigator.pop(context);
-                                // Show success screen via showDialog
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (ctx) => Dialog(
-                                    insetPadding: EdgeInsets.zero,
-                                    backgroundColor: Colors.transparent,
-                                    child: StoreSuccessScreen(
-                                      onViewStore: () {
-                                        Navigator.pop(ctx);
-                                        fetchItems();
-                                      },
+                                // Update dashboard for new feed items
+                                if (category == 'feed') {
+                                  final currentDashboardData =
+                                      OfflineDataProvider
+                                          .instance
+                                          .dashboardData ??
+                                      {};
+                                  final updatedDashboardData = {
+                                    ...currentDashboardData,
+                                    'totalFeeds':
+                                        (currentDashboardData['totalFeeds'] ??
+                                            0) +
+                                        quantity,
+                                  };
+                                  await OfflineDataService.instance
+                                      .cacheUserDashboard(
+                                        user.id,
+                                        updatedDashboardData,
+                                      );
+                                  await OfflineDataProvider.instance
+                                      .loadDashboardData(forceRefresh: true);
+                                }
+
+                                if (mounted) {
+                                  // Close dialog first
+                                  Navigator.pop(context);
+                                  // Show success screen via showDialog
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (ctx) => Dialog(
+                                      insetPadding: EdgeInsets.zero,
+                                      backgroundColor: Colors.transparent,
+                                      child: StoreSuccessScreen(
+                                        onViewStore: () {
+                                          Navigator.pop(ctx);
+                                          fetchItems();
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                Navigator.pop(context);
-                                // Show error screen via showDialog
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (ctx) => Dialog(
-                                    insetPadding: EdgeInsets.zero,
-                                    backgroundColor: Colors.transparent,
-                                    child: StoreErrorScreen(
-                                      onTryAgain: () {
-                                        Navigator.pop(ctx);
-                                        _showAddItemDialog();
-                                      },
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  // Show error screen via showDialog
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (ctx) => Dialog(
+                                      insetPadding: EdgeInsets.zero,
+                                      backgroundColor: Colors.transparent,
+                                      child: StoreErrorScreen(
+                                        onTryAgain: () {
+                                          Navigator.pop(ctx);
+                                          _showAddItemDialog();
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
                               }
                             }
-                          }
-                        },
-                        type: LoadingButtonType.elevated,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: CustomColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          },
+                          type: LoadingButtonType.elevated,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: CustomColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                          child: Text(tr('add_item')),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: CustomColors.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            backgroundColor: Colors.white,
+                          ),
+                          child: Text(
+                            tr('cancel'),
+                            style: const TextStyle(color: CustomColors.primary),
                           ),
                         ),
-                        child: Text(tr('add_item')),
                       ),
                     ],
                   ),
