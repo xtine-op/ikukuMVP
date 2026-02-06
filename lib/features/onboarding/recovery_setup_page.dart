@@ -34,7 +34,6 @@ class _RecoverySetupPageState extends State<RecoverySetupPage> {
     }
 
     setState(() {
-      _isLoading = true;
       _error = null;
     });
 
@@ -64,11 +63,7 @@ class _RecoverySetupPageState extends State<RecoverySetupPage> {
         _error = e.toString();
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      // Loading handled by LoadingButton
     }
   }
 
@@ -144,30 +139,29 @@ class _RecoverySetupPageState extends State<RecoverySetupPage> {
                 const SizedBox(height: 48),
                 SizedBox(
                   width: double.infinity,
-                  child: LoadingButton(
-                    onPressed: _isLoading ? null : _onSave,
-                    type: LoadingButtonType.elevated,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: CustomColors.buttonGradient,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: CustomColors.buttonGradient,
-                        borderRadius: BorderRadius.circular(10),
+                    child: LoadingButton(
+                      onPressed: _onSave,
+                      type: LoadingButtonType.elevated,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        constraints: const BoxConstraints(minHeight: 48),
-                        child: Text(
-                          'continue'.tr(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
+                      child: Text(
+                        'continue'.tr(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                          fontSize: 16,
                         ),
                       ),
                     ),

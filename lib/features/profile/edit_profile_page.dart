@@ -49,7 +49,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+    // Loading is handled by LoadingButton internally
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
@@ -109,9 +109,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      // Loading state cleanup handled by LoadingButton
     }
   }
 
@@ -241,35 +239,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
               // Save Button
               SizedBox(
                 width: double.infinity,
-                child: LoadingButton(
-                  onPressed: _saveProfile,
-                  type: LoadingButtonType.elevated,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    foregroundColor: CustomColors.text,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: CustomColors.buttonGradient,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: CustomColors.buttonGradient,
-                      borderRadius: BorderRadius.circular(12),
+                  child: LoadingButton(
+                    onPressed: _saveProfile,
+                    type: LoadingButtonType.elevated,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Container(
-                      alignment: Alignment.center,
-                      constraints: const BoxConstraints(minHeight: 48),
-                      child: Text(
-                        'save_changes'.tr(),
-                        style: const TextStyle(
-                          color: CustomColors.text,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    child: Text(
+                      'save_changes'.tr(),
+                      style: const TextStyle(
+                        color: CustomColors.text,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
