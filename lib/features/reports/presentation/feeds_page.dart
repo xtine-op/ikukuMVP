@@ -8,6 +8,7 @@ class FeedsPage extends StatelessWidget {
   final List<Map<String, dynamic>> selectedFeeds;
   final void Function(List<Map<String, dynamic>>) onSelectedFeedsChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const FeedsPage({
     super.key,
@@ -15,6 +16,7 @@ class FeedsPage extends StatelessWidget {
     required this.selectedFeeds,
     required this.onSelectedFeedsChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -27,6 +29,7 @@ class FeedsPage extends StatelessWidget {
           selectedFeeds: selectedFeeds,
           onSelectedFeedsChanged: onSelectedFeedsChanged,
           onContinue: onContinue,
+          onDone: onDone,
         ),
       ),
     );
@@ -38,12 +41,14 @@ class _FeedsSelector extends StatefulWidget {
   final List<Map<String, dynamic>> selectedFeeds;
   final void Function(List<Map<String, dynamic>>) onSelectedFeedsChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const _FeedsSelector({
     required this.feeds,
     required this.selectedFeeds,
     required this.onSelectedFeedsChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -200,36 +205,57 @@ class _FeedsSelectorState extends State<_FeedsSelector> {
           );
         }),
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: widget.onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        if (widget.onDone != null) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onDone,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CustomColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              child: const Text(
+                'DONE',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
+          ),
+        ] else ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: CustomColors.text,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Text(
-                  'continue'.tr(),
-                  style: const TextStyle(color: CustomColors.text),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Text(
+                    'continue'.tr(),
+                    style: const TextStyle(color: CustomColors.text),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

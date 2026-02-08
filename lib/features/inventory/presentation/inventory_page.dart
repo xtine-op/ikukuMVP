@@ -727,6 +727,7 @@ class _InventoryPageState extends State<InventoryPage> {
         return false;
       },
       child: Scaffold(
+        backgroundColor: const Color(0xFFF7F8FA),
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black87),
@@ -736,7 +737,6 @@ class _InventoryPageState extends State<InventoryPage> {
           backgroundColor: Colors.white,
           elevation: 0,
         ),
-        backgroundColor: Colors.white,
         body: loading
             ? const Center(child: CircularProgressIndicator())
             : Padding(
@@ -780,20 +780,22 @@ class _InventoryPageState extends State<InventoryPage> {
                       )
                     else
                       Expanded(
-                        child: ListView.separated(
+                        child: ListView.builder(
                           itemCount: items.length,
-                          separatorBuilder: (context, i) =>
-                              const SizedBox(height: 16),
                           itemBuilder: (context, i) {
                             final item = items[i];
                             return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.black12,
-                                  width: 1.2,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
                                 color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0x1400681D),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12,
@@ -809,8 +811,9 @@ class _InventoryPageState extends State<InventoryPage> {
                                       Text(
                                         item.name,
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
                                           fontSize: 16,
+                                          color: CustomColors.text,
                                         ),
                                       ),
                                       Text(

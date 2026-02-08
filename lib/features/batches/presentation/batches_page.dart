@@ -113,7 +113,10 @@ class _BatchesPageState extends State<BatchesPage> {
                     child: Container(
                       alignment: Alignment.center,
                       constraints: const BoxConstraints(minHeight: 48),
-                      child: Text(tr('yes')),
+                      child: Text(
+                        tr('yes'),
+                        style: const TextStyle(color: CustomColors.text),
+                      ),
                     ),
                   ),
                 ),
@@ -141,18 +144,19 @@ class _BatchesPageState extends State<BatchesPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Color(0xFFF7F8FA),
+        backgroundColor: const Color(0xFFF7F8FA),
         title: Text(tr('add_batch')),
         content: SizedBox(
           width: 510, // Increase dialog width for better UI
           child: Form(
             key: formKey,
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
+                    initialValue: name,
                     decoration: InputDecoration(
                       labelText: tr('batch_name'),
                       filled: true,
@@ -169,7 +173,7 @@ class _BatchesPageState extends State<BatchesPage> {
                         v == null || v.isEmpty ? tr('enter_batch_name') : null,
                     onSaved: (v) => name = v ?? '',
                   ),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     value: birdType,
                     items: [
@@ -200,8 +204,9 @@ class _BatchesPageState extends State<BatchesPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   TextFormField(
+                    initialValue: ageInDays.toString(),
                     decoration: InputDecoration(
                       labelText: tr('age_in_days'),
                       filled: true,
@@ -220,8 +225,9 @@ class _BatchesPageState extends State<BatchesPage> {
                         : null,
                     onSaved: (v) => ageInDays = int.tryParse(v ?? '0') ?? 0,
                   ),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   TextFormField(
+                    initialValue: totalChickens.toString(),
                     decoration: InputDecoration(
                       labelText: tr('total_chickens'),
                       filled: true,
@@ -240,8 +246,9 @@ class _BatchesPageState extends State<BatchesPage> {
                         : null,
                     onSaved: (v) => totalChickens = int.tryParse(v ?? '0') ?? 0,
                   ),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   TextFormField(
+                    initialValue: pricePerBird.toString(),
                     decoration: InputDecoration(
                       labelText: tr('price_per_bird'),
                       filled: true,
@@ -341,7 +348,7 @@ class _BatchesPageState extends State<BatchesPage> {
                   ),
                   child: Text(
                     tr('add_batch'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
@@ -382,7 +389,7 @@ class _BatchesPageState extends State<BatchesPage> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: const Color(0xFFF7F8FA),
         title: Text(tr('edit_batch')),
@@ -484,50 +491,47 @@ class _BatchesPageState extends State<BatchesPage> {
           // Save button
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 56, // Increased height
             child: LoadingButton(
               onPressed: () async {
                 if (formKey.currentState?.validate() ?? false) {
                   formKey.currentState?.save();
-                  final updatedBatch = batch.copyWith(
-                    name: name,
-                    pricePerBird: pricePerBird,
+                  await SupabaseService().updateBatch(
+                    batch
+                        .copyWith(name: name, pricePerBird: pricePerBird)
+                        .toJson(),
                   );
-                  await SupabaseService().updateBatch(updatedBatch.toJson());
+                  await Future.delayed(
+                    const Duration(milliseconds: 500),
+                  ); // Added delay
                   if (mounted) {
-                    Navigator.pop(context);
+                    // Use dialogContext to pop the dialog
+                    Navigator.pop(dialogContext);
                     fetchBatches();
                   }
                 }
               },
               type: LoadingButtonType.elevated,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
+                backgroundColor: CustomColors.primary,
                 shadowColor: Colors.transparent,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                foregroundColor: CustomColors.text,
-                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 12,
+                  vertical: 16, // Increased vertical padding
                 ),
               ),
-              child: Ink(
-                decoration: BoxDecoration(
-                  gradient: CustomColors.buttonGradient,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Container(
-                  alignment: Alignment.center,
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: Text(
-                    tr('save'),
-                    style: const TextStyle(color: CustomColors.text),
-                  ),
-                ),
+              child: Text(
+                tr('save'),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -561,6 +565,7 @@ class _BatchesPageState extends State<BatchesPage> {
   Widget build(BuildContext context) {
     final isEmpty = !loading && batches.isEmpty;
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -658,7 +663,7 @@ class _BatchesPageState extends State<BatchesPage> {
                                   'CREATE A BATCH',
                                   style: TextStyle(
                                     color: CustomColors.text,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                     fontSize: 16,
                                     letterSpacing: 0.5,
                                   ),
@@ -687,80 +692,139 @@ class _BatchesPageState extends State<BatchesPage> {
               ),
             )
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: batches.length,
               itemBuilder: (context, i) {
                 final batch = batches[i];
-                return ListTile(
-                  title: Text(batch.name),
-                  subtitle: Text(
-                    '${'bird_type'.tr()}: ${batch.birdType == 'broiler'
-                        ? 'broiler'.tr()
-                        : batch.birdType == 'layer'
-                        ? 'layer'.tr()
-                        : batch.birdType == 'kienyeji'
-                        ? 'kienyeji'.tr()
-                        : 'unknown_type'.tr()}, ${'chickens'.tr()}: ${batch.totalChickens}, Age: ${batch.currentAgeInDays} days',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          _showEditBatchDialog(batch);
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        color: Colors.red,
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              backgroundColor: Color(0xFFF7F8FA),
-                              title: const Text('Delete Batch'),
-                              content: Text(
-                                'Are you sure you want to delete "${batch.name}"?',
-                              ),
-                              actions: [
-                                OutlinedButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: CustomColors.primary,
-                                    side: BorderSide(
-                                      color: CustomColors.primary,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) {
-                            await SupabaseService().deleteBatch(batch.id);
-                            fetchBatches();
-                          }
-                        },
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0x1400681D),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  onTap: () {
-                    context.go('/report-entry');
-                  },
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    title: Text(
+                      batch.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: CustomColors.text,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        '${'bird_type'.tr()}: ${batch.birdType == 'broiler'
+                            ? 'broiler'.tr()
+                            : batch.birdType == 'layer'
+                            ? 'layer'.tr()
+                            : batch.birdType == 'kienyeji'
+                            ? 'kienyeji'.tr()
+                            : 'unknown_type'.tr()}\n${'chickens'.tr()}: ${batch.totalChickens}, Age: ${batch.currentAgeInDays} days',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: CustomColors.primary),
+                          onPressed: () {
+                            _showEditBatchDialog(batch);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                backgroundColor: const Color(0xFFF7F8FA),
+                                title: const Text('Delete Batch'),
+                                content: Text(
+                                  'Are you sure you want to delete "${batch.name}"?',
+                                ),
+                                actions: [
+                                  OutlinedButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: CustomColors.primary,
+                                      side: BorderSide(
+                                        color: CustomColors.primary,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  LoadingButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context, true);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              setState(() => loading = true);
+                              try {
+                                await SupabaseService().deleteBatch(batch.id);
+                                await OfflineDataProvider.instance.loadBatches(
+                                  forceRefresh: true,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Batch deleted successfully',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to delete batch: $e',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                fetchBatches();
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      _showEditBatchDialog(batch);
+                    },
+                  ),
                 );
               },
             ),

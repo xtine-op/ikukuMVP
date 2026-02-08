@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -6,6 +7,13 @@ class ReportDetailPage extends StatelessWidget {
   final Map<String, dynamic> report;
   final Map<String, dynamic>? batch;
   const ReportDetailPage({super.key, required this.report, this.batch});
+
+  void _editSection(BuildContext context, int stepIndex) {
+    context.push(
+      '/report-entry',
+      extra: {'report': report, 'batch': batch, 'initialStep': stepIndex},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +96,7 @@ class ReportDetailPage extends StatelessWidget {
             ),
             _SectionCard(
               title: '${'birds'.tr()}- ${birdType.toUpperCase()}',
+              onEdit: () => _editSection(context, 2),
               items: [
                 _SectionItem(
                   label: 'sold'.tr(),
@@ -110,6 +119,7 @@ class ReportDetailPage extends StatelessWidget {
             if (showEggs && eggsCollected != null)
               _SectionCard(
                 title: 'eggs'.tr(),
+                onEdit: () => _editSection(context, 3),
                 items: [
                   _SectionItem(
                     label: 'collected'.tr(),
@@ -128,6 +138,8 @@ class ReportDetailPage extends StatelessWidget {
               ),
             _SectionCard(
               title: 'feeds_used'.tr(),
+              onEdit: () =>
+                  _editSection(context, birdType == 'broiler' ? 3 : 4),
               items: [
                 ...feedsUsed.map(
                   (f) => _SectionItem(
@@ -141,6 +153,8 @@ class ReportDetailPage extends StatelessWidget {
             ),
             _SectionCard(
               title: 'vaccines'.tr(),
+              onEdit: () =>
+                  _editSection(context, birdType == 'broiler' ? 4 : 5),
               items: vaccinesUsed.isNotEmpty
                   ? [
                       ...vaccinesUsed.map(
@@ -156,6 +170,8 @@ class ReportDetailPage extends StatelessWidget {
             ),
             _SectionCard(
               title: 'other_materials'.tr(),
+              onEdit: () =>
+                  _editSection(context, birdType == 'broiler' ? 5 : 6),
               items: otherMaterialsUsed.isNotEmpty
                   ? [
                       ...otherMaterialsUsed.map(
@@ -172,6 +188,8 @@ class ReportDetailPage extends StatelessWidget {
             if (notes.isNotEmpty)
               _SectionCard(
                 title: 'additional_notes'.tr(),
+                onEdit: () =>
+                    _editSection(context, birdType == 'broiler' ? 6 : 7),
                 items: [_SectionItem(label: '', value: notes)],
               ),
             const SizedBox(height: 16),
@@ -216,8 +234,9 @@ class ReportDetailPage extends StatelessWidget {
 
 class _SectionCard extends StatelessWidget {
   final String title;
+  final VoidCallback? onEdit;
   final List<_SectionItem> items;
-  const _SectionCard({required this.title, required this.items});
+  const _SectionCard({required this.title, this.onEdit, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -245,6 +264,18 @@ class _SectionCard extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
+              if (onEdit != null)
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Text(
+                    'EDIT ITEMS',
+                    style: TextStyle(
+                      color: CustomColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 8),

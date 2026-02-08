@@ -27,7 +27,7 @@ class SelectBatchPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'select_batch_title'.tr(),
+            'Select the batch you are reporting for',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -37,17 +37,24 @@ class SelectBatchPage extends StatelessWidget {
             child: ListView(
               children: batches
                   .map(
-                    (batch) => Card(
-                      color: selectedBatch?.id == batch.id
-                          ? CustomColors
-                                .lightYellow // Light yellow for selected
-                          : batchesReportedToday.contains(batch.id)
-                          ? Colors.grey[200] // Grey for already reported
-                          : CustomColors.background,
-                      shape: RoundedRectangleBorder(
+                    (batch) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: selectedBatch?.id == batch.id
+                            ? CustomColors
+                                  .lightYellow // Light yellow for selected
+                            : batchesReportedToday.contains(batch.id)
+                            ? Colors.grey[200] // Grey for already reported
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0x1400681D),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      elevation: 0,
                       child: ListTile(
                         title: Padding(
                           padding: const EdgeInsets.only(bottom: 10.0),
@@ -62,26 +69,6 @@ class SelectBatchPage extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              if (batchesReportedToday.contains(batch.id))
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: CustomColors.lightGreen,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    'reported_today'.tr(),
-                                    style: TextStyle(
-                                      color: CustomColors.text,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -150,52 +137,16 @@ class SelectBatchPage extends StatelessWidget {
                                 color: CustomColors.secondary,
                               )
                             : null,
-                        onTap: batchesReportedToday.contains(batch.id)
-                            ? null
-                            : () => onBatchSelected(batch),
+                        onTap: () {
+                          onBatchSelected(batch);
+                          onContinue();
+                        },
                       ),
                     ),
                   )
                   .toList(),
             ),
           ),
-          // Move Continue button immediately after the batch list and center it
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 24.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: CustomColors.buttonGradient,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ElevatedButton(
-                  onPressed: selectedBatch != null ? onContinue : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    foregroundColor: CustomColors.text,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  child: Text(
-                    'continue'.tr(),
-                    style: const TextStyle(color: CustomColors.text),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (selectedBatch == null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                'select_batch_error'.tr(),
-                style: TextStyle(color: CustomColors.textDisabled),
-              ),
-            ),
         ],
       ),
     );

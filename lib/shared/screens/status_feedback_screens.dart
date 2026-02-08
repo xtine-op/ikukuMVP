@@ -146,8 +146,10 @@ class BatchErrorScreen extends StatelessWidget {
 /// Report Success Screen
 class ReportSuccessScreen extends StatelessWidget {
   final VoidCallback? onDone;
+  final String? buttonLabel;
 
-  const ReportSuccessScreen({Key? key, this.onDone}) : super(key: key);
+  const ReportSuccessScreen({Key? key, this.onDone, this.buttonLabel})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +168,7 @@ class ReportSuccessScreen extends StatelessWidget {
             child: StatusFeedback(
               heading: 'daily_report_saved'.tr(),
               bodyText: 'daily_report_saved_message'.tr(),
-              buttonLabel: 'back_to_dashboard'.tr(),
+              buttonLabel: buttonLabel ?? 'back_to_dashboard'.tr(),
               statusType: StatusType.success,
               imagePath: 'assets/icons/large_success_tick.svg',
               onButtonPressed: onDone ?? () => Navigator.pop(context),

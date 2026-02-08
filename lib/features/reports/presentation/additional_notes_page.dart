@@ -8,6 +8,7 @@ class AdditionalNotesPage extends StatelessWidget {
   final String? notes;
   final ValueChanged<String> onNotesChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const AdditionalNotesPage({
     super.key,
@@ -15,6 +16,7 @@ class AdditionalNotesPage extends StatelessWidget {
     required this.notes,
     required this.onNotesChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -51,33 +53,57 @@ class AdditionalNotesPage extends StatelessWidget {
             onChanged: onNotesChanged,
           ),
           const Spacer(),
-          ElevatedButton(
-            onPressed: onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Text(
-                  'continue'.tr(),
-                  style: const TextStyle(color: CustomColors.text),
+          if (onDone != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onDone,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CustomColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'DONE',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ),
-          ),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  foregroundColor: CustomColors.text,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: CustomColors.buttonGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Text(
+                      'continue'.tr(),
+                      style: const TextStyle(color: CustomColors.text),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

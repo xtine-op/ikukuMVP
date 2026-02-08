@@ -8,6 +8,7 @@ class VaccinesPage extends StatelessWidget {
   final List<Map<String, dynamic>> selectedVaccines;
   final void Function(List<Map<String, dynamic>>) onSelectedVaccinesChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const VaccinesPage({
     super.key,
@@ -15,6 +16,7 @@ class VaccinesPage extends StatelessWidget {
     required this.selectedVaccines,
     required this.onSelectedVaccinesChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -27,6 +29,7 @@ class VaccinesPage extends StatelessWidget {
           selectedVaccines: selectedVaccines,
           onSelectedVaccinesChanged: onSelectedVaccinesChanged,
           onContinue: onContinue,
+          onDone: onDone,
         ),
       ),
     );
@@ -38,12 +41,14 @@ class _VaccinesSelector extends StatefulWidget {
   final List<Map<String, dynamic>> selectedVaccines;
   final void Function(List<Map<String, dynamic>>) onSelectedVaccinesChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const _VaccinesSelector({
     required this.vaccines,
     required this.selectedVaccines,
     required this.onSelectedVaccinesChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -208,36 +213,57 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           );
         }),
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: widget.onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        if (widget.onDone != null) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onDone,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CustomColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              foregroundColor: CustomColors.text,
-              textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              child: const Text(
+                'DONE',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: CustomColors.buttonGradient,
-                borderRadius: BorderRadius.circular(12),
+          ),
+        ] else ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                foregroundColor: CustomColors.text,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              child: Container(
-                alignment: Alignment.center,
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Text(
-                  'continue'.tr(),
-                  style: const TextStyle(color: CustomColors.text),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: CustomColors.buttonGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Text(
+                    'continue'.tr(),
+                    style: const TextStyle(color: CustomColors.text),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

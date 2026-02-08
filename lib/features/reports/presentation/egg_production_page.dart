@@ -18,6 +18,7 @@ class EggProductionPage extends StatelessWidget {
   final int? brokenEggs;
   final ValueChanged<String> onBrokenEggsChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
 
   const EggProductionPage({
     super.key,
@@ -35,6 +36,7 @@ class EggProductionPage extends StatelessWidget {
     required this.brokenEggs,
     required this.onBrokenEggsChanged,
     required this.onContinue,
+    this.onDone,
   });
 
   @override
@@ -250,38 +252,59 @@ class EggProductionPage extends StatelessWidget {
             ),
           ),
 
-          // Continue button at the bottom
+          // Buttons at the bottom
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onContinue,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          if (onDone != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onDone,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CustomColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                foregroundColor: CustomColors.text,
-                textStyle: const TextStyle(fontWeight: FontWeight.w600),
-              ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
-              child: Ink(
-                decoration: BoxDecoration(
-                  gradient: CustomColors.buttonGradient,
-                  borderRadius: BorderRadius.circular(8),
+                child: const Text(
+                  'DONE',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                child: Container(
-                  alignment: Alignment.center,
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: Text(
-                    'continue'.tr(),
-                    style: const TextStyle(color: CustomColors.text),
+              ),
+            ),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: CustomColors.text,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ).copyWith(backgroundColor: WidgetStateProperty.all(null)),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: CustomColors.buttonGradient,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Text(
+                      'continue'.tr(),
+                      style: const TextStyle(color: CustomColors.text),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

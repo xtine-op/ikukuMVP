@@ -120,6 +120,7 @@
   "net_profit": "Faida Halisi",
   "total_sales": "Jumla ya Mauzo",
   "total_expenses": "Jumla ya Matumizi",
+  "view_report": "Angalia Ripoti",
   "dashboard_tour_batches_title": "Makundi ya Kuku",
   "dashboard_tour_batches_desc": "Bofya hapa kuongeza kundi jipya la kuku au kudhibiti yaliyopo. Fikiria kama banda lako la kidijitali!",
   "dashboard_tour_reports_title": "Ripoti za Shamba",
@@ -272,6 +273,8 @@
   
   "enter_quantity_kg": "Weka kiasi (kg)",
   "cannot_use_more_than_feed": "Haiwezi kutumia zaidi ya {0} kg ya {1}",
+  "already_reported_title": "Tayari Imeshawasilishwa",
+  "already_reported_message": "Tayari umeshatuma ripoti ya kundi hili kwa tarehe uliyochagua.",
 
 
   "no_batches_message": "Inaonekana hujaongeza makundi yako bado, nenda kwenye makundi na ongeza kundi la vifaranga ili kuendelea",

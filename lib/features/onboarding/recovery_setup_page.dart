@@ -25,6 +25,10 @@ class _RecoverySetupPageState extends State<RecoverySetupPage> {
     'question_4',
   ];
 
+  bool get _isEditing =>
+      (GoRouterState.of(context).extra as Map?)?.containsKey('initialStep') ??
+      false;
+
   Future<void> _onSave() async {
     if (_selectedQuestion == null || _answerController.text.trim().isEmpty) {
       setState(() {
@@ -56,7 +60,11 @@ class _RecoverySetupPageState extends State<RecoverySetupPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('recovery_saved'.tr())));
-        context.go('/');
+        if (_isEditing) {
+          context.pop();
+        } else {
+          context.go('/');
+        }
       }
     } catch (e) {
       setState(() {

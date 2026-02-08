@@ -167,43 +167,35 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  // Add a new batch record
+  // Add or update a batch record
   Future<void> addBatchRecord(Map<String, dynamic> record) async {
     // Create a copy of the record to avoid modifying the original
     final rec = Map<String, dynamic>.from(record);
 
-    // Debug: Print what we're about to save
-    print('addBatchRecord - feeds_used: ${rec['feeds_used']}');
-    print('addBatchRecord - vaccines_used: ${rec['vaccines_used']}');
-    print(
-      'addBatchRecord - other_materials_used: ${rec['other_materials_used']}',
-    );
-
     // Ensure feeds_used, vaccines_used, and other_materials_used are properly formatted
-    // These should be stored as JSON arrays in the database
     if (rec['feeds_used'] != null && rec['feeds_used'] is List) {
-      // Convert to proper format for database storage
       rec['feeds_used'] = List<Map<String, dynamic>>.from(rec['feeds_used']);
     }
-
     if (rec['vaccines_used'] != null && rec['vaccines_used'] is List) {
-      // Convert to proper format for database storage
       rec['vaccines_used'] = List<Map<String, dynamic>>.from(
         rec['vaccines_used'],
       );
     }
-
     if (rec['other_materials_used'] != null &&
         rec['other_materials_used'] is List) {
-      // Convert to proper format for database storage
       rec['other_materials_used'] = List<Map<String, dynamic>>.from(
         rec['other_materials_used'],
       );
     }
 
-    print('addBatchRecord - About to insert: $rec');
-    await supabase.from('batch_records').insert(rec);
-    print('addBatchRecord - Insert completed successfully');
+    if (rec.containsKey('id')) {
+      print('addBatchRecord - Updating existing record: ${rec['id']}');
+      await supabase.from('batch_records').update(rec).eq('id', rec['id']);
+    } else {
+      print('addBatchRecord - Inserting new record');
+      await supabase.from('batch_records').insert(rec);
+    }
+    print('addBatchRecord - Operation completed successfully');
   }
 
   // Fix database constraints to allow one report per batch per day
@@ -432,5 +424,30 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(
       await query.order('expense_date', ascending: false),
     );
+  }
+
+  // Fetch all report dates for a specific batch
+  Future<List<DateTime>> fetchReportDatesForBatch(String batchId) async {
+    try {
+      final response = await supabase
+          .from('batch_records')
+          .select('daily_records!inner(record_date)')
+          .eq('batch_id', batchId);
+
+      final List<DateTime> dates = [];
+      for (final item in response) {
+        final dailyRecord = item['daily_records'];
+        if (dailyRecord != null && dailyRecord['record_date'] != null) {
+          final date = DateTime.tryParse(dailyRecord['record_date']);
+          if (date != null) {
+            dates.add(date);
+          }
+        }
+      }
+      return dates;
+    } catch (e) {
+      print('Error fetching report dates for batch: $e');
+      return [];
+    }
   }
 }

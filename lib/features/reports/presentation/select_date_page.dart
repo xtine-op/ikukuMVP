@@ -6,12 +6,14 @@ class SelectDatePage extends StatefulWidget {
   final DateTime? selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onContinue;
+  final List<DateTime> reportedDates;
 
   const SelectDatePage({
     super.key,
     this.selectedDate,
     required this.onDateSelected,
     required this.onContinue,
+    this.reportedDates = const [],
   });
 
   @override
@@ -37,13 +39,28 @@ class _SelectDatePageState extends State<SelectDatePage> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: _selectedDate ?? today,
       firstDate: DateTime.now().subtract(
-        const Duration(days: 30),
-      ), // 30 days ago
-      lastDate: DateTime.now(),
+        const Duration(days: 365),
+      ), // 1 year ago
+      lastDate: today,
+      selectableDayPredicate: (DateTime date) {
+        // Disable future dates
+        if (date.isAfter(today)) {
+          return false;
+        }
+
+        // Disable dates that already have reports for this batch
+        return !widget.reportedDates.any(
+          (d) =>
+              d.year == date.year && d.month == date.month && d.day == date.day,
+        );
+      },
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(

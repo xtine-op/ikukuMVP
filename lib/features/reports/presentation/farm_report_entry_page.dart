@@ -33,6 +33,10 @@ class FarmReportEntryPage extends StatefulWidget {
 class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   // Multi-step flow: Batch -> Date -> ChickenReduction -> EggProduction (layers/kienyeji) -> Feeds -> Vaccines -> Other -> Notes -> Review
 
+  bool get _isEditing =>
+      (GoRouterState.of(context).extra as Map?)?.containsKey('initialStep') ??
+      false;
+
   // Step tracking
   int step = 0;
   PageController? _pageController;
@@ -117,16 +121,80 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
   List<Map<String, dynamic>> selectedVaccines = [];
   List<Map<String, dynamic>> selectedOtherMaterials = [];
 
+  // Track reported dates for the selected batch
+  List<DateTime> reportedDates = [];
+
   // Cache the pages list to avoid recreation during navigation
   List<Widget>? _cachedPages;
 
   @override
   void initState() {
     super.initState();
-    step = 0; // Ensure step starts at 0
-    _pageController = PageController(initialPage: 0);
-    print('[FarmReportEntryPage] PageController initialized with step: $step');
     _fetchInitialData();
+  }
+
+  void _initializeFromExtra() {
+    final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+    if (extra != null && extra.containsKey('initialStep')) {
+      step = extra['initialStep'] as int;
+      final reportData = extra['report'] as Map<String, dynamic>?;
+      final batchData = extra['batch'] as Map<String, dynamic>?;
+
+      if (batchData != null) {
+        selectedBatch = Batch.fromJson(batchData);
+      }
+
+      if (reportData != null) {
+        print('[FarmReportEntry] Initializing with report data: $reportData');
+        reportDate =
+            DateTime.tryParse(reportData['record_date'] ?? '') ??
+            DateTime.now();
+        selectedDate = reportDate;
+
+        // Populate other fields from reportData
+        chickenReduction = reportData['chicken_reduction'] == true
+            ? 'yes'
+            : 'no';
+        reductionCounts = {
+          'curled': reportData['chickens_curled'] ?? 0,
+          'stolen': reportData['chickens_stolen'] ?? 0,
+          'death': reportData['chickens_died'] ?? 0,
+          'sold': reportData['chickens_sold'] ?? 0,
+        };
+        salesAmount = (reportData['sales_amount'] as num?)?.toDouble();
+        eggsCollected = reportData['eggs_collected'];
+        collectedEggs = eggsCollected != null && eggsCollected! > 0;
+        gradeEggs = reportData['grade_eggs'] == true;
+        bigEggs = reportData['eggs_standard'];
+        deformedEggs = reportData['eggs_deformed'];
+        brokenEggs = reportData['eggs_broken'];
+        selectedFeeds =
+            (reportData['feeds_used'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e))
+                .toList() ??
+            [];
+        selectedVaccines =
+            (reportData['vaccines_used'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e))
+                .toList() ??
+            [];
+        selectedOtherMaterials =
+            (reportData['other_materials_used'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e))
+                .toList() ??
+            [];
+        notes = reportData['notes'];
+      }
+    } else {
+      step = 0;
+    }
+
+    if (selectedBatch != null) {
+      _fetchReportedDates(selectedBatch!.id);
+    }
+
+    _pageController = PageController(initialPage: step);
+    print('[FarmReportEntryPage] PageController initialized with step: $step');
   }
 
   @override
@@ -303,16 +371,13 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
     setState(() {
       batches = loadedBatches;
-      feeds = inventoryItems
-          .where((i) => i.category == 'feed' && i.quantity > 0)
-          .toList();
-      vaccines = inventoryItems
-          .where((i) => i.category == 'vaccine' && i.quantity > 0)
-          .toList();
+      feeds = inventoryItems.where((i) => i.category == 'feed').toList();
+      vaccines = inventoryItems.where((i) => i.category == 'vaccine').toList();
       otherMaterials = inventoryItems
-          .where((i) => i.category == 'other' && i.quantity > 0)
+          .where((i) => i.category == 'other')
           .toList();
       batchesReportedToday = reportedBatchIds;
+      _initializeFromExtra();
       loading = false;
       error = null;
       _invalidatePagesCache(); // Invalidate cache when data is loaded
@@ -334,95 +399,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
 
     // If we're on the batch selection step (step 0) and a batch is selected
     if (step == 0 && selectedBatch != null) {
-      print(
-        '[FarmReportEntryPage] On batch selection step with batch selected, checking if already reported',
-      );
-      setState(() => loading = true);
-      bool? alreadyReported;
-      String? errorMsg;
-      try {
-        alreadyReported = await SupabaseService()
-            .hasDailyRecordForBatch(selectedBatch!.id, DateTime.now())
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                errorMsg =
-                    'Request timed out. Please check your connection and try again.';
-                return false;
-              },
-            );
-      } catch (e) {
-        print('Error checking report status: $e');
-        // If there's an error checking status, allow the user to proceed
-        // This prevents blocking due to database issues
-        alreadyReported = false;
-        errorMsg = null;
-      }
-      if (errorMsg != null) {
-        setState(() => loading = false);
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            backgroundColor: const Color(0xFFF7F8FA),
-            title: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(
-                'error'.tr(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ),
-            content: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(errorMsg!),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: Text('ok'.tr()),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-      if (alreadyReported == true) {
-        setState(() => loading = false);
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            backgroundColor: const Color(0xFFF7F8FA),
-            title: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text(
-                'already_reported_title'.tr(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ),
-            content: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Text('already_reported_message'.tr()),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: Text('ok'.tr()),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-      print('[FarmReportEntryPage] Moving to chicken reduction step (step 1)');
+      print('[FarmReportEntryPage] Moving to Select Date step (step 1)');
       setState(() {
         loading = false;
         step = 1;
@@ -645,6 +622,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       );
     }
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -748,36 +726,78 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
     _cachedPages = null;
   }
 
+  Future<void> _fetchReportedDates(String batchId) async {
+    final dates = await SupabaseService().fetchReportDatesForBatch(batchId);
+    setState(() {
+      reportedDates = dates;
+      _invalidatePagesCache();
+    });
+  }
+
   Future<void> _checkExistingReport(DateTime date) async {
-    if (selectedBatch == null) return;
+    if (selectedBatch == null || _isEditing) return;
 
+    setState(() => loading = true);
+    bool alreadyReported = false;
     try {
-      await SupabaseService().supabase
-          .from('farm_reports')
-          .select()
-          .eq('batch_id', selectedBatch!.id)
-          .eq('report_date', DateFormat('yyyy-MM-dd').format(date))
-          .single();
-
-      if (mounted) {
-        // Show warning dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('existing_report_warning'.tr()),
-            content: Text('report_exists_for_date'.tr()),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('ok'.tr()),
-              ),
-            ],
-          ),
-        );
-      }
+      alreadyReported = await SupabaseService()
+          .hasDailyRecordForBatch(selectedBatch!.id, date)
+          .timeout(const Duration(seconds: 10));
     } catch (e) {
-      // No existing report found, which is what we want
-      // We proceed silently in this case
+      print('Error checking report status: $e');
+      alreadyReported = false;
+    }
+
+    setState(() => loading = false);
+
+    if (alreadyReported && mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: const Color(0xFFF7F8FA),
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Text(
+              'already_reported_title'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Text('already_reported_message'.tr()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                // Stay on step 1 (Select Date)
+                if (mounted) {
+                  setState(() {
+                    step = 1;
+                    _invalidatePagesCache();
+                  });
+                  _pageController?.jumpToPage(1);
+                }
+              },
+              child: Text('ok'.tr()),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // If no report exists, we STILL want to stay on the same page
+      // to allow the user to click "Continue" manually.
+      if (mounted) {
+        setState(() {
+          step = 1;
+          _invalidatePagesCache();
+        });
+        _pageController?.jumpToPage(1);
+      }
     }
   }
 
@@ -813,6 +833,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       // Page 2: Select Date
       SelectDatePage(
         selectedDate: selectedDate,
+        reportedDates: reportedDates,
         onDateSelected: (date) {
           setState(() {
             selectedDate = date;
@@ -823,8 +844,10 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           _checkExistingReport(date);
         },
         onContinue: () {
-          print('[FarmReportEntryPage] SelectDatePage onContinue called');
-          _nextStep();
+          // Stay on the same page after date selection and clicking ok/continue
+          print(
+            '[FarmReportEntryPage] SelectDatePage onContinue called - staying on page',
+          );
         },
       ),
 
@@ -841,6 +864,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           _invalidatePagesCache();
         }),
         onContinue: _nextStep,
+        onDone: _isEditing ? _saveReport : null,
         selectedBatch: selectedBatch,
         salesAmount: salesAmount,
         onSalesAmountChanged: (amount) => setState(() {
@@ -885,6 +909,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             _invalidatePagesCache();
           }),
           onContinue: _nextStep,
+          onDone: _isEditing ? _saveReport : null,
         ),
       // Page 4: Feeds (always shown)
       FeedsPage(
@@ -893,6 +918,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         onSelectedFeedsChanged: (newFeeds) =>
             setState(() => selectedFeeds = newFeeds),
         onContinue: _nextStep,
+        onDone: _isEditing ? _saveReport : null,
       ),
       // Page 5: Vaccines
       VaccinesPage(
@@ -901,6 +927,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         onSelectedVaccinesChanged: (newVaccines) =>
             setState(() => selectedVaccines = newVaccines),
         onContinue: _nextStep,
+        onDone: _isEditing ? _saveReport : null,
       ),
       // Page 6: Other Materials
       OtherMaterialsPage(
@@ -909,6 +936,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         onSelectedOtherMaterialsChanged: (newMaterials) =>
             setState(() => selectedOtherMaterials = newMaterials),
         onContinue: _nextStep,
+        onDone: _isEditing ? _saveReport : null,
       ),
       // Page 7: Additional Notes
       AdditionalNotesPage(
@@ -916,6 +944,7 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         notes: notes,
         onNotesChanged: (v) => setState(() => notes = v),
         onContinue: _nextStep,
+        onDone: _isEditing ? _saveReport : null,
       ),
       // Page 8: Review & Save
       ReviewAndSavePage(
@@ -1122,57 +1151,71 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
         print(
           '[FarmReportEntry] Device is online, proceeding with online save',
         );
-        // Check again before saving (in case of race condition)
-        final alreadyReported = await SupabaseService().hasDailyRecordForBatch(
-          selectedBatch!.id,
-          DateTime.now(),
-        );
-        if (alreadyReported) {
-          setState(() => loading = false);
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              backgroundColor: const Color(0xFFF7F8FA),
-              title: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                child: Text(
-                  'already_reported_title'.tr(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+        // Check again before saving (in case of race condition), but allow if editing
+        if (!_isEditing) {
+          final alreadyReported = await SupabaseService()
+              .hasDailyRecordForBatch(selectedBatch!.id, reportDate);
+          if (alreadyReported) {
+            setState(() => loading = false);
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                backgroundColor: const Color(0xFFF7F8FA),
+                title: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 24,
+                  ),
+                  child: Text(
+                    'already_reported_title'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
-              ),
-              content: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 24,
+                content: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 24,
+                  ),
+                  child: Text('already_reported_message'.tr()),
                 ),
-                child: Text('already_reported_message'.tr()),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: Text('ok'.tr()),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: Text('ok'.tr()),
-                ),
-              ],
-            ),
-          );
-          return;
+            );
+            return;
+          }
         }
       }
 
       final now = DateTime.now();
+      final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      final existingReport = extra?['report'] as Map<String, dynamic>?;
+
+      print('[FarmReportEntry] existingReport from extra: $existingReport');
 
       // Prepare comprehensive report data
       final reportData = <String, dynamic>{
+        if (existingReport != null && existingReport.containsKey('id'))
+          'id': existingReport['id'],
+        if (existingReport != null &&
+            existingReport.containsKey('daily_record_id'))
+          'daily_record_id': existingReport['daily_record_id'],
         'user_id': user.id,
-        'record_date': now.toIso8601String(),
+        'record_date': existingReport != null
+            ? existingReport['record_date']
+            : now.toIso8601String(),
         'notes': notes,
         'batch_id': selectedBatch!.id,
         'chicken_reduction': chickenReduction == 'yes',
@@ -1248,11 +1291,18 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           insetPadding: EdgeInsets.zero,
           backgroundColor: Colors.transparent,
           child: ReportSuccessScreen(
+            buttonLabel: _isEditing ? 'view_report'.tr() : null,
             onDone: () {
               Navigator.pop(ctx);
               _showingDialog = false;
               if (mounted) {
-                context.go('/');
+                if (_isEditing) {
+                  // Pass back the updated report data to ensure UI refreshes if needed
+                  // or simply pop back to the report details page which is already in the stack
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
               }
             },
           ),
@@ -1404,17 +1454,23 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       }
     }
 
-    // Create daily record (notes go to batch record, not daily record)
-    final dailyRecordData = {
-      'user_id': reportData['user_id'],
-      'record_date':
-          reportData['record_date'] ?? DateTime.now().toIso8601String(),
-    };
-    final dailyRecordId = await SupabaseService().addDailyRecord(
-      dailyRecordData,
-    );
+    // Create/Reuse daily record
+    String? dailyRecordId;
+    if (reportData.containsKey('daily_record_id') &&
+        reportData['daily_record_id'] != null) {
+      dailyRecordId = reportData['daily_record_id'];
+      print('[FarmReportEntry] Reusing dailyRecordId: $dailyRecordId');
+    } else {
+      final dailyRecordData = {
+        'user_id': reportData['user_id'],
+        'record_date':
+            reportData['record_date'] ?? DateTime.now().toIso8601String(),
+      };
+      dailyRecordId = await SupabaseService().addDailyRecord(dailyRecordData);
+      print('[FarmReportEntry] Created new dailyRecordId: $dailyRecordId');
+    }
 
-    // Create batch record
+    // Create/Update batch record
     final batchRecordData = Map<String, dynamic>.from(reportData);
     batchRecordData['daily_record_id'] = dailyRecordId;
     batchRecordData.remove('user_id');

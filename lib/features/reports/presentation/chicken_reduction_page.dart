@@ -9,6 +9,7 @@ class ChickenReductionPage extends StatelessWidget {
   final Map<String, int> reductionCounts;
   final ValueChanged<Map<String, int>> onCountsChanged;
   final VoidCallback onContinue;
+  final VoidCallback? onDone;
   final dynamic selectedBatch;
   final double? salesAmount;
   final ValueChanged<double>? onSalesAmountChanged;
@@ -20,6 +21,7 @@ class ChickenReductionPage extends StatelessWidget {
     required this.reductionCounts,
     required this.onCountsChanged,
     required this.onContinue,
+    this.onDone,
     this.selectedBatch,
     this.salesAmount,
     this.onSalesAmountChanged,
@@ -123,41 +125,65 @@ class ChickenReductionPage extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onContinue,
-                    style:
-                        ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          foregroundColor: CustomColors.text,
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ).copyWith(
-                          backgroundColor: WidgetStateProperty.all(null),
+                if (onDone != null) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onDone,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CustomColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: CustomColors.buttonGradient,
-                        borderRadius: BorderRadius.circular(8),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        constraints: const BoxConstraints(minHeight: 48),
-                        child: Text(
-                          'continue'.tr(),
-                          style: const TextStyle(color: CustomColors.text),
+                      child: const Text(
+                        'DONE',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ),
-                ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onContinue,
+                      style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            foregroundColor: CustomColors.text,
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ).copyWith(
+                            backgroundColor: WidgetStateProperty.all(null),
+                          ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: CustomColors.buttonGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          constraints: const BoxConstraints(minHeight: 48),
+                          child: Text(
+                            'continue'.tr(),
+                            style: const TextStyle(color: CustomColors.text),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
