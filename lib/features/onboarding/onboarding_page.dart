@@ -18,17 +18,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<_OnboardingScreenData> _screens = [
     _OnboardingScreenData(
-      image: 'assets/icons/onboarding-image-1.png',
+      image: 'assets/icons/onboarding-1.png',
       title: 'onboarding_title_1',
       description: 'onboarding_desc_1',
     ),
     _OnboardingScreenData(
-      image: 'assets/icons/onboarding-image-2.png',
+      image: 'assets/icons/onboarding-2.png',
       title: 'onboarding_title_2',
       description: 'onboarding_desc_2',
     ),
     _OnboardingScreenData(
-      image: 'assets/icons/onboarding-image-3.png',
+      image: 'assets/icons/onboarding-3.png',
       title: 'onboarding_title_3',
       description: 'onboarding_desc_3',
     ),

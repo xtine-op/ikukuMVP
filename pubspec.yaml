@@ -124,4 +124,7 @@ flutter:
     - assets/icons/error_warning.svg
     - assets/icons/large_success_tick.svg
     - assets/icons/large_error_cross.svg
+    - assets/icons/onboarding-1.png
+    - assets/icons/onboarding-2.png
+    - assets/icons/onboarding-3.png
 
