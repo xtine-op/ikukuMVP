@@ -396,5 +396,7 @@
   "fetch_question": "Fetch Question",
   "verify_answer": "Verify Answer",
   "incorrect_answer": "Incorrect answer. Please try again.",
-  "user_not_found": "No account found with this phone number."
+  "user_not_found": "No account found with this phone number.",
+  "cannot_see_items": "Cannot see the items in the list?",
+  "add_item_to_store": "Add item to store"
 }

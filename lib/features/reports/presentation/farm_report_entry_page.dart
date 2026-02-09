@@ -626,24 +626,16 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () async {
+          onPressed: () {
             if (step > 0 && _pageController != null) {
               // If on Feeds page and batch type is not layers/kienyeji, skip Egg Production
               if (step == _feedsPageIndex && !_isLayersOrKienyeji()) {
-                await _animateToStep(_chickenReductionPageIndex);
+                _animateToStep(_chickenReductionPageIndex);
               } else {
-                await _animateToStep(step - 1);
+                _animateToStep(step - 1);
               }
             } else {
-              if (Navigator.of(context).canPop()) {
-                Future.microtask(() {
-                  if (mounted) context.pop();
-                });
-              } else {
-                Future.microtask(() {
-                  if (mounted) context.go('/');
-                });
-              }
+              Navigator.of(context).pop();
             }
           },
         ),
@@ -690,11 +682,6 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             } else {
               await _animateToStep(step - 1);
             }
-            return false;
-          } else if (Navigator.of(context).canPop()) {
-            Future.microtask(() {
-              if (mounted) context.pop();
-            });
             return false;
           }
           return true;
@@ -822,12 +809,48 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           });
         },
         onContinue: () async {
-          await _checkExistingReport(selectedDate);
-          // Only proceed if no report exists
-          final alreadyReported = await SupabaseService()
-              .hasDailyRecordForBatch(selectedBatch!.id, selectedDate)
-              .timeout(const Duration(seconds: 10));
-          if (!alreadyReported) {
+          if (selectedBatch == null) return;
+          
+          setState(() => loading = true);
+          bool alreadyReported = false;
+          try {
+            alreadyReported = await SupabaseService()
+                .hasDailyRecordForBatch(selectedBatch!.id, selectedDate)
+                .timeout(const Duration(seconds: 10));
+          } catch (e) {
+            print('Error checking report status: $e');
+          }
+          setState(() => loading = false);
+          
+          if (alreadyReported && mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                backgroundColor: const Color(0xFFF7F8FA),
+                title: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: Text(
+                    'already_reported_title'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                content: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: Text('already_reported_message'.tr()),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text('ok'.tr()),
+                  ),
+                ],
+              ),
+            );
+          } else {
             _nextStep();
           }
         },

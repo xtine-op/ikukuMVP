@@ -169,9 +169,9 @@
   "have_collected_eggs_today": "Je, umekusanya mayai leo?",
   "would_like_to_grade_eggs": "Je, ungependa kupima mayai yako?",
   "onboarding_title_1": "Karibu Ikuku!",
-  "onboarding_desc_1": "Fuatilia shamba lako, simamia duka lako, na ripoti kwa urahisi.",
-  "onboarding_title_2": "Ongeza Maelezo ya Shamba",
-  "onboarding_desc_2": "Weka wasifu wa shamba lako kuanza.",
+  "onboarding_desc_1": "Fuatilia shamba na biashara yako kwa urahisi.",
+  "onboarding_title_2": "Huduma Za Ugani",
+  "onboarding_desc_2": "Pata ushauri wa kitalaamu wa kuku popote, saa yoyote",
   "onboarding_title_3": "Anza Kuripoti",
   "onboarding_desc_3": "Rekodi shughuli za kila siku na uone maendeleo yako kwa urahisi.",
   "onboarding_title_4": "Fuatilia Kiwanda",
@@ -402,5 +402,7 @@
   "fetch_question": "Tafuta Swali",
   "verify_answer": "Thibitisha Jibu",
   "incorrect_answer": "Jibu si sahihi. Tafadhali jaribu tena.",
-  "user_not_found": "Hakuna akaunti iliyopatikana na nambari hii ya simu."
+  "user_not_found": "Hakuna akaunti iliyopatikana na nambari hii ya simu.",
+  "cannot_see_items": "Huwezi kuona vitu kwenye orodha?",
+  "add_item_to_store": "Ongeza kipengele kwenye stoo"
 }

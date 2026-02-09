@@ -154,19 +154,39 @@ class _VaccinesSelectorState extends State<_VaccinesSelector> {
           style: const TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 8),
-        ...widget.vaccines.map((vaccine) {
-          final isSelected = _selectedVaccines.any(
-            (v) => v['name'] == vaccine.name,
-          );
-          return CheckboxListTile(
-            value: isSelected,
-            title: Text(
-              '${vaccine.name} (${"stock".tr()}: ${vaccine.quantity} ${"lit".tr()})',
+        if (widget.vaccines.isEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'cannot_see_items'.tr(),
+            style: TextStyle(
+              fontSize: 14,
+              color: CustomColors.textDisabled,
             ),
-            onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          );
-        }),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pushNamed('/inventory-categories');
+            },
+            icon: const Icon(Icons.add),
+            label: Text('add_item_to_store'.tr()),
+          ),
+          const SizedBox(height: 16),
+        ] else ...[
+          ...widget.vaccines.map((vaccine) {
+            final isSelected = _selectedVaccines.any(
+              (v) => v['name'] == vaccine.name,
+            );
+            return CheckboxListTile(
+              value: isSelected,
+              title: Text(
+                '${vaccine.name} (${"stock".tr()}: ${vaccine.quantity} ${"lit".tr()})',
+              ),
+              onChanged: (checked) => _toggleVaccine(vaccine, checked ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+            );
+          }),
+        ],
         const SizedBox(height: 16),
         ..._selectedVaccines.map((v) {
           final vaccineName = v['name'] as String;

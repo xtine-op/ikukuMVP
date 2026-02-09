@@ -154,19 +154,39 @@ class _OtherMaterialsSelectorState extends State<_OtherMaterialsSelector> {
           style: const TextStyle(fontSize: 18),
         ),
         const SizedBox(height: 8),
-        ...widget.otherMaterials.map((material) {
-          final isSelected = _selectedOtherMaterials.any(
-            (m) => m['name'] == material.name,
-          );
-          return CheckboxListTile(
-            value: isSelected,
-            title: Text(
-              '${material.name} (${"stock".tr()}: ${material.quantity})',
+        if (widget.otherMaterials.isEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'cannot_see_items'.tr(),
+            style: TextStyle(
+              fontSize: 14,
+              color: CustomColors.textDisabled,
             ),
-            onChanged: (checked) => _toggleMaterial(material, checked ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          );
-        }),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pushNamed('/inventory-categories');
+            },
+            icon: const Icon(Icons.add),
+            label: Text('add_item_to_store'.tr()),
+          ),
+          const SizedBox(height: 16),
+        ] else ...[
+          ...widget.otherMaterials.map((material) {
+            final isSelected = _selectedOtherMaterials.any(
+              (m) => m['name'] == material.name,
+            );
+            return CheckboxListTile(
+              value: isSelected,
+              title: Text(
+                '${material.name} (${"stock".tr()}: ${material.quantity})',
+              ),
+              onChanged: (checked) => _toggleMaterial(material, checked ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+            );
+          }),
+        ],
         const SizedBox(height: 16),
         ..._selectedOtherMaterials.map((m) {
           final name = m['name'];
