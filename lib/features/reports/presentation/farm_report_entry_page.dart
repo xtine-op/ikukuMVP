@@ -772,32 +772,12 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                // Stay on step 1 (Select Date)
-                if (mounted) {
-                  setState(() {
-                    step = 1;
-                    _invalidatePagesCache();
-                  });
-                  _pageController?.jumpToPage(1);
-                }
-              },
+              onPressed: () => Navigator.of(ctx).pop(),
               child: Text('ok'.tr()),
             ),
           ],
         ),
       );
-    } else {
-      // If no report exists, we STILL want to stay on the same page
-      // to allow the user to click "Continue" manually.
-      if (mounted) {
-        setState(() {
-          step = 1;
-          _invalidatePagesCache();
-        });
-        _pageController?.jumpToPage(1);
-      }
     }
   }
 
@@ -840,14 +820,16 @@ class _FarmReportEntryPageState extends State<FarmReportEntryPage> {
             reportDate = date;
             _invalidatePagesCache();
           });
-          // Check if a report already exists for this date
-          _checkExistingReport(date);
         },
-        onContinue: () {
-          // Stay on the same page after date selection and clicking ok/continue
-          print(
-            '[FarmReportEntryPage] SelectDatePage onContinue called - staying on page',
-          );
+        onContinue: () async {
+          await _checkExistingReport(selectedDate);
+          // Only proceed if no report exists
+          final alreadyReported = await SupabaseService()
+              .hasDailyRecordForBatch(selectedBatch!.id, selectedDate)
+              .timeout(const Duration(seconds: 10));
+          if (!alreadyReported) {
+            _nextStep();
+          }
         },
       ),
 
