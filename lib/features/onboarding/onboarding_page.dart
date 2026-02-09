@@ -207,48 +207,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         ),
                         const SizedBox(height: 24),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Skip button on left
-                            if (_currentPage != _screens.length - 1) ...[
-                              TextButton(
-                                onPressed: () async {
-                                  final prefs =
-                                      await SharedPreferences.getInstance();
-                                  await prefs.setBool(
-                                    'onboarding_complete',
-                                    true,
-                                  );
-                                  widget.onFinish();
-                                },
-                                child: Text(
-                                  'skip'.tr(),
-                                  style: TextStyle(color: CustomColors.text),
-                                ),
-                              ),
-                            ] else ...[
-                              const SizedBox(width: 48),
-                            ],
-                            // Continue button on right
-                            if (_currentPage != _screens.length - 1) ...[
+                            // Continue button centered on page 3
+                            if (_currentPage == 2) ...[
                               CircleAvatar(
-                                backgroundColor:
-                                    (_currentPage == 0 ||
-                                        _currentPage == 1 ||
-                                        _currentPage == 3 ||
-                                        _currentPage == 4)
-                                    ? CustomColors.primary
-                                    : Colors.white.withOpacity(0.18),
+                                backgroundColor: Colors.white.withOpacity(0.18),
                                 child: IconButton(
                                   icon: Icon(
                                     Icons.arrow_forward,
-                                    color:
-                                        (_currentPage == 0 ||
-                                            _currentPage == 1 ||
-                                            _currentPage == 3 ||
-                                            _currentPage == 4)
-                                        ? Colors.white
-                                        : CustomColors.text,
+                                    color: CustomColors.text,
+                                  ),
+                                  onPressed: _onNext,
+                                ),
+                              ),
+                            ] else if (_currentPage != _screens.length - 1) ...[
+                              // Skip button on left
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton(
+                                    onPressed: () async {
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
+                                      await prefs.setBool(
+                                        'onboarding_complete',
+                                        true,
+                                      );
+                                      widget.onFinish();
+                                    },
+                                    child: Text(
+                                      'skip'.tr(),
+                                      style: TextStyle(color: CustomColors.text),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Continue button on right
+                              CircleAvatar(
+                                backgroundColor: CustomColors.primary,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
                                   ),
                                   onPressed: _onNext,
                                 ),
