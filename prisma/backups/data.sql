@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict E2p9ffpwuvepcOyx0XgKl6jOoENAgtKGnMqke4vJCUwaFS4FCeaQ0gQqDtzQBDv
+-- \restrict P9Sz9KyqinZkVCR3kN0rpGNxPbTfrRJNGWlz9Y8iYWlK9oba9ACIgZOjy05tpFa
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -622,6 +622,8 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	015a2515-2e3a-4652-85ff-553365d699d5	{"action":"token_revoked","actor_id":"7720f8b9-5587-4fac-a275-3c59cf19f5d3","actor_username":"tester@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-02-09 07:40:24.14787+00	
 00000000-0000-0000-0000-000000000000	80817d9b-27eb-451e-b614-ee49a4a23fbb	{"action":"token_refreshed","actor_id":"7720f8b9-5587-4fac-a275-3c59cf19f5d3","actor_username":"tester@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-02-09 08:39:54.947974+00	
 00000000-0000-0000-0000-000000000000	b0f821c5-8815-4a7c-bf1d-73722f3b69d0	{"action":"token_revoked","actor_id":"7720f8b9-5587-4fac-a275-3c59cf19f5d3","actor_username":"tester@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-02-09 08:39:54.967013+00	
+00000000-0000-0000-0000-000000000000	4805fdf4-6498-40d9-82f6-010ad2809f23	{"action":"user_repeated_signup","actor_id":"8c23da63-3d8b-4999-af4c-d28f8fa6f3de","actor_username":"xtineopwapo@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-02-10 10:54:13.095619+00	
+00000000-0000-0000-0000-000000000000	264c5fcc-7d28-4a28-afcb-f4333723228a	{"action":"user_repeated_signup","actor_id":"89f818c2-c79f-4eb1-b931-a2029983f13f","actor_username":"christine@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-02-10 13:35:45.780766+00	
 \.
 
 
@@ -1287,6 +1289,6 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 290, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict E2p9ffpwuvepcOyx0XgKl6jOoENAgtKGnMqke4vJCUwaFS4FCeaQ0gQqDtzQBDv
+-- \unrestrict P9Sz9KyqinZkVCR3kN0rpGNxPbTfrRJNGWlz9Y8iYWlK9oba9ACIgZOjy05tpFa
 
 RESET ALL;
