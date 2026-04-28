@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict s1dNwTTd5FwZcp9fuTgrzKeOA2paa34frkSx2Xzm02ZWWohzC0KygzQhaTAeAso
+-- \restrict disPNZHQiRVjUMWuIwMbMIwroOEbrK0NCJoUdhuEuoCQqhn24X1qv9I8refkgFz
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -863,6 +863,7 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	0cc6175f-2319-469f-b173-6f3db350928f	{"action":"user_repeated_signup","actor_id":"8c23da63-3d8b-4999-af4c-d28f8fa6f3de","actor_username":"xtineopwapo@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-04-23 05:24:08.065716+00	
 00000000-0000-0000-0000-000000000000	ee864741-7587-4753-a4a2-b4b90c2578b3	{"action":"user_signedup","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-04-25 06:54:50.977733+00	
 00000000-0000-0000-0000-000000000000	be730cea-7b48-47a4-875e-30a8784865c6	{"action":"login","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-04-25 06:54:51.009073+00	
+00000000-0000-0000-0000-000000000000	e6735086-ff34-4843-8d16-88702e6a83ea	{"action":"user_repeated_signup","actor_id":"2bd5f804-d025-4d99-8e8e-3cc978369df7","actor_username":"shemaiahngala8@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-04-27 10:10:19.63177+00	
 \.
 
 
@@ -1801,6 +1802,6 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 403, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict s1dNwTTd5FwZcp9fuTgrzKeOA2paa34frkSx2Xzm02ZWWohzC0KygzQhaTAeAso
+-- \unrestrict disPNZHQiRVjUMWuIwMbMIwroOEbrK0NCJoUdhuEuoCQqhn24X1qv9I8refkgFz
 
 RESET ALL;
