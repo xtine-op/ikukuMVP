@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict disPNZHQiRVjUMWuIwMbMIwroOEbrK0NCJoUdhuEuoCQqhn24X1qv9I8refkgFz
+-- \restrict MSE1Sz04fja7OwecWIgKNq6tTCCv0K4k9aVaM9aR3BM10DAFZtJcx5DvFBbHZx3
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -864,6 +864,8 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	ee864741-7587-4753-a4a2-b4b90c2578b3	{"action":"user_signedup","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-04-25 06:54:50.977733+00	
 00000000-0000-0000-0000-000000000000	be730cea-7b48-47a4-875e-30a8784865c6	{"action":"login","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-04-25 06:54:51.009073+00	
 00000000-0000-0000-0000-000000000000	e6735086-ff34-4843-8d16-88702e6a83ea	{"action":"user_repeated_signup","actor_id":"2bd5f804-d025-4d99-8e8e-3cc978369df7","actor_username":"shemaiahngala8@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-04-27 10:10:19.63177+00	
+00000000-0000-0000-0000-000000000000	bb9c4645-5876-474c-9670-0315e24c5c80	{"action":"token_refreshed","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-04-28 04:56:58.552041+00	
+00000000-0000-0000-0000-000000000000	62dcca6c-793a-4470-b7ab-32eb40a5082e	{"action":"token_revoked","actor_id":"2e7c880b-cd7d-4dc3-a433-3e9de6843829","actor_username":"ratiatirati@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-04-28 04:56:58.577797+00	
 \.
 
 
@@ -946,7 +948,7 @@ COPY "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_pas
 00000000-0000-0000-0000-000000000000	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	authenticated	authenticated	hildakinya17@gmail.com	$2a$10$Qc80qzAXyUrfUOkJpBnCxuK7EIWYlngSVWXn8al3j9wblX0/adGxO	2026-03-09 09:01:55.048773+00	\N		\N		\N			\N	2026-04-08 11:19:24.237791+00	{"provider": "email", "providers": ["email"]}	{"sub": "058e4af7-39ae-4420-a9d8-b1b6f3cf62a9", "email": "hildakinya17@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-03-09 09:01:54.974304+00	2026-04-20 12:09:03.48152+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	dfc003db-05ba-460b-98ce-3cd171a63487	authenticated	authenticated	wingxbloom@gmail.com	$2a$10$fJyEz1QIjitxDl8/WxddceXPeWR7a1eXhS/prXL3JyEVJETSRfVkK	2026-03-18 14:49:41.685583+00	\N		\N		\N			\N	2026-03-18 14:49:41.722407+00	{"provider": "email", "providers": ["email"]}	{"sub": "dfc003db-05ba-460b-98ce-3cd171a63487", "email": "wingxbloom@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-03-18 14:49:41.5727+00	2026-04-16 06:34:45.617517+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	1e37a39f-e81d-4913-ba2e-17f328ff1f6f	authenticated	authenticated	okothburayo@gmail.com	$2a$10$YspU9OYsmZQYqpIOvSYkEeJXa7WibZkDsk8vukP1P24WatGnfNcLS	2026-04-20 08:21:10.193976+00	\N		\N		\N			\N	2026-04-20 08:21:10.222825+00	{"provider": "email", "providers": ["email"]}	{"sub": "1e37a39f-e81d-4913-ba2e-17f328ff1f6f", "email": "okothburayo@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-04-20 08:21:10.088116+00	2026-04-20 08:21:10.306333+00	\N	\N			\N		0	\N		\N	f	\N	f
-00000000-0000-0000-0000-000000000000	2e7c880b-cd7d-4dc3-a433-3e9de6843829	authenticated	authenticated	ratiatirati@gmail.com	$2a$10$rt8KQNFS757St1udPUqHvuTJNqavq65DFvnZZPT7aJBclrkk4IkOG	2026-04-25 06:54:50.994294+00	\N		\N		\N			\N	2026-04-25 06:54:51.012105+00	{"provider": "email", "providers": ["email"]}	{"sub": "2e7c880b-cd7d-4dc3-a433-3e9de6843829", "email": "ratiatirati@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-04-25 06:54:50.897789+00	2026-04-25 06:54:51.072483+00	\N	\N			\N		0	\N		\N	f	\N	f
+00000000-0000-0000-0000-000000000000	2e7c880b-cd7d-4dc3-a433-3e9de6843829	authenticated	authenticated	ratiatirati@gmail.com	$2a$10$rt8KQNFS757St1udPUqHvuTJNqavq65DFvnZZPT7aJBclrkk4IkOG	2026-04-25 06:54:50.994294+00	\N		\N		\N			\N	2026-04-25 06:54:51.012105+00	{"provider": "email", "providers": ["email"]}	{"sub": "2e7c880b-cd7d-4dc3-a433-3e9de6843829", "email": "ratiatirati@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-04-25 06:54:50.897789+00	2026-04-28 04:56:58.621978+00	\N	\N			\N		0	\N		\N	f	\N	f
 \.
 
 
@@ -1093,8 +1095,8 @@ bccd9ebb-bbe7-4aa5-8cb8-67a4ac4f31cc	81468649-c0d6-4e0e-ad5b-1e40161d1094	2026-0
 325e7256-35ed-4230-9ef0-4d0eb7e56f89	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	2026-04-08 11:19:24.237883+00	2026-04-08 11:19:24.237883+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	41.89.195.3	\N	\N	\N	\N	\N
 ead3be3e-26ad-481a-8b2e-8358c7721f7a	15c261b8-60a5-458c-91b7-5098a661f0b2	2026-04-09 08:34:14.813599+00	2026-04-18 10:24:26.591146+00	\N	aal1	\N	2026-04-18 10:24:26.591028	Dart/3.8 (dart:io)	41.89.195.3	\N	\N	\N	\N	\N
 707a3d7f-ae15-451e-94bf-dff5c083a602	1e37a39f-e81d-4913-ba2e-17f328ff1f6f	2026-04-20 08:21:10.222935+00	2026-04-20 08:21:10.222935+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	105.161.170.251	\N	\N	\N	\N	\N
-8cce345a-9bbe-452c-b1d5-76b85e248fa9	2e7c880b-cd7d-4dc3-a433-3e9de6843829	2026-04-25 06:54:51.012224+00	2026-04-25 06:54:51.012224+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	154.76.8.58	\N	\N	\N	\N	\N
 a273901f-0f82-4a49-978b-bd3f9da704b6	16ea2019-1055-46a6-8dd8-ce7a57da94a1	2026-03-17 13:11:44.159324+00	2026-04-22 04:34:34.702451+00	\N	aal1	\N	2026-04-22 04:34:34.702323	Dart/3.8 (dart:io)	217.199.148.226	\N	\N	\N	\N	\N
+8cce345a-9bbe-452c-b1d5-76b85e248fa9	2e7c880b-cd7d-4dc3-a433-3e9de6843829	2026-04-25 06:54:51.012224+00	2026-04-28 04:56:58.638787+00	\N	aal1	\N	2026-04-28 04:56:58.638675	Dart/3.8 (dart:io)	154.159.237.96	\N	\N	\N	\N	\N
 \.
 
 
@@ -1455,7 +1457,8 @@ COPY "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "revoked"
 00000000-0000-0000-0000-000000000000	334	av6rk2o7deye	e7210088-5be1-453d-86a6-b74c9d2883eb	t	2026-03-17 14:46:32.93509+00	2026-04-22 10:16:21.085745+00	\N	26bcfd1c-9ba2-4c17-87e0-8fab936c8899
 00000000-0000-0000-0000-000000000000	400	nfjoqf2be272	16ea2019-1055-46a6-8dd8-ce7a57da94a1	f	2026-04-22 04:34:34.66363+00	2026-04-22 04:34:34.66363+00	lut7m4meic5x	a273901f-0f82-4a49-978b-bd3f9da704b6
 00000000-0000-0000-0000-000000000000	401	trzqpcmdfbsr	e7210088-5be1-453d-86a6-b74c9d2883eb	f	2026-04-22 10:16:21.097827+00	2026-04-22 10:16:21.097827+00	av6rk2o7deye	26bcfd1c-9ba2-4c17-87e0-8fab936c8899
-00000000-0000-0000-0000-000000000000	403	jf4ujmn2rd5k	2e7c880b-cd7d-4dc3-a433-3e9de6843829	f	2026-04-25 06:54:51.050062+00	2026-04-25 06:54:51.050062+00	\N	8cce345a-9bbe-452c-b1d5-76b85e248fa9
+00000000-0000-0000-0000-000000000000	403	jf4ujmn2rd5k	2e7c880b-cd7d-4dc3-a433-3e9de6843829	t	2026-04-25 06:54:51.050062+00	2026-04-28 04:56:58.580257+00	\N	8cce345a-9bbe-452c-b1d5-76b85e248fa9
+00000000-0000-0000-0000-000000000000	404	lsp3tyucyl7a	2e7c880b-cd7d-4dc3-a433-3e9de6843829	f	2026-04-28 04:56:58.609753+00	2026-04-28 04:56:58.609753+00	jf4ujmn2rd5k	8cce345a-9bbe-452c-b1d5-76b85e248fa9
 \.
 
 
@@ -1795,13 +1798,13 @@ COPY "storage"."vector_indexes" ("id", "name", "bucket_id", "data_type", "dimens
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: supabase_auth_admin
 --
 
-SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 403, true);
+SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 404, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict disPNZHQiRVjUMWuIwMbMIwroOEbrK0NCJoUdhuEuoCQqhn24X1qv9I8refkgFz
+-- \unrestrict MSE1Sz04fja7OwecWIgKNq6tTCCv0K4k9aVaM9aR3BM10DAFZtJcx5DvFBbHZx3
 
 RESET ALL;
