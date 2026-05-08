@@ -487,6 +487,25 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
 ALTER TABLE "public"."users" OWNER TO "postgres";
 
 
+CREATE OR REPLACE VIEW "public"."user_dashboard_stats" AS
+ SELECT "id" AS "user_id",
+    "full_name",
+    ( SELECT COALESCE("sum"("batches"."total_chickens"), (0)::bigint) AS "coalesce"
+           FROM "public"."batches"
+          WHERE ("batches"."user_id" = "u"."id")) AS "total_birds",
+    ( SELECT COALESCE("sum"("inventory_items"."quantity"), (0)::bigint) AS "coalesce"
+           FROM "public"."inventory_items"
+          WHERE (("inventory_items"."user_id" = "u"."id") AND ("inventory_items"."category" = 'feed'::"text"))) AS "total_feeds",
+    ( SELECT COALESCE("sum"("br"."eggs_collected"), (0)::bigint) AS "coalesce"
+           FROM ("public"."batch_records" "br"
+             JOIN "public"."daily_records" "dr" ON (("br"."daily_record_id" = "dr"."id")))
+          WHERE ("dr"."user_id" = "u"."id")) AS "total_eggs"
+   FROM "public"."users" "u";
+
+
+ALTER VIEW "public"."user_dashboard_stats" OWNER TO "postgres";
+
+
 ALTER TABLE ONLY "public"."batch_records"
     ADD CONSTRAINT "batch_records_pkey" PRIMARY KEY ("id");
 
@@ -1084,6 +1103,12 @@ GRANT ALL ON TABLE "public"."sales_records" TO "service_role";
 GRANT ALL ON TABLE "public"."users" TO "anon";
 GRANT ALL ON TABLE "public"."users" TO "authenticated";
 GRANT ALL ON TABLE "public"."users" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "anon";
+GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "service_role";
 
 
 
