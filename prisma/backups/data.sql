@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict aBvQPbIilVJwixQrIQ5W9OSCmxOobbCEHPXwcUbMqO4XiIlOUr2eS9whmZjEvRg
+-- \restrict lXHH3Ls88ymzd9jAacQDdETU8WQWDo0vZlijn2GVL9cCLf9hpQfBZ8oZcMfSrV5
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -929,6 +929,8 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	cb46cd6b-4369-444a-9586-2529e944293a	{"action":"token_revoked","actor_id":"058e4af7-39ae-4420-a9d8-b1b6f3cf62a9","actor_username":"hildakinya17@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-05-08 08:33:15.218621+00	
 00000000-0000-0000-0000-000000000000	d7272236-9a0c-44ee-9a8b-1a78b5324a61	{"action":"user_signedup","actor_id":"7f354bb7-8977-4f76-861a-a755e5436a9f","actor_username":"ianmcmxvii1917@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-05-11 11:04:39.319204+00	
 00000000-0000-0000-0000-000000000000	40b6654b-8cfb-4f9a-8f30-4653dcbd304a	{"action":"login","actor_id":"7f354bb7-8977-4f76-861a-a755e5436a9f","actor_username":"ianmcmxvii1917@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-05-11 11:04:39.361221+00	
+00000000-0000-0000-0000-000000000000	9aa9aff3-7e1e-42e8-90b7-d402462e25a2	{"action":"token_refreshed","actor_id":"7f354bb7-8977-4f76-861a-a755e5436a9f","actor_username":"ianmcmxvii1917@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-05-12 09:46:55.226595+00	
+00000000-0000-0000-0000-000000000000	4f16fba1-7377-4d11-b04f-8461d4affb9f	{"action":"token_revoked","actor_id":"7f354bb7-8977-4f76-861a-a755e5436a9f","actor_username":"ianmcmxvii1917@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-05-12 09:46:55.258124+00	
 \.
 
 
@@ -1013,7 +1015,7 @@ COPY "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_pas
 00000000-0000-0000-0000-000000000000	1e37a39f-e81d-4913-ba2e-17f328ff1f6f	authenticated	authenticated	okothburayo@gmail.com	$2a$10$YspU9OYsmZQYqpIOvSYkEeJXa7WibZkDsk8vukP1P24WatGnfNcLS	2026-04-20 08:21:10.193976+00	\N		\N		\N			\N	2026-04-20 08:21:10.222825+00	{"provider": "email", "providers": ["email"]}	{"sub": "1e37a39f-e81d-4913-ba2e-17f328ff1f6f", "email": "okothburayo@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-04-20 08:21:10.088116+00	2026-04-20 08:21:10.306333+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	2e7c880b-cd7d-4dc3-a433-3e9de6843829	authenticated	authenticated	ratiatirati@gmail.com	$2a$10$rt8KQNFS757St1udPUqHvuTJNqavq65DFvnZZPT7aJBclrkk4IkOG	2026-04-25 06:54:50.994294+00	\N		\N		\N			\N	2026-04-25 06:54:51.012105+00	{"provider": "email", "providers": ["email"]}	{"sub": "2e7c880b-cd7d-4dc3-a433-3e9de6843829", "email": "ratiatirati@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-04-25 06:54:50.897789+00	2026-05-05 11:44:38.471504+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	57b2d7bb-8ac0-4f33-a128-b26e55d3b398	authenticated	authenticated	wamboielizabeth276@gmail.com	$2a$10$sisl3nLNG2.mBMZhvzGjX.tDdJOjUox.OQt.JNWKcxbQYWhyuIlQi	2026-05-01 14:32:30.338141+00	\N		\N		\N			\N	2026-05-01 18:26:20.046662+00	{"provider": "email", "providers": ["email"]}	{"sub": "57b2d7bb-8ac0-4f33-a128-b26e55d3b398", "email": "wamboielizabeth276@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-05-01 14:32:30.2563+00	2026-05-07 20:12:04.34286+00	\N	\N			\N		0	\N		\N	f	\N	f
-00000000-0000-0000-0000-000000000000	7f354bb7-8977-4f76-861a-a755e5436a9f	authenticated	authenticated	ianmcmxvii1917@gmail.com	$2a$10$84EcIGc4TUBcqaNv7IgVFu6EVtN28hX/oqxTSr1h09aA6BtCDRfS2	2026-05-11 11:04:39.334763+00	\N		\N		\N			\N	2026-05-11 11:04:39.36526+00	{"provider": "email", "providers": ["email"]}	{"sub": "7f354bb7-8977-4f76-861a-a755e5436a9f", "email": "ianmcmxvii1917@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-05-11 11:04:39.224308+00	2026-05-11 11:04:39.435802+00	\N	\N			\N		0	\N		\N	f	\N	f
+00000000-0000-0000-0000-000000000000	7f354bb7-8977-4f76-861a-a755e5436a9f	authenticated	authenticated	ianmcmxvii1917@gmail.com	$2a$10$84EcIGc4TUBcqaNv7IgVFu6EVtN28hX/oqxTSr1h09aA6BtCDRfS2	2026-05-11 11:04:39.334763+00	\N		\N		\N			\N	2026-05-11 11:04:39.36526+00	{"provider": "email", "providers": ["email"]}	{"sub": "7f354bb7-8977-4f76-861a-a755e5436a9f", "email": "ianmcmxvii1917@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-05-11 11:04:39.224308+00	2026-05-12 09:46:55.309689+00	\N	\N			\N		0	\N		\N	f	\N	f
 \.
 
 
@@ -1168,7 +1170,7 @@ a273901f-0f82-4a49-978b-bd3f9da704b6	16ea2019-1055-46a6-8dd8-ce7a57da94a1	2026-0
 74ef4612-1673-488a-955f-2f8c2ed42925	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	2026-03-13 16:22:16.628335+00	2026-05-07 19:48:52.04088+00	\N	aal1	\N	2026-05-07 19:48:52.040763	Dart/3.8 (dart:io)	154.159.237.218	\N	\N	\N	\N	\N
 9b889678-7981-4977-a767-c81931968a55	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	2026-05-07 21:12:17.837389+00	2026-05-07 21:12:17.837389+00	\N	aal1	\N	\N	Dart/3.11 (dart:io)	154.159.237.218	\N	\N	\N	\N	\N
 d609760a-0b41-4a3f-adaa-0541b4bd8a79	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	2026-05-07 21:26:47.34273+00	2026-05-08 08:33:15.282073+00	\N	aal1	\N	2026-05-08 08:33:15.281958	Dart/3.11 (dart:io)	154.159.237.218	\N	\N	\N	\N	\N
-8dc91db9-d128-4685-8eff-eb854d9ec576	7f354bb7-8977-4f76-861a-a755e5436a9f	2026-05-11 11:04:39.366422+00	2026-05-11 11:04:39.366422+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	62.8.73.119	\N	\N	\N	\N	\N
+8dc91db9-d128-4685-8eff-eb854d9ec576	7f354bb7-8977-4f76-861a-a755e5436a9f	2026-05-11 11:04:39.366422+00	2026-05-12 09:46:55.328237+00	\N	aal1	\N	2026-05-12 09:46:55.328128	Dart/3.8 (dart:io)	62.8.73.119	\N	\N	\N	\N	\N
 \.
 
 
@@ -1515,8 +1517,8 @@ COPY "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "revoked"
 00000000-0000-0000-0000-000000000000	348	6icq5j6nx4l7	81468649-c0d6-4e0e-ad5b-1e40161d1094	t	2026-03-26 16:29:24.811865+00	2026-03-26 18:34:57.442939+00	\N	bccd9ebb-bbe7-4aa5-8cb8-67a4ac4f31cc
 00000000-0000-0000-0000-000000000000	433	vdsd4tperflt	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	t	2026-05-07 21:26:47.362813+00	2026-05-08 08:33:15.22176+00	\N	d609760a-0b41-4a3f-adaa-0541b4bd8a79
 00000000-0000-0000-0000-000000000000	349	l27rdpuhr7lc	81468649-c0d6-4e0e-ad5b-1e40161d1094	t	2026-03-26 18:34:57.468973+00	2026-03-27 08:43:57.642858+00	6icq5j6nx4l7	bccd9ebb-bbe7-4aa5-8cb8-67a4ac4f31cc
-00000000-0000-0000-0000-000000000000	435	utgh7tiai3d2	7f354bb7-8977-4f76-861a-a755e5436a9f	f	2026-05-11 11:04:39.401045+00	2026-05-11 11:04:39.401045+00	\N	8dc91db9-d128-4685-8eff-eb854d9ec576
 00000000-0000-0000-0000-000000000000	350	m4wiy6cw5u35	81468649-c0d6-4e0e-ad5b-1e40161d1094	t	2026-03-27 08:43:57.66762+00	2026-03-27 09:44:54.170399+00	l27rdpuhr7lc	bccd9ebb-bbe7-4aa5-8cb8-67a4ac4f31cc
+00000000-0000-0000-0000-000000000000	435	utgh7tiai3d2	7f354bb7-8977-4f76-861a-a755e5436a9f	t	2026-05-11 11:04:39.401045+00	2026-05-12 09:46:55.261346+00	\N	8dc91db9-d128-4685-8eff-eb854d9ec576
 00000000-0000-0000-0000-000000000000	351	pu47s6ytfbgx	81468649-c0d6-4e0e-ad5b-1e40161d1094	t	2026-03-27 09:44:54.195038+00	2026-03-27 11:34:25.241891+00	m4wiy6cw5u35	bccd9ebb-bbe7-4aa5-8cb8-67a4ac4f31cc
 00000000-0000-0000-0000-000000000000	343	gqxa2xltbt7y	dfc003db-05ba-460b-98ce-3cd171a63487	t	2026-03-23 11:46:34.426723+00	2026-03-27 12:06:36.631677+00	57y26ry5tard	11a678e3-8f94-4919-91ef-2b2863c145d9
 00000000-0000-0000-0000-000000000000	313	fwazkiadc556	8a6cf5c9-df59-4ae9-93b2-ae36bdb7b74f	t	2026-03-11 13:35:34.708235+00	2026-03-28 11:40:09.215959+00	ihaccdfphh2o	1d7db2fd-ffb0-444d-ae6c-1c435b844b02
@@ -1566,6 +1568,7 @@ COPY "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "revoked"
 00000000-0000-0000-0000-000000000000	416	ybwfx564esne	57b2d7bb-8ac0-4f33-a128-b26e55d3b398	t	2026-05-05 15:32:41.080205+00	2026-05-05 21:04:35.060607+00	r7l4szzolstr	095f012c-089b-4938-a8a0-c7f8afbbe2ae
 00000000-0000-0000-0000-000000000000	434	t5yilay62zog	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	f	2026-05-08 08:33:15.250279+00	2026-05-08 08:33:15.250279+00	vdsd4tperflt	d609760a-0b41-4a3f-adaa-0541b4bd8a79
 00000000-0000-0000-0000-000000000000	417	y3o3lnonaf7g	57b2d7bb-8ac0-4f33-a128-b26e55d3b398	t	2026-05-05 21:04:35.084539+00	2026-05-07 09:18:08.490405+00	ybwfx564esne	095f012c-089b-4938-a8a0-c7f8afbbe2ae
+00000000-0000-0000-0000-000000000000	436	sbzgsixlhesf	7f354bb7-8977-4f76-861a-a755e5436a9f	f	2026-05-12 09:46:55.294624+00	2026-05-12 09:46:55.294624+00	utgh7tiai3d2	8dc91db9-d128-4685-8eff-eb854d9ec576
 00000000-0000-0000-0000-000000000000	418	mtiyyq2oweor	57b2d7bb-8ac0-4f33-a128-b26e55d3b398	t	2026-05-07 09:18:08.520171+00	2026-05-07 10:17:32.775914+00	y3o3lnonaf7g	095f012c-089b-4938-a8a0-c7f8afbbe2ae
 \.
 
@@ -1910,13 +1913,13 @@ COPY "storage"."vector_indexes" ("id", "name", "bucket_id", "data_type", "dimens
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: supabase_auth_admin
 --
 
-SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 435, true);
+SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 436, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict aBvQPbIilVJwixQrIQ5W9OSCmxOobbCEHPXwcUbMqO4XiIlOUr2eS9whmZjEvRg
+-- \unrestrict lXHH3Ls88ymzd9jAacQDdETU8WQWDo0vZlijn2GVL9cCLf9hpQfBZ8oZcMfSrV5
 
 RESET ALL;
