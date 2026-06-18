@@ -480,8 +480,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "is_test_user" boolean DEFAULT false,
     "updated_at" timestamp with time zone DEFAULT "now"(),
     "recovery_question" "text",
-    "recovery_answer" "text",
-    "avatar_url" "text"
+    "recovery_answer" "text"
 );
 
 
