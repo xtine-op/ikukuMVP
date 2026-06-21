@@ -506,6 +506,25 @@ CREATE OR REPLACE VIEW "public"."user_dashboard_stats" AS
 ALTER VIEW "public"."user_dashboard_stats" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."user_notifications" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "type" "text" NOT NULL,
+    "title_en" "text" NOT NULL,
+    "title_sw" "text" NOT NULL,
+    "message_en" "text" NOT NULL,
+    "message_sw" "text" NOT NULL,
+    "reference_key" "text" NOT NULL,
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
+    "is_read" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "user_notifications_type_check" CHECK (("type" = ANY (ARRAY['low_stock'::"text", 'missing_record'::"text"])))
+);
+
+
+ALTER TABLE "public"."user_notifications" OWNER TO "postgres";
+
+
 ALTER TABLE ONLY "public"."batch_records"
     ADD CONSTRAINT "batch_records_pkey" PRIMARY KEY ("id");
 
@@ -556,6 +575,11 @@ ALTER TABLE ONLY "public"."batch_records"
 
 
 
+ALTER TABLE ONLY "public"."user_notifications"
+    ADD CONSTRAINT "user_notifications_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
 
@@ -570,6 +594,14 @@ CREATE INDEX "idx_farm_summaries_date" ON "public"."farm_summaries" USING "btree
 
 
 CREATE INDEX "idx_farm_summaries_user_id" ON "public"."farm_summaries" USING "btree" ("user_id");
+
+
+
+CREATE UNIQUE INDEX "user_notifications_user_reference_idx" ON "public"."user_notifications" USING "btree" ("user_id", "reference_key");
+
+
+
+CREATE INDEX "user_notifications_user_unread_idx" ON "public"."user_notifications" USING "btree" ("user_id", "is_read", "created_at" DESC);
 
 
 
@@ -670,6 +702,11 @@ ALTER TABLE ONLY "public"."sales_records"
 
 
 
+ALTER TABLE ONLY "public"."user_notifications"
+    ADD CONSTRAINT "user_notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -705,6 +742,10 @@ CREATE POLICY "Users can edit their own dashboard summaries" ON "public"."dashbo
 
 
 
+CREATE POLICY "Users can insert own notifications" ON "public"."user_notifications" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can insert their own farm summaries" ON "public"."farm_summaries" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -721,11 +762,19 @@ CREATE POLICY "Users can insert their own sales records" ON "public"."sales_reco
 
 
 
+CREATE POLICY "Users can read own notifications" ON "public"."user_notifications" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can select their own farms" ON "public"."farms" FOR SELECT USING (("user_id" = "auth"."uid"()));
 
 
 
 CREATE POLICY "Users can select their own profile" ON "public"."users" FOR SELECT USING (("id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users can update own notifications" ON "public"."user_notifications" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -819,6 +868,9 @@ ALTER TABLE "public"."inventory_items" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."sales_records" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."user_notifications" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
@@ -1109,6 +1161,12 @@ GRANT ALL ON TABLE "public"."users" TO "service_role";
 GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "anon";
 GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_notifications" TO "anon";
+GRANT ALL ON TABLE "public"."user_notifications" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_notifications" TO "service_role";
 
 
 
