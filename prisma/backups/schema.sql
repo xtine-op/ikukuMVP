@@ -212,31 +212,50 @@ ALTER FUNCTION "public"."insert_into_farm_base_tables"() OWNER TO "postgres";
 CREATE OR REPLACE FUNCTION "public"."update_dashboard_summary"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
+DECLARE
+  target_user_id uuid;
 BEGIN
-    -- Update the dashboard summary for the user
-    UPDATE dashboard_summary
-    SET 
-        total_feeds = (
-            SELECT SUM(quantity)
-            FROM inventory_items
-            WHERE user_id = NEW.user_id
-            AND category = 'feeds'
-        ),
-        total_eggs = (
-            SELECT SUM(eggs_collected)
-            FROM batch_records br
-            JOIN daily_records dr ON br.daily_record_id = dr.id
-            WHERE dr.user_id = NEW.user_id
-            AND dr.report_date >= CURRENT_DATE - INTERVAL '7 days'
-        ),
-        total_chickens = (
-            SELECT SUM(total_chickens)
-            FROM batches
-            WHERE user_id = NEW.user_id
-        )
-    WHERE user_id = NEW.user_id;
-    
-    RETURN NEW;
+  IF TG_TABLE_NAME = 'batches' THEN
+    target_user_id := COALESCE(NEW.user_id, OLD.user_id);
+  ELSIF TG_TABLE_NAME = 'inventory_items' THEN
+    target_user_id := COALESCE(NEW.user_id, OLD.user_id);
+  ELSIF TG_TABLE_NAME = 'batch_records' THEN
+    SELECT dr.user_id
+    INTO target_user_id
+    FROM public.daily_records dr
+    WHERE dr.id = COALESCE(NEW.daily_record_id, OLD.daily_record_id);
+  ELSE
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  IF target_user_id IS NULL THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  UPDATE public.dashboard_summary
+  SET
+    total_feeds = (
+      SELECT COALESCE(SUM(quantity), 0)
+      FROM public.inventory_items
+      WHERE user_id = target_user_id
+        AND category = 'feed'
+    ),
+    total_eggs = (
+      SELECT COALESCE(SUM(br.eggs_collected), 0)
+      FROM public.batch_records br
+      JOIN public.daily_records dr ON br.daily_record_id = dr.id
+      WHERE dr.user_id = target_user_id
+        AND dr.record_date >= CURRENT_DATE - INTERVAL '7 days'
+    ),
+    total_chickens = (
+      SELECT COALESCE(SUM(total_chickens), 0)
+      FROM public.batches
+      WHERE user_id = target_user_id
+    ),
+    last_updated = NOW()
+  WHERE user_id = target_user_id;
+
+  RETURN COALESCE(NEW, OLD);
 END;
 $$;
 
@@ -455,6 +474,24 @@ CREATE OR REPLACE VIEW "public"."financial_summary" WITH ("security_invoker"='on
 ALTER VIEW "public"."financial_summary" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."notifications" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "type" "text" NOT NULL,
+    "reference_key" "text",
+    "title_en" "text" NOT NULL,
+    "title_sw" "text" NOT NULL,
+    "message_en" "text" NOT NULL,
+    "message_sw" "text" NOT NULL,
+    "is_read" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "notifications_type_check" CHECK (("type" = ANY (ARRAY['low_stock'::"text", 'missing_record'::"text"])))
+);
+
+
+ALTER TABLE "public"."notifications" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."sales_records" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "batch_id" "uuid",
@@ -506,23 +543,16 @@ CREATE OR REPLACE VIEW "public"."user_dashboard_stats" AS
 ALTER VIEW "public"."user_dashboard_stats" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."user_notifications" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+CREATE TABLE IF NOT EXISTS "public"."user_push_preferences" (
     "user_id" "uuid" NOT NULL,
-    "type" "text" NOT NULL,
-    "title_en" "text" NOT NULL,
-    "title_sw" "text" NOT NULL,
-    "message_en" "text" NOT NULL,
-    "message_sw" "text" NOT NULL,
-    "reference_key" "text" NOT NULL,
-    "metadata" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
-    "is_read" boolean DEFAULT false NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "user_notifications_type_check" CHECK (("type" = ANY (ARRAY['low_stock'::"text", 'missing_record'::"text"])))
+    "onesignal_external_id" "text" NOT NULL,
+    "language" "text" DEFAULT 'en'::"text" NOT NULL,
+    "push_enabled" boolean DEFAULT true NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 
-ALTER TABLE "public"."user_notifications" OWNER TO "postgres";
+ALTER TABLE "public"."user_push_preferences" OWNER TO "postgres";
 
 
 ALTER TABLE ONLY "public"."batch_records"
@@ -565,6 +595,11 @@ ALTER TABLE ONLY "public"."inventory_items"
 
 
 
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."sales_records"
     ADD CONSTRAINT "sales_records_pkey" PRIMARY KEY ("id");
 
@@ -575,8 +610,8 @@ ALTER TABLE ONLY "public"."batch_records"
 
 
 
-ALTER TABLE ONLY "public"."user_notifications"
-    ADD CONSTRAINT "user_notifications_pkey" PRIMARY KEY ("id");
+ALTER TABLE ONLY "public"."user_push_preferences"
+    ADD CONSTRAINT "user_push_preferences_pkey" PRIMARY KEY ("user_id");
 
 
 
@@ -597,11 +632,7 @@ CREATE INDEX "idx_farm_summaries_user_id" ON "public"."farm_summaries" USING "bt
 
 
 
-CREATE UNIQUE INDEX "user_notifications_user_reference_idx" ON "public"."user_notifications" USING "btree" ("user_id", "reference_key");
-
-
-
-CREATE INDEX "user_notifications_user_unread_idx" ON "public"."user_notifications" USING "btree" ("user_id", "is_read", "created_at" DESC);
+CREATE INDEX "idx_notifications_user_unread" ON "public"."notifications" USING "btree" ("user_id", "is_read", "created_at" DESC);
 
 
 
@@ -653,7 +684,7 @@ ALTER TABLE ONLY "public"."dashboard_summary"
 
 
 ALTER TABLE ONLY "public"."farm_summaries"
-    ADD CONSTRAINT "farm_summaries_batch_id_fkey" FOREIGN KEY ("batch_id") REFERENCES "public"."batches"("id");
+    ADD CONSTRAINT "farm_summaries_batch_id_fkey" FOREIGN KEY ("batch_id") REFERENCES "public"."batches"("id") ON DELETE CASCADE;
 
 
 
@@ -664,11 +695,6 @@ ALTER TABLE ONLY "public"."farm_summaries"
 
 ALTER TABLE ONLY "public"."farms"
     ADD CONSTRAINT "farms_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."batch_records"
-    ADD CONSTRAINT "fk_batch" FOREIGN KEY ("batch_id") REFERENCES "public"."batches"("id");
 
 
 
@@ -687,8 +713,13 @@ ALTER TABLE ONLY "public"."inventory_items"
 
 
 
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."sales_records"
-    ADD CONSTRAINT "sales_records_batch_id_fkey" FOREIGN KEY ("batch_id") REFERENCES "public"."batches"("id");
+    ADD CONSTRAINT "sales_records_batch_id_fkey" FOREIGN KEY ("batch_id") REFERENCES "public"."batches"("id") ON DELETE CASCADE;
 
 
 
@@ -702,8 +733,8 @@ ALTER TABLE ONLY "public"."sales_records"
 
 
 
-ALTER TABLE ONLY "public"."user_notifications"
-    ADD CONSTRAINT "user_notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+ALTER TABLE ONLY "public"."user_push_preferences"
+    ADD CONSTRAINT "user_push_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -742,10 +773,6 @@ CREATE POLICY "Users can edit their own dashboard summaries" ON "public"."dashbo
 
 
 
-CREATE POLICY "Users can insert own notifications" ON "public"."user_notifications" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "Users can insert their own farm summaries" ON "public"."farm_summaries" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
@@ -762,19 +789,11 @@ CREATE POLICY "Users can insert their own sales records" ON "public"."sales_reco
 
 
 
-CREATE POLICY "Users can read own notifications" ON "public"."user_notifications" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "Users can select their own farms" ON "public"."farms" FOR SELECT USING (("user_id" = "auth"."uid"()));
 
 
 
 CREATE POLICY "Users can select their own profile" ON "public"."users" FOR SELECT USING (("id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "Users can update own notifications" ON "public"."user_notifications" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -867,10 +886,37 @@ ALTER TABLE "public"."farms" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."inventory_items" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "notifications_insert_policy" ON "public"."notifications" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "notifications_select_policy" ON "public"."notifications" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "notifications_update_policy" ON "public"."notifications" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
 ALTER TABLE "public"."sales_records" ENABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."user_notifications" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."user_push_preferences" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "user_push_preferences_insert_policy" ON "public"."user_push_preferences" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "user_push_preferences_select_policy" ON "public"."user_push_preferences" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "user_push_preferences_update_policy" ON "public"."user_push_preferences" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
 
 
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
@@ -1146,6 +1192,12 @@ GRANT ALL ON TABLE "public"."financial_summary" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."notifications" TO "anon";
+GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
+GRANT ALL ON TABLE "public"."notifications" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."sales_records" TO "anon";
 GRANT ALL ON TABLE "public"."sales_records" TO "authenticated";
 GRANT ALL ON TABLE "public"."sales_records" TO "service_role";
@@ -1164,9 +1216,9 @@ GRANT ALL ON TABLE "public"."user_dashboard_stats" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."user_notifications" TO "anon";
-GRANT ALL ON TABLE "public"."user_notifications" TO "authenticated";
-GRANT ALL ON TABLE "public"."user_notifications" TO "service_role";
+GRANT ALL ON TABLE "public"."user_push_preferences" TO "anon";
+GRANT ALL ON TABLE "public"."user_push_preferences" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_push_preferences" TO "service_role";
 
 
 
