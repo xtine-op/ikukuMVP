@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict DiEJxhCWIOM53oOVEfMs2EQN7qZSOUWwwaTm5uBAod1ig6YDSRALtUh1LAawsxg
+-- \restrict UaQj8Qr247nEfQVJbTeaw7GbyOfJ59cFh5VuREnuRCMv3Cr2BNgd2FzHI778VS9
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -1422,6 +1422,7 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	afc22d22-e479-4c40-8bb9-123d50799655	{"action":"token_revoked","actor_id":"3d920a07-4422-4751-b142-039c32ab241e","actor_username":"anisismaelmohamud1@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-07-19 09:09:55.65234+00	
 00000000-0000-0000-0000-000000000000	8ef920a8-9343-4d2c-a58e-9780638c40a7	{"action":"user_signedup","actor_id":"0e972cdd-747d-4f15-aed3-e69579323790","actor_username":"dennoleeh@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-07-19 11:14:21.078475+00	
 00000000-0000-0000-0000-000000000000	7c557cc9-423b-4623-8f3e-7983530892f0	{"action":"login","actor_id":"0e972cdd-747d-4f15-aed3-e69579323790","actor_username":"dennoleeh@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-07-19 11:14:21.10296+00	
+00000000-0000-0000-0000-000000000000	6913a48f-63f0-4963-993e-39bd7a52fb36	{"action":"user_repeated_signup","actor_id":"45e66ac4-dc43-45c9-910a-e92646926526","actor_username":"yvvonjemymahmajala@gmail.com","actor_via_sso":false,"log_type":"user","traits":{"provider":"email"}}	2026-07-20 08:40:07.560215+00	
 \.
 
 
@@ -2920,6 +2921,6 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 689, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict DiEJxhCWIOM53oOVEfMs2EQN7qZSOUWwwaTm5uBAod1ig6YDSRALtUh1LAawsxg
+-- \unrestrict UaQj8Qr247nEfQVJbTeaw7GbyOfJ59cFh5VuREnuRCMv3Cr2BNgd2FzHI778VS9
 
 RESET ALL;
