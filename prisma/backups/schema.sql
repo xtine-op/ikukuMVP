@@ -152,6 +152,85 @@ $$;
 ALTER FUNCTION "public"."get_farm_data"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_financial_summary"("p_batch_id" "uuid" DEFAULT NULL::"uuid") RETURNS TABLE("batch_id" "uuid", "batch_name" "text", "total_sales" numeric, "total_expenses" numeric, "profit" numeric, "eggs_sales" numeric, "chicken_sales" numeric, "manure_sales" numeric, "eggs_sales_pct" numeric, "chicken_sales_pct" numeric, "manure_sales_pct" numeric, "predicted_revenue" numeric, "store_inventory_value" numeric, "mortality_rate" numeric, "fcr" numeric)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        fs.batch_id,
+        b.name AS batch_name,
+        
+        -- 1. Totals from existing financial_summary view
+        fs.total_gains AS total_sales,
+        fs.total_expenses,
+        fs.profit,
+
+        -- 2. Income Category Breakdown (Eggs, Chicken, Manure)
+        COALESCE(SUM(CASE WHEN LOWER(s.category) = 'eggs' THEN s.total_amount ELSE 0 END), 0) AS eggs_sales,
+        COALESCE(SUM(CASE WHEN LOWER(s.category) IN ('chicken', 'birds') THEN s.total_amount ELSE 0 END), 0) AS chicken_sales,
+        COALESCE(SUM(CASE WHEN LOWER(s.category) = 'manure' THEN s.total_amount ELSE 0 END), 0) AS manure_sales,
+
+        -- 3. Income Contribution Percentages (%)
+        CASE 
+            WHEN fs.total_gains > 0 THEN 
+                ROUND((COALESCE(SUM(CASE WHEN LOWER(s.category) = 'eggs' THEN s.total_amount ELSE 0 END), 0) / fs.total_gains) * 100, 2)
+            ELSE 0 
+        END AS eggs_sales_pct,
+
+        CASE 
+            WHEN fs.total_gains > 0 THEN 
+                ROUND((COALESCE(SUM(CASE WHEN LOWER(s.category) IN ('chicken', 'birds') THEN s.total_amount ELSE 0 END), 0) / fs.total_gains) * 100, 2)
+            ELSE 0 
+        END AS chicken_sales_pct,
+
+        CASE 
+            WHEN fs.total_gains > 0 THEN 
+                ROUND((COALESCE(SUM(CASE WHEN LOWER(s.category) = 'manure' THEN s.total_amount ELSE 0 END), 0) / fs.total_gains) * 100, 2)
+            ELSE 0 
+        END AS manure_sales_pct,
+
+        -- 4. Net Predicted Revenue = Expected Gross Sales - Total Expenses
+        (
+            (((b.initial_count - COALESCE(SUM(br.chickens_died), 0)) * 500) + (COALESCE(SUM(br.eggs_collected), 0) * 15)) 
+            - fs.total_expenses
+        ) AS predicted_revenue,
+
+        -- 5. Total Store Inventory Value
+        (
+            SELECT COALESCE(SUM(quantity * price), 0) 
+            FROM inventory_items 
+            WHERE user_id = auth.uid()
+        ) AS store_inventory_value,
+
+        -- 6. Mortality Rate %
+        CASE 
+            WHEN b.initial_count > 0 THEN 
+                ROUND((COALESCE(SUM(br.chickens_died), 0)::decimal / b.initial_count::decimal) * 100, 2)
+            ELSE 0 
+        END AS mortality_rate,
+
+        -- 7. Food Conversion Ratio (FCR)
+        CASE 
+            WHEN COALESCE(SUM(br.eggs_collected), 0) > 0 THEN 
+                ROUND(COALESCE(SUM(br.feed_quantity_kg), 0) / SUM(br.eggs_collected), 2)
+            ELSE 0 
+        END AS fcr
+
+    FROM financial_summary fs
+    JOIN batches b ON b.id = fs.batch_id
+    LEFT JOIN sales_records s ON s.batch_id = fs.batch_id
+    LEFT JOIN batch_records br ON br.batch_id = fs.batch_id
+    WHERE b.user_id = auth.uid()
+      AND (p_batch_id IS NULL OR fs.batch_id = p_batch_id)
+    GROUP BY fs.batch_id, b.name, fs.total_gains, fs.total_expenses, fs.profit, b.initial_count;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_financial_summary"("p_batch_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_monthly_farm_summary"("p_user_id" "uuid") RETURNS TABLE("user_id" "uuid", "date" "date", "batch_id" "text", "total_eggs_collected" bigint, "total_feeds_used_items" bigint, "total_vaccines_used_items" bigint, "total_other_materials_used_items" bigint, "total_expenses" numeric)
     LANGUAGE "plpgsql"
     AS $$
@@ -1096,6 +1175,12 @@ REVOKE ALL ON FUNCTION "public"."get_farm_data"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_farm_data"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_farm_data"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_farm_data"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_financial_summary"("p_batch_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_financial_summary"("p_batch_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_financial_summary"("p_batch_id" "uuid") TO "service_role";
 
 
 
