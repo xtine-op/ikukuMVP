@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict 438CdY8JRegESW2loVulJQrBayLWVNnqQFwgkk1cb1Ajeb3EQJkb7851UHDm3Do
+-- \restrict Hszaf5NnFHqhrAWR0b31fXPy8SSQ3fLfXu5YoUjPVMsz2SsohEaeXUj8rep9oFN
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.6
@@ -2066,6 +2066,22 @@ COPY "auth"."mfa_challenges" ("id", "factor_id", "created_at", "verified_at", "i
 
 
 --
+-- Data for Name: mfa_recovery_code_sets; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+COPY "auth"."mfa_recovery_code_sets" ("id", "user_id", "mfa_factor_id", "failed_verification_count", "verification_locked_until", "created_at", "updated_at") FROM stdin;
+\.
+
+
+--
+-- Data for Name: mfa_recovery_codes; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+COPY "auth"."mfa_recovery_codes" ("id", "mfa_recovery_code_set_id", "code_hash", "consumed_at", "created_at") FROM stdin;
+\.
+
+
+--
 -- Data for Name: oauth_authorizations; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -2093,7 +2109,7 @@ COPY "auth"."oauth_consents" ("id", "user_id", "client_id", "scopes", "granted_a
 -- Data for Name: one_time_tokens; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
-COPY "auth"."one_time_tokens" ("id", "user_id", "token_type", "token_hash", "relates_to", "created_at", "updated_at") FROM stdin;
+COPY "auth"."one_time_tokens" ("id", "user_id", "token_type", "token_hash", "relates_to", "created_at", "updated_at", "expires_at") FROM stdin;
 \.
 
 
@@ -2709,6 +2725,22 @@ COPY "auth"."saml_relay_states" ("id", "sso_provider_id", "request_id", "for_ema
 
 
 --
+-- Data for Name: scim_tokens; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+COPY "auth"."scim_tokens" ("id", "sso_provider_id", "token_hash", "prefix", "created_at", "expires_at", "revoked_at", "last_used_at") FROM stdin;
+\.
+
+
+--
+-- Data for Name: scim_users; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
+--
+
+COPY "auth"."scim_users" ("id", "sso_provider_id", "user_id", "resource", "created_at", "updated_at", "deleted_at") FROM stdin;
+\.
+
+
+--
 -- Data for Name: sso_domains; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
@@ -3284,6 +3316,6 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 759, true);
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict 438CdY8JRegESW2loVulJQrBayLWVNnqQFwgkk1cb1Ajeb3EQJkb7851UHDm3Do
+-- \unrestrict Hszaf5NnFHqhrAWR0b31fXPy8SSQ3fLfXu5YoUjPVMsz2SsohEaeXUj8rep9oFN
 
 RESET ALL;
