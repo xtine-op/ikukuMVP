@@ -4,7 +4,7 @@ SET session_replication_role = replica;
 -- PostgreSQL database dump
 --
 
--- \restrict 808sdVVXyQntEolSz7LefSfgXfpt4EHfgQh3RwKHtXgUCeIHORoyivEn6igDh5F
+-- \restrict c2oX4O52FxmlXeJc7Hx5nVnyrXhyyB1ZYquTlsDtP1k93bEhf9NcEonEvDXBd97
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.11
@@ -1626,6 +1626,10 @@ COPY "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "
 00000000-0000-0000-0000-000000000000	fb51da4b-0673-480e-a4d5-4f2ee12d9ecd	{"action":"login","actor_id":"205959f1-8a0d-4c63-a19b-56a7ad555768","actor_username":"michaelmuasa006@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-11-06 12:35:30.482854+00	
 00000000-0000-0000-0000-000000000000	a035a5e8-0fcc-4274-8b8f-cf8a461d9848	{"action":"user_signedup","actor_id":"70d5dd1a-0228-4246-8052-1c75aa6c014d","actor_username":"ulyapanwa2024@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-11-07 09:29:08.57198+00	
 00000000-0000-0000-0000-000000000000	9e28a316-4c65-474b-b370-7f48b74bcd8d	{"action":"login","actor_id":"70d5dd1a-0228-4246-8052-1c75aa6c014d","actor_username":"ulyapanwa2024@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-11-07 09:29:08.600904+00	
+00000000-0000-0000-0000-000000000000	ff44eda1-3c67-4db4-8607-2c0405a4fe6d	{"action":"user_signedup","actor_id":"7b2e7929-98cc-4780-88cb-0523d713aafb","actor_username":"finley.mwangola12@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"email"}}	2026-11-08 12:51:58.159453+00	
+00000000-0000-0000-0000-000000000000	fccce504-051a-47b8-8ed2-3fe8d520307c	{"action":"login","actor_id":"7b2e7929-98cc-4780-88cb-0523d713aafb","actor_username":"finley.mwangola12@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}	2026-11-08 12:51:58.191423+00	
+00000000-0000-0000-0000-000000000000	7ad21a1a-5194-4bd6-8079-d5ec5e94e725	{"action":"token_refreshed","actor_id":"70d5dd1a-0228-4246-8052-1c75aa6c014d","actor_username":"ulyapanwa2024@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-11-09 16:25:29.28092+00	
+00000000-0000-0000-0000-000000000000	e688e897-0152-475d-b2b4-cf1922158289	{"action":"token_revoked","actor_id":"70d5dd1a-0228-4246-8052-1c75aa6c014d","actor_username":"ulyapanwa2024@gmail.com","actor_via_sso":false,"log_type":"token"}	2026-11-09 16:25:29.304693+00	
 \.
 
 
@@ -1750,8 +1754,9 @@ COPY "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_pas
 00000000-0000-0000-0000-000000000000	db2388e4-6e3b-4c4e-abf0-433f862def6e	authenticated	authenticated	simiondancan@gmail.com	$2a$10$Rl0wTmXWasuawduuIF9rhugPvkeKVdmI5LRjMHO.Ec3b/sz6fp1kO	2026-08-11 07:40:20.889099+00	\N		\N		\N			\N	2026-08-11 07:40:20.907955+00	{"provider": "email", "providers": ["email"]}	{"sub": "db2388e4-6e3b-4c4e-abf0-433f862def6e", "email": "simiondancan@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-08-11 07:40:20.793182+00	2026-10-03 06:26:11.367616+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	81234c09-642f-449d-b394-422ab438001c	authenticated	authenticated	lionelumanyi@gmail.com	$2a$10$HDw4tPd28sMV3se/LEqG6.LWcZcSE5ocUmqvThOWXwnkzaSxyYCS.	2026-10-03 18:19:11.265161+00	\N		\N		\N			\N	2026-10-03 18:19:11.284821+00	{"provider": "email", "providers": ["email"]}	{"sub": "81234c09-642f-449d-b394-422ab438001c", "email": "lionelumanyi@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-10-03 18:19:11.161539+00	2026-10-03 18:19:11.353584+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	authenticated	authenticated	xtine@gmail.com	$2a$10$CgahysVazmQUGmb9AjfpHeAiMIpfDT3hAVAsbT0AX3MXnX/sEnQWO	2026-10-30 12:04:22.195561+00	\N		\N		\N			\N	2026-10-30 12:04:22.217555+00	{"provider": "email", "providers": ["email"]}	{"sub": "9fb01d83-b7d2-4820-b2c7-e2e20f840fdd", "email": "xtine@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-10-30 12:04:22.093638+00	2026-11-02 06:00:25.609979+00	\N	\N			\N		0	\N		\N	f	\N	f
+00000000-0000-0000-0000-000000000000	7b2e7929-98cc-4780-88cb-0523d713aafb	authenticated	authenticated	finley.mwangola12@gmail.com	$2a$10$puG.tHuYIueAZWTsoXNlqeHMG3ZIcvYO4YvK9Khj1kAlppeo68b7a	2026-11-08 12:51:58.177065+00	\N		\N		\N			\N	2026-11-08 12:51:58.199131+00	{"provider": "email", "providers": ["email"]}	{"sub": "7b2e7929-98cc-4780-88cb-0523d713aafb", "email": "finley.mwangola12@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-11-08 12:51:58.065015+00	2026-11-08 12:51:58.278029+00	\N	\N			\N		0	\N		\N	f	\N	f
+00000000-0000-0000-0000-000000000000	70d5dd1a-0228-4246-8052-1c75aa6c014d	authenticated	authenticated	ulyapanwa2024@gmail.com	$2a$10$U1axw8jVkuNs0MD0PdHaRuyWGnAjU9IIKyPVlDbc4uJ4SJYwnxHPq	2026-11-07 09:29:08.585159+00	\N		\N		\N			\N	2026-11-07 09:29:08.602533+00	{"provider": "email", "providers": ["email"]}	{"sub": "70d5dd1a-0228-4246-8052-1c75aa6c014d", "email": "ulyapanwa2024@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-11-07 09:29:08.483854+00	2026-11-09 16:25:29.346194+00	\N	\N			\N		0	\N		\N	f	\N	f
 00000000-0000-0000-0000-000000000000	205959f1-8a0d-4c63-a19b-56a7ad555768	authenticated	authenticated	michaelmuasa006@gmail.com	$2a$10$XXSW.FlENsRIW6Wk6ZDn/OVrS7uxa7FAg3lpdPvBnD/w0qjjJAE9m	2026-11-06 12:35:30.464562+00	\N		\N		\N			\N	2026-11-06 12:35:30.487179+00	{"provider": "email", "providers": ["email"]}	{"sub": "205959f1-8a0d-4c63-a19b-56a7ad555768", "email": "michaelmuasa006@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-11-06 12:35:30.346281+00	2026-11-06 12:35:30.560899+00	\N	\N			\N		0	\N		\N	f	\N	f
-00000000-0000-0000-0000-000000000000	70d5dd1a-0228-4246-8052-1c75aa6c014d	authenticated	authenticated	ulyapanwa2024@gmail.com	$2a$10$U1axw8jVkuNs0MD0PdHaRuyWGnAjU9IIKyPVlDbc4uJ4SJYwnxHPq	2026-11-07 09:29:08.585159+00	\N		\N		\N			\N	2026-11-07 09:29:08.602533+00	{"provider": "email", "providers": ["email"]}	{"sub": "70d5dd1a-0228-4246-8052-1c75aa6c014d", "email": "ulyapanwa2024@gmail.com", "email_verified": true, "phone_verified": false}	\N	2026-11-07 09:29:08.483854+00	2026-11-07 09:29:08.67862+00	\N	\N			\N		0	\N		\N	f	\N	f
 \.
 
 
@@ -1861,6 +1866,7 @@ c583ba5f-f6e5-45f9-b5e3-4dcdad3b9ee0	c583ba5f-f6e5-45f9-b5e3-4dcdad3b9ee0	{"sub"
 9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	{"sub": "9fb01d83-b7d2-4820-b2c7-e2e20f840fdd", "email": "xtine@gmail.com", "email_verified": false, "phone_verified": false}	email	2026-10-30 12:04:22.148374+00	2026-10-30 12:04:22.148423+00	2026-10-30 12:04:22.148423+00	f2939cc2-b8a6-4810-b44a-978cf4eb1149
 205959f1-8a0d-4c63-a19b-56a7ad555768	205959f1-8a0d-4c63-a19b-56a7ad555768	{"sub": "205959f1-8a0d-4c63-a19b-56a7ad555768", "email": "michaelmuasa006@gmail.com", "email_verified": false, "phone_verified": false}	email	2026-11-06 12:35:30.417583+00	2026-11-06 12:35:30.41763+00	2026-11-06 12:35:30.41763+00	f0729970-f484-4e2e-9a05-4fb04330c7a5
 70d5dd1a-0228-4246-8052-1c75aa6c014d	70d5dd1a-0228-4246-8052-1c75aa6c014d	{"sub": "70d5dd1a-0228-4246-8052-1c75aa6c014d", "email": "ulyapanwa2024@gmail.com", "email_verified": false, "phone_verified": false}	email	2026-11-07 09:29:08.542464+00	2026-11-07 09:29:08.542516+00	2026-11-07 09:29:08.542516+00	6ea7511f-744a-4e1b-8d02-c1d463c94f60
+7b2e7929-98cc-4780-88cb-0523d713aafb	7b2e7929-98cc-4780-88cb-0523d713aafb	{"sub": "7b2e7929-98cc-4780-88cb-0523d713aafb", "email": "finley.mwangola12@gmail.com", "email_verified": false, "phone_verified": false}	email	2026-11-08 12:51:58.12501+00	2026-11-08 12:51:58.125081+00	2026-11-08 12:51:58.125081+00	b2071bea-141f-4c37-a0b8-d1a4589fb9d0
 \.
 
 
@@ -2009,7 +2015,8 @@ a70633f1-4bb9-428f-b78c-3b5b7a80b997	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	2026-0
 7c6f0209-d6fc-4686-a53f-9b03b030901a	1d5ef748-0b49-4528-973f-8abef4b2b8e7	2026-10-28 08:28:36.015875+00	2026-10-28 08:28:36.015875+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	41.139.250.213	\N	\N	\N	\N	\N
 e7f7e558-c5bd-44bb-bc6c-ee568c6dfee8	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	2026-10-30 12:04:22.21822+00	2026-11-02 06:00:25.621865+00	\N	aal1	\N	2026-11-02 06:00:25.621747	Dart/3.8 (dart:io)	102.135.169.62	\N	\N	\N	\N	\N
 aba408cf-d442-4d09-9dd5-afcf129d1da3	205959f1-8a0d-4c63-a19b-56a7ad555768	2026-11-06 12:35:30.488077+00	2026-11-06 12:35:30.488077+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	102.0.35.56	\N	\N	\N	\N	\N
-88f974a9-e038-49bb-bbb9-00141f9051a5	70d5dd1a-0228-4246-8052-1c75aa6c014d	2026-11-07 09:29:08.603205+00	2026-11-07 09:29:08.603205+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	114.79.16.217	\N	\N	\N	\N	\N
+34f5f3c5-da4b-4194-9243-48bcd27e8b48	7b2e7929-98cc-4780-88cb-0523d713aafb	2026-11-08 12:51:58.199895+00	2026-11-08 12:51:58.199895+00	\N	aal1	\N	\N	Dart/3.8 (dart:io)	102.205.217.28	\N	\N	\N	\N	\N
+88f974a9-e038-49bb-bbb9-00141f9051a5	70d5dd1a-0228-4246-8052-1c75aa6c014d	2026-11-07 09:29:08.603205+00	2026-11-09 16:25:29.361951+00	\N	aal1	\N	2026-11-09 16:25:29.36126	Dart/3.8 (dart:io)	103.165.215.186	\N	\N	\N	\N	\N
 \.
 
 
@@ -2143,6 +2150,7 @@ ad2bccb2-731f-419d-b683-540ee57aebcf	2026-10-03 18:19:11.354659+00	2026-10-03 18
 e7f7e558-c5bd-44bb-bc6c-ee568c6dfee8	2026-10-30 12:04:22.29189+00	2026-10-30 12:04:22.29189+00	password	30efa65e-0c7f-403e-9569-09f061972d24
 aba408cf-d442-4d09-9dd5-afcf129d1da3	2026-11-06 12:35:30.561427+00	2026-11-06 12:35:30.561427+00	password	dc785b67-7692-43b6-a0a2-269f49134ca2
 88f974a9-e038-49bb-bbb9-00141f9051a5	2026-11-07 09:29:08.679237+00	2026-11-07 09:29:08.679237+00	password	7f20f505-bf1d-4ce2-b64f-dc98e30aaaf0
+34f5f3c5-da4b-4194-9243-48bcd27e8b48	2026-11-08 12:51:58.278603+00	2026-11-08 12:51:58.278603+00	password	38cb67ef-9ccc-4e5a-99b2-1cb8e696a161
 \.
 
 
@@ -2820,7 +2828,9 @@ COPY "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "revoked"
 00000000-0000-0000-0000-000000000000	786	iwbwrnxd4svd	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	t	2026-10-30 12:04:22.257048+00	2026-11-02 06:00:25.573813+00	\N	e7f7e558-c5bd-44bb-bc6c-ee568c6dfee8
 00000000-0000-0000-0000-000000000000	787	xtc4qczsbqzj	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	f	2026-11-02 06:00:25.596991+00	2026-11-02 06:00:25.596991+00	iwbwrnxd4svd	e7f7e558-c5bd-44bb-bc6c-ee568c6dfee8
 00000000-0000-0000-0000-000000000000	788	omgnlueww4om	205959f1-8a0d-4c63-a19b-56a7ad555768	f	2026-11-06 12:35:30.524109+00	2026-11-06 12:35:30.524109+00	\N	aba408cf-d442-4d09-9dd5-afcf129d1da3
-00000000-0000-0000-0000-000000000000	789	xrhvf2feo5em	70d5dd1a-0228-4246-8052-1c75aa6c014d	f	2026-11-07 09:29:08.641674+00	2026-11-07 09:29:08.641674+00	\N	88f974a9-e038-49bb-bbb9-00141f9051a5
+00000000-0000-0000-0000-000000000000	790	mkqrrf5ualbi	7b2e7929-98cc-4780-88cb-0523d713aafb	f	2026-11-08 12:51:58.238241+00	2026-11-08 12:51:58.238241+00	\N	34f5f3c5-da4b-4194-9243-48bcd27e8b48
+00000000-0000-0000-0000-000000000000	789	xrhvf2feo5em	70d5dd1a-0228-4246-8052-1c75aa6c014d	t	2026-11-07 09:29:08.641674+00	2026-11-09 16:25:29.307309+00	\N	88f974a9-e038-49bb-bbb9-00141f9051a5
+00000000-0000-0000-0000-000000000000	791	rclij5pgmr5z	70d5dd1a-0228-4246-8052-1c75aa6c014d	f	2026-11-09 16:25:29.331834+00	2026-11-09 16:25:29.331834+00	xrhvf2feo5em	88f974a9-e038-49bb-bbb9-00141f9051a5
 \.
 
 
@@ -3036,6 +3046,7 @@ c583ba5f-f6e5-45f9-b5e3-4dcdad3b9ee0	Wawi	072400000	2026-10-04 10:39:10.975164+0
 9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	Christine	0741934955	2026-10-30 12:04:22.604681+00	f	2026-10-30 12:04:22.604681+00	question_2	nairobi
 205959f1-8a0d-4c63-a19b-56a7ad555768	Michael muasa	0705562048	2026-11-06 12:35:31.025831+00	f	2026-11-06 12:35:31.025831+00	question_4	kandumbu
 70d5dd1a-0228-4246-8052-1c75aa6c014d	ulya	088803335694	2026-11-07 09:29:09.035202+00	f	2026-11-07 09:29:09.035202+00	question_2	madiun
+7b2e7929-98cc-4780-88cb-0523d713aafb	Finley	0746551520	2026-11-08 12:51:58.609633+00	f	2026-11-08 12:51:58.609633+00	question_2	kisumu
 \.
 
 
@@ -3254,6 +3265,7 @@ bde49d0b-2bca-4905-b90c-1427d60c4e79	f6785909-f260-418c-8e9c-c92a65e7ff8c	Dagy	N
 2345418b-c943-4478-98a6-64cf51633263	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	My farm	Nairobi	2026-10-30 12:04:47.728978+00
 6de9915c-1889-4efc-be8e-6afca0839c76	205959f1-8a0d-4c63-a19b-56a7ad555768	YoungBoy	machakos	2026-11-06 12:35:54.627242+00
 e1636a16-a224-4ba2-b400-1587a02d1ba7	70d5dd1a-0228-4246-8052-1c75aa6c014d	Agriwisata	Malang	2026-11-07 09:29:35.808972+00
+09c93e47-b6c2-4682-b14c-cdd58116df59	7b2e7929-98cc-4780-88cb-0523d713aafb	ukunda farm	ukunda	2026-11-08 12:52:22.371107+00
 \.
 
 
@@ -3363,6 +3375,7 @@ a1789823-6068-45b4-ad43-0fd20cb3d718	005af20f-7758-4f66-8cb7-a141d30387f0	missin
 402f1b11-4882-4f35-920d-f445509994b0	00ad1e99-72aa-43a0-8193-3de81fdf1f80	missing_record	\N	Reminder	Ukumbusho	Heyy, Christine, have you checked your chicks? Update your records	Hujambo, Christine, umeangalia vifaranga vyako? Sasisha rekodi zako	t	2026-10-03 16:21:35.4025+00
 30bb576b-fca1-4c42-a750-4ad3b6fb7ed7	81234c09-642f-449d-b394-422ab438001c	missing_record	\N	Reminder	Ukumbusho	Heyy, Amuj, have you checked your chicks? Update your records	Hujambo, Amuj, umeangalia vifaranga vyako? Sasisha rekodi zako	f	2026-10-03 18:23:35.601348+00
 73aef4ce-3dab-4043-b913-d4cf81b00bae	058e4af7-39ae-4420-a9d8-b1b6f3cf62a9	missing_record	\N	Reminder	Ukumbusho	Heyy, hildakinya17, have you checked your chicks? Update your records	Hujambo, hildakinya17, umeangalia vifaranga vyako? Sasisha rekodi zako	f	2026-10-03 19:13:38.702062+00
+e438922b-2826-44dd-85b7-0bd4a68b2aac	70d5dd1a-0228-4246-8052-1c75aa6c014d	missing_record	\N	Reminder	Ukumbusho	Heyy, ulya, have you checked your chicks? Update your records	Hujambo, ulya, umeangalia vifaranga vyako? Sasisha rekodi zako	f	2026-11-09 16:25:33.180658+00
 \.
 
 
@@ -3401,8 +3414,9 @@ e5a250d5-9fd4-4eb7-b6a7-5e4e4d1e4ffe	e5a250d5-9fd4-4eb7-b6a7-5e4e4d1e4ffe	en	t	2
 9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	9fb01d83-b7d2-4820-b2c7-e2e20f840fdd	en	t	2026-11-02 09:00:25.463023+00
 81234c09-642f-449d-b394-422ab438001c	81234c09-642f-449d-b394-422ab438001c	en	t	2026-10-03 21:26:29.444251+00
 205959f1-8a0d-4c63-a19b-56a7ad555768	205959f1-8a0d-4c63-a19b-56a7ad555768	en	t	2026-11-06 15:35:29.703728+00
-70d5dd1a-0228-4246-8052-1c75aa6c014d	70d5dd1a-0228-4246-8052-1c75aa6c014d	en	t	2026-11-07 16:29:07.726363+00
 acc722a7-3c37-4447-b22e-d9423208fa0f	acc722a7-3c37-4447-b22e-d9423208fa0f	en	t	2026-07-14 14:54:30.471254+00
+7b2e7929-98cc-4780-88cb-0523d713aafb	7b2e7929-98cc-4780-88cb-0523d713aafb	en	t	2026-11-08 15:51:58.474511+00
+70d5dd1a-0228-4246-8052-1c75aa6c014d	70d5dd1a-0228-4246-8052-1c75aa6c014d	en	t	2026-11-09 23:25:26.819121+00
 79f829ff-a10c-4cf1-98df-89d16531ee4b	79f829ff-a10c-4cf1-98df-89d16531ee4b	en	t	2026-07-30 22:14:29.828755+00
 c583ba5f-f6e5-45f9-b5e3-4dcdad3b9ee0	c583ba5f-f6e5-45f9-b5e3-4dcdad3b9ee0	en	t	2026-10-04 13:55:14.459776+00
 f297c472-4a10-400c-9a09-1439c27f552f	f297c472-4a10-400c-9a09-1439c27f552f	en	t	2026-07-31 10:00:03.439329+00
@@ -3481,13 +3495,13 @@ COPY "storage"."vector_indexes" ("id", "name", "bucket_id", "data_type", "dimens
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: supabase_auth_admin
 --
 
-SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 789, true);
+SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 791, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
--- \unrestrict 808sdVVXyQntEolSz7LefSfgXfpt4EHfgQh3RwKHtXgUCeIHORoyivEn6igDh5F
+-- \unrestrict c2oX4O52FxmlXeJc7Hx5nVnyrXhyyB1ZYquTlsDtP1k93bEhf9NcEonEvDXBd97
 
 RESET ALL;
